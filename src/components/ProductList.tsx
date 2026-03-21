@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import Button from '@/components/Button';
 
 export default async function ProductList() {
   const { data: products, error } = await supabase
@@ -20,7 +19,6 @@ export default async function ProductList() {
   }
 
   return (
-    // Celá sekce má tmavé pozadí jako Hero sekce
     <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px] py-16 lg:py-24">
       
       <div className="max-w-[1440px] mx-auto">
@@ -28,106 +26,102 @@ export default async function ProductList() {
           Nejprodávanější produkty
         </h2>
 
-        {/* Grid: 1 sloupec mobil, 2 tablet, 4 desktop [cite: 3] */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
           
           {products?.map((product, index) => {
-            // --- MOCK DATA PRO DESIGN ---
-            // Simulujeme data, která zatím v DB nemáme, abychom viděli design
+            // MOCK DATA PRO DESIGN
             const isTop = index === 0;
             const isNovinka = index < 2;
             const isJenUNas = !isTop && !isNovinka;
-            const hasDiscount = index === 1; // Druhý produkt bude ve slevě
+            const hasDiscount = index === 1;
             const originalPrice = hasDiscount ? product.price + 150 : null;
-            const stockCount = index === 0 ? 5 : 15; // První produkt má méně než 10 ks
-            // -----------------------------
+            const stockCount = index === 0 ? 5 : 15;
 
             return (
               <div 
                 key={product.id} 
-                // Zde definujeme zaoblení 16px [cite: 3] a tmavé pozadí. 
-                // Group přidáváme pro hover efekty (oranžový rámeček a změna barvy tagu)
-                className="group relative bg-[#0F172A] border border-[#2B3755] rounded-[16px] p-[24px] flex flex-col hover:border-[#FF6B35] hover:bg-[#1E2638] transition-all duration-300"
+                className="group relative bg-[#0F172A] border border-[#8B95AC] rounded-[16px] p-[24px] flex flex-col hover:bg-[#2B3755] transition-all duration-300"
               >
-                {/* 1. Link přes celou kartu (vede na detail) */}
+                {/* Neviditelný odkaz přes celou kartu */}
                 <Link href={`/produkt/${product.id}`} className="absolute inset-0 z-0 rounded-[16px]" aria-label={`Detail produktu ${product.name}`}></Link>
 
-                {/* 2. TAGY shora dolů (Shop-tag: 11px, Light, tracking 5%) [cite: 3] */}
-                <div className="flex justify-center gap-2 mb-6 relative z-10 pointer-events-none">
+                {/* TAGY - Absolutní pozice v pravém horním rohu, zarovnané doprava (items-end) */}
+                <div className="absolute top-[24px] right-[24px] z-20 flex flex-col items-end gap-2 pointer-events-none">
                   {isTop && (
-                    <span className="bg-[#62BBE2] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em]">
+                    <span className="bg-[#62BBE2] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
                       TOP 1
                     </span>
                   )}
-                  {isNovinka && (
-                    <span className="bg-[#F9B420] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em]">
+                  {!isTop && isNovinka && (
+                    <span className="bg-[#F9B420] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
                       novinka
                     </span>
                   )}
                   {isJenUNas && (
-                    <span className="bg-[#D1D6DF] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em]">
+                    <span className="bg-[#D1D6DF] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
                       jen u nás
                     </span>
                   )}
                 </div>
 
-                {/* 3. OBRÁZEK (fixní výška 144px mobil/tablet, 218px desktop) */}
-                <div className="relative w-full h-[144px] lg:h-[218px] bg-white rounded-md mb-6 flex-shrink-0 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
+                {/* OBRÁZEK - Transparentní pozadí bez paddingu */}
+                <div className="relative w-full h-[144px] lg:h-[218px] bg-transparent mb-6 flex-shrink-0 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
                   <Image 
                     src={product.image_url || '/images/product-image_0001.jpg'} 
                     alt={product.name}
                     fill
-                    className="object-contain p-2"
+                    className="object-contain"
                   />
                 </div>
 
-                {/* 4. TEXTY (Název a Popis) */}
-                {/* Flex-grow zajistí, že cena a tlačítko budou vždy zarovnané dole */}
+                {/* TEXTY */}
                 <div className="flex flex-col flex-grow items-center text-center relative z-10 pointer-events-none">
-                  {/* H4 desktop: 19px, SemiBold [cite: 3] */}
-                  <h3 className="text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] mb-4">
+                  {/* H4 - OPRAVENO: 16px pro mobil, 19px desktop */}
+                  <h3 className="text-[16px] md:text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] mb-4">
                     {product.name}
                   </h3>
                   
-                  {/* Body Desktop: 15px, Regular [cite: 3] */}
-                  <p className="text-[15px] font-normal leading-[1.6] text-white/70 mb-6 line-clamp-3">
+                  {/* Body - OPRAVENO: 12px pro mobil, 15px desktop */}
+                  <p className="text-[12px] md:text-[15px] font-normal leading-[1.6] text-white/70 mb-6 line-clamp-3">
                     {product.description}
                   </p>
                 </div>
 
-                {/* 5. CENA, SKLAD a TLAČÍTKO (zarovnáno vždy dole) */}
+                {/* CENA, SKLAD a TLAČÍTKO */}
                 <div className="mt-auto flex flex-col items-center relative z-10">
                   
-                  {/* Blok ceny */}
-                  <div className="flex flex-col items-center mb-6 h-[48px] justify-end">
+                  <div className="flex flex-col items-center mb-6 h-[48px] justify-end pointer-events-none">
                     {hasDiscount && (
                       <span className="text-[15px] text-[#8B95AC] line-through decoration-[#8B95AC] mb-1">
                         Cena {originalPrice} Kč
                       </span>
                     )}
-                    {/* Shop-price Desktop: 21px, SemiBold, success barva [cite: 3] */}
                     <span className="text-[21px] font-semibold tracking-[-0.02em] text-[#059669] leading-none">
                       Cena {product.price} Kč
                     </span>
                   </div>
 
-                  {/* Skladovost s hover efektem na tagu (změna na yellow #F9B420) [cite: 3] */}
-                  <div className="flex items-center gap-2 mb-6 text-[15px]">
+                  <div className="flex items-center gap-2 mb-6 text-[15px] pointer-events-none">
                     <span className="text-[#FDFBF7]">Skladem</span>
                     <span className="bg-[#2B3755] text-white px-2 py-1 rounded-full text-[11px] font-light tracking-[0.05em] group-hover:bg-[#F9B420] group-hover:text-[#0F172A] transition-colors duration-300">
                       {stockCount > 10 ? 'více než 10 ks' : 'méně než 10 ks'}
                     </span>
                   </div>
 
-                  {/* Tlačítko - pointer-events-auto umožňuje na něj kliknout, i když je přes kartu přehozený neviditelný Link */}
-                  <div className="w-full pointer-events-auto">
-                    {/* Zde by v reálu byla akce addToCart, zatím jen design */}
-                    <Button variant="outlined" className="w-full !py-[12px]">
+                  {/* NOVÝ BUTTON - Text s ikonkou košíku */}
+                  <div className="w-full pointer-events-auto flex justify-center">
+                    <button className="flex items-center gap-2 text-[#FF6B35] font-semibold text-[16px] hover:text-[#FF7F51] transition-colors group/btn">
+                      {/* SVG Ikonka košíku */}
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:scale-110 transition-transform">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
                       Do košíku
-                    </Button>
+                    </button>
                   </div>
-                </div>
 
+                </div>
               </div>
             );
           })}
