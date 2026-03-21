@@ -11,7 +11,12 @@ export default async function ProductList() {
 
   if (error) {
     console.error('Chyba při načítání produktů:', error);
-    return <div className="text-center py-20 text-red-500">Jejda, produkty se nepodařilo načíst.</div>;
+    return (
+      <div className="text-center py-20 text-red-500">
+        Jejda, produkty se nepodařilo načíst.<br/>
+        <strong>Detail chyby: {error.message}</strong>
+      </div>
+    );
   }
 
   return (
