@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+// IMPORT NAŠEHO NOVÉHO TLAČÍTKA
+import AddToCartButton from '@/components/AddToCartButton';
 
 export default async function ProductList() {
   const { data: products, error } = await supabase
@@ -104,16 +106,9 @@ export default async function ProductList() {
                     </span>
                   </div>
 
-                  {/* Tlačítko (Body + font-bold) */}
-                  <div className="w-full pointer-events-auto flex justify-center">
-                    <button className="style-body font-bold flex items-center gap-2 text-[#FF6B35] hover:text-[#FF7F51] transition-colors group/btn">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:scale-110 transition-transform">
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                      </svg>
-                      Do košíku
-                    </button>
+                  {/* <-- NAHRADILI JSME STATICKÉ TLAČÍTKO NOVOU KOMPONENTOU --> */}
+                  <div className="w-full pointer-events-auto flex justify-center z-30 relative">
+                    <AddToCartButton product={product} />
                   </div>
 
                 </div>

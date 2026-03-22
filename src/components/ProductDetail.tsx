@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import { useCart } from '@/context/CartContext'; // <-- PŘIDANÝ IMPORT KONTEXTU KOŠÍKU
 
 // MOCK DATA
 const product = {
@@ -30,6 +31,9 @@ export default function ProductDetail() {
   const [isDescOpen, setIsDescOpen] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [mainImage, setMainImage] = useState(product.images[0]);
+  
+  // <-- VYTÁHNUTÍ FUNKCE PRO PŘIDÁNÍ DO KOŠÍKU -->
+  const { addToCart } = useCart();
 
   return (
     <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px] py-[32px]">
@@ -45,7 +49,6 @@ export default function ProductDetail() {
           {/* LEVÝ SLOUPEC: OBRÁZKY */}
           <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start gap-4">
             
-            {/* ÚPRAVA ZDE: h-[262px] pro mobil, md:h-[423px] pro tablet a desktop */}
             <div 
               className="relative w-full h-[262px] md:h-[423px] flex items-start justify-center cursor-zoom-in overflow-hidden"
               onClick={() => setLightboxImg(mainImage)}
@@ -98,7 +101,19 @@ export default function ProductDetail() {
                 </span>
               </div>
 
-              <Button className="w-full md:w-[320px]">
+              {/* <-- NAPOJENÍ BUTTONU NA KOŠÍK --> */}
+              <Button 
+                className="w-full md:w-[320px]"
+                onClick={() => {
+                  addToCart({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    image_url: mainImage
+                  });
+                }}
+              >
                 Do košíku
               </Button>
             </div>

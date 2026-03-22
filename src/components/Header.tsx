@@ -3,17 +3,21 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+// IMPORTUJEME NÁŠ HOOK PRO KOŠÍK
+import { useCart } from '@/context/CartContext';
 
 export default function Header() {
   // Stav pro sledování, zda je mobilní menu otevřené
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Vytáhneme si celkový počet položek v košíku z našeho globálního stavu
+  const { cartCount } = useCart();
 
   // Funkce na přepínání menu
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
     // ÚPRAVA VÝŠKY: h-[80px] pro mobil, md:h-[98px] pro tablet, lg:h-[116px] pro desktop
-    // Vertikální padding (py) byl odstraněn, vycentrování zajišťuje 'items-center'
     <header className="bg-[#252C3C] text-[#FDFBF7] px-4 lg:px-[84px] h-[80px] md:h-[98px] lg:h-[116px] flex items-center justify-between gap-4 w-full relative z-50 border-b border-[#2B3755]">
       
       {/* Levá část - Logo */}
@@ -31,7 +35,6 @@ export default function Header() {
 
       {/* Pravá část - Navigace a Košík (DESKTOP) */}
       <div className="hidden md:flex items-center gap-4 lg:gap-6">
-        {/* whitespace-nowrap zabraňuje zalamování slov */}
         <nav className="flex items-center text-[15px] lg:text-[16px] font-medium tracking-[-0.02em] leading-none whitespace-nowrap">
           <Link href="/znamky" className="pr-[22px] hover:text-[#FF7F51] transition">Známky</Link>
           <span className="w-px h-5 bg-white/30"></span>
@@ -45,26 +48,41 @@ export default function Header() {
           <Link href="/darkove-sady" className="px-[22px] hover:text-[#FF7F51] transition">Dárkové sady</Link>
         </nav>
 
-        {/* Sjednocený design košíku pro Desktop dle Mobilu */}
+        {/* KOŠÍK - DESKTOP */}
         <Link href="/kosik" className="flex items-center group flex-shrink-0">
-          <div className="w-[40px] h-[40px] rounded-full bg-[#2B3755] group-hover:bg-[#FF6B35] transition flex items-center justify-center">
-             {/* Pevná (Solid) ikona košíku dle mobilu */}
+          {/* Přidáno 'relative' pro pozicování odznáčku */}
+          <div className="relative w-[52px] h-[52px] rounded-full bg-[#0F172A] group-hover:bg-[#FF6B35] transition flex items-center justify-center">
              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
              </svg>
+             
+             {/* ODZNÁČEK S POČTEM PRODUKTŮ */}
+             {cartCount > 0 && (
+               <span className="absolute -top-1 -right-1 bg-[#FF6B35] text-[#0F172A] text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+                 {cartCount}
+               </span>
+             )}
           </div>
         </Link>
       </div>
 
       {/* Pravá část - Mobilní tlačítka (MOBILE) */}
       <div className="flex md:hidden items-center gap-4 flex-shrink-0">
-        {/* Košík pro mobil - Nový vzhled s plnou ikonou a modrým pozadím */}
+        
+        {/* KOŠÍK - MOBIL */}
         <Link href="/kosik">
-          <div className="w-[40px] h-[40px] rounded-full bg-[#2B3755] flex items-center justify-center">
-             {/* Pevná (Solid) ikona košíku dle mobilu */}
+          {/* Přidáno 'relative' pro pozicování odznáčku */}
+          <div className="relative w-[40px] h-[40px] rounded-full bg-[#0F172A] flex items-center justify-center">
              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
              </svg>
+
+             {/* ODZNÁČEK S POČTEM PRODUKTŮ */}
+             {cartCount > 0 && (
+               <span className="absolute -top-1 -right-1 bg-[#FF6B35] text-[#0F172A] text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+                 {cartCount}
+               </span>
+             )}
           </div>
         </Link>
         
@@ -75,12 +93,10 @@ export default function Header() {
           aria-label="Přepnout menu"
         >
           {isMobileMenuOpen ? (
-            // Ikona Křížku (zavřít)
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            // Ikona Hamburgeru (otevřít)
             <div className="flex flex-col justify-between h-[18px] w-[26px]">
               <span className="w-full h-[2.5px] bg-[#FDFBF7] rounded-full"></span>
               <span className="w-full h-[2.5px] bg-[#FDFBF7] rounded-full"></span>

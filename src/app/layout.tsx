@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer'; // <-- Importujeme Footer
+import { CartProvider } from '@/context/CartContext'; 
 
 export const metadata: Metadata = {
   title: 'Creative Stamp | E-shop',
-  description: 'Objevte ty nejlepší kousky pro váš šatník.',
+  description: 'Objevte ty nejlepší kousky pro vaši sbírku.',
 };
 
 const poppins = Poppins({ 
@@ -21,16 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="cs">
-      {/* Přidal jsem flex a min-h-screen, aby patička zůstala dole i při nedostatku obsahu */}
-      <body className={`${poppins.className} flex flex-col min-h-screen`}>
-        <Header /> 
-        
-        {/* flex-grow roztáhne hlavní obsah, aby odtlačil patičku dolů */}
-        <main className="flex-grow">
+      <body className={`${poppins.className} flex flex-col min-h-screen bg-[#0F172A]`}>
+        <CartProvider>
           {children}
-        </main>
-        
-        <Footer /> {/* <-- A tady ji vložíme */}
+        </CartProvider>
       </body>
     </html>
   );
