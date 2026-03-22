@@ -35,18 +35,19 @@ export default function ProductDetail() {
     <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px] py-[32px]">
       <div className="max-w-[1440px] mx-auto">
         
-        {/* ÚPRAVA MOBIL: Nadpis zobrazený HNED NAD obrázkem, vycentrovaný (skrytý na desktopu) */}
+        {/* Nadpis pro mobil */}
         <h1 className="style-h2 mb-6 text-center lg:hidden w-full">
           {product.name}
         </h1>
 
         <div className="flex flex-col lg:flex-row gap-[32px] md:gap-[48px] lg:gap-[64px] mb-[64px]">
           
-          {/* LEVÝ SLOUPEC: OBRÁZKY (na mobilu vycentrované) */}
+          {/* LEVÝ SLOUPEC: OBRÁZKY */}
           <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start gap-4">
             
+            {/* ÚPRAVA ZDE: h-[262px] pro mobil, md:h-[423px] pro tablet a desktop */}
             <div 
-              className="relative w-full h-[423px] flex items-start justify-center cursor-zoom-in overflow-hidden"
+              className="relative w-full h-[262px] md:h-[423px] flex items-start justify-center cursor-zoom-in overflow-hidden"
               onClick={() => setLightboxImg(mainImage)}
             >
               <Image 
@@ -63,7 +64,6 @@ export default function ProductDetail() {
               {product.images.map((img, idx) => (
                 <div 
                   key={idx} 
-                  // ÚPRAVA: Aktivní rámeček v Primary barvě (#FF6B35)
                   className={`relative w-[80px] h-[80px] md:w-[100px] md:h-[100px] shrink-0 border rounded-[8px] overflow-hidden cursor-pointer transition-colors ${mainImage === img ? 'border-[#FF6B35]' : 'border-[#8B95AC] hover:border-[#D1D6DF]'}`}
                   onClick={() => setMainImage(img)}
                 >
@@ -74,10 +74,9 @@ export default function ProductDetail() {
           </div>
 
           {/* PRAVÝ SLOUPEC: INFORMACE O PRODUKTU */}
-          {/* ÚPRAVA MOBIL: Vše vycentrované (items-center text-center), na desktopu zpět vlevo */}
           <div className="w-full lg:w-1/2 flex flex-col items-center text-center lg:items-start lg:text-left gap-0">
             
-            {/* ÚPRAVA DESKTOP: Nadpis skrytý na mobilu, viditelný jen od lg výš */}
+            {/* Nadpis pro desktop */}
             <h1 className="style-h2 mb-4 hidden lg:block">
               {product.name}
             </h1>
@@ -85,7 +84,6 @@ export default function ProductDetail() {
             <p className="style-perex text-white/80 mb-6">{product.perex}</p>
 
             {/* CENA, SKLAD A BUTTON */}
-            {/* ÚPRAVA: Zcela odstraněna linka (border-t) nad cenou, navazuje plynule */}
             <div className="w-full flex flex-col items-center lg:items-start mb-6 pt-2">
               <div className="mb-2">
                 <span className="style-product-price text-[#059669]">
@@ -106,13 +104,11 @@ export default function ProductDetail() {
             </div>
 
             {/* DETAILNÍ POPIS (Accordion) */}
-            {/* ÚPRAVA: Držíme text-left pro accordion, aby se ho mobilní centrování nedotklo */}
             <div className="w-full border-t border-[#8B95AC]/30 pt-6 text-left">
               <button 
                 className="w-full flex items-center justify-between lg:cursor-auto text-left group"
                 onClick={() => setIsDescOpen(!isDescOpen)}
               >
-                {/* ÚPRAVA: Hover efekt v Primary-hover barvě (#FF7F51) */}
                 <h2 className="style-h4 group-hover:text-[#FF7F51] transition-colors">Detailní popis známky</h2>
                 <svg 
                   className={`lg:hidden w-6 h-6 transition-transform duration-300 ${isDescOpen ? 'rotate-180' : ''}`} 
