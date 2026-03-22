@@ -19,7 +19,6 @@ export default async function ProductList() {
   }
 
   return (
-    // ÚPRAVA: Odstraněny všechny py (padding-y) třídy.
     <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px]">
       
       <div className="max-w-[1440px] mx-auto">
@@ -41,19 +40,20 @@ export default async function ProductList() {
               >
                 <Link href={`/produkt/${product.id}`} className="absolute inset-0 z-0 rounded-[16px]" aria-label={`Detail produktu ${product.name}`}></Link>
 
-                <div className="absolute top-[24px] right-[24px] z-20 flex flex-col items-end gap-2 pointer-events-none">
+                {/* TAGY - Zde je použita třída style-product-tag */}
+                <div className="absolute top-[30px] right-[24px] z-20 flex flex-col items-end gap-2 pointer-events-none">
                   {isTop && (
-                    <span className="bg-[#62BBE2] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
+                    <span className="style-product-tag bg-[#62BBE2] text-[#0F172A] px-3 py-1 rounded-full shadow-sm">
                       TOP 1
                     </span>
                   )}
                   {!isTop && isNovinka && (
-                    <span className="bg-[#F9B420] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
+                    <span className="style-product-tag bg-[#F9B420] text-[#0F172A] px-3 py-1 rounded-full shadow-sm">
                       novinka
                     </span>
                   )}
                   {isJenUNas && (
-                    <span className="bg-[#D1D6DF] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
+                    <span className="style-product-tag bg-[#D1D6DF] text-[#0F172A] px-3 py-1 rounded-full shadow-sm">
                       jen u nás
                     </span>
                   )}
@@ -69,11 +69,13 @@ export default async function ProductList() {
                 </div>
 
                 <div className="flex flex-col flex-grow items-center text-center relative z-10 pointer-events-none">
-                  <h3 className="text-[16px] md:text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] mb-4">
+                  {/* H4 Titulek */}
+                  <h3 className="style-h4 mb-4">
                     {product.name}
                   </h3>
                   
-                  <p className="text-[12px] md:text-[15px] font-normal leading-[1.6] text-white/70 mb-6 line-clamp-3">
+                  {/* Popis (Body) */}
+                  <p className="style-body text-white/70 mb-6 line-clamp-3">
                     {product.description}
                   </p>
                 </div>
@@ -81,25 +83,30 @@ export default async function ProductList() {
                 <div className="mt-auto flex flex-col items-center relative z-10">
                   
                   <div className="flex flex-col items-center mb-6 h-[48px] justify-end pointer-events-none">
+                    {/* Stará cena (Body) */}
                     {hasDiscount && (
-                      <span className="text-[15px] text-[#8B95AC] line-through decoration-[#8B95AC] mb-1">
+                      <span className="style-body relative inline-block text-[#8B95AC] mb-1">
                         Cena {originalPrice} Kč
+                        <span className="absolute left-[-5%] top-1/2 w-[110%] h-[1.5px] bg-[#8B95AC] -rotate-12 transform origin-center"></span>
                       </span>
                     )}
-                    <span className="text-[21px] font-semibold tracking-[-0.02em] text-[#059669] leading-none">
+                    {/* Nová cena (Product-price) */}
+                    <span className="style-product-price text-[#059669]">
                       Cena {product.price} Kč
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 mb-6 text-[15px] pointer-events-none">
-                    <span className="text-[#FDFBF7]">Skladem</span>
-                    <span className="bg-[#2B3755] text-white px-2 py-1 rounded-full text-[11px] font-light tracking-[0.05em] group-hover:bg-[#F9B420] group-hover:text-[#0F172A] transition-colors duration-300">
+                  {/* Skladem (Body a Product-tag) */}
+                  <div className="flex items-center gap-2 mb-6 pointer-events-none">
+                    <span className="style-body text-[#FDFBF7]">Skladem</span>
+                    <span className="style-product-tag bg-[#2B3755] text-white px-2 py-1 rounded-full group-hover:bg-[#F9B420] group-hover:text-[#0F172A] transition-colors duration-300">
                       {stockCount > 10 ? 'více než 10 ks' : 'méně než 10 ks'}
                     </span>
                   </div>
 
+                  {/* Tlačítko (Body + font-bold) */}
                   <div className="w-full pointer-events-auto flex justify-center">
-                    <button className="flex items-center gap-2 text-[#FF6B35] font-semibold text-[16px] hover:text-[#FF7F51] transition-colors group/btn">
+                    <button className="style-body font-bold flex items-center gap-2 text-[#FF6B35] hover:text-[#FF7F51] transition-colors group/btn">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:scale-110 transition-transform">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>

@@ -21,27 +21,27 @@ export default function Hero() {
     <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px] overflow-hidden">
       
       {/* 1. Nadpis - H1 */}
-      {/* Mezera pod nadpisem na tabletu mb-10 (40px) */}
-      <h1 className="text-[24px] md:text-[32px] lg:text-[42px] font-semibold tracking-[-0.01em] lg:tracking-[-0.02em] leading-[1.4] lg:leading-[1.1] text-center mb-10 lg:mb-[52px]">
+      {/* ÚPRAVA: Použita globální třída style-h1 */}
+      <h1 className="style-h1 text-center mb-10 lg:mb-[52px]">
         Vytvoř si vlastní arch se známkami a fotkami
       </h1>
 
       {/* --- DESKTOP / TABLET BLOK --- */}
-      {/* ÚPRAVA TABLET: Mezera (gap) mezi obrázkem a kroky sjednocena na md:gap-10 (40px) */}
       <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-10 md:gap-10 lg:gap-6 mx-auto w-full mb-10 lg:mb-0">
         
         {/* KROKY (Steps) */}
-        {/* ÚPRAVA TABLET: mt-[28px] změněno na md:mt-0, aby se mezeru řídil čistě gap rodiče */}
         <div className="order-2 lg:order-1 flex flex-row md:flex-row lg:flex-col gap-8 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0 overflow-visible md:mt-0 lg:mt-0">
           {desktopSteps.map((step) => (
             <div key={step.id} className="flex flex-col items-center text-center w-full">
               <div className="w-10 h-10 rounded-full bg-[#F9B420] text-[#0F172A] flex items-center justify-center font-bold text-[20px] mb-4 shrink-0">
                 {step.id}
               </div>
-              <h3 className="text-[20px] lg:text-[21px] font-semibold tracking-[-0.02em] leading-[1.1] mb-2">
+              {/* ÚPRAVA: Použita globální třída style-h3 */}
+              <h3 className="style-h3 mb-2">
                 {step.title}
               </h3>
-              <p className="text-[14px] lg:text-[15px] font-normal leading-[1.6] text-white/90 max-w-[280px]">
+              {/* ÚPRAVA: Použita globální třída style-body */}
+              <p className="style-body text-white/90 max-w-[280px]">
                 {step.text}
               </p>
             </div>
@@ -85,6 +85,7 @@ export default function Hero() {
               <div className="w-8 h-8 rounded-full bg-[#F9B420] text-[#0F172A] flex items-center justify-center font-bold text-[16px] shrink-0 mb-1">
                 {step.id}
               </div>
+              {/* ÚPRAVA: Zde záměrně NEPOUŽÍVÁME globální styl, zachováno lokální formátování pro mobil */}
               <h3 className="text-[14px] font-medium tracking-normal leading-[1.6] text-[#FDFBF7]">
                 {step.title}
               </h3>
@@ -108,7 +109,6 @@ export default function Hero() {
       </div>
 
       {/* --- TLAČÍTKA --- */}
-      {/* ÚPRAVA TABLET: md:mt-12 změněno na md:mt-10 (40px) pro sjednocení mezer */}
       <div className="mt-4 md:mt-10 lg:mt-10 flex justify-center w-full">
         
         {/* Tlačítko Desktop (S dekorativní šipkou) */}
