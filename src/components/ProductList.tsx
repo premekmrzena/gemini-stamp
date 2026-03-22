@@ -19,17 +19,14 @@ export default async function ProductList() {
   }
 
   return (
-    <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px] py-16 lg:py-24">
+    // ÚPRAVA: Odstraněny všechny py (padding-y) třídy.
+    <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px]">
       
       <div className="max-w-[1440px] mx-auto">
-        <h2 className="text-[28px] lg:text-[36px] font-semibold tracking-[-0.02em] text-center mb-12">
-          Nejprodávanější produkty
-        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
           
           {products?.map((product, index) => {
-            // MOCK DATA PRO DESIGN
             const isTop = index === 0;
             const isNovinka = index < 2;
             const isJenUNas = !isTop && !isNovinka;
@@ -42,10 +39,8 @@ export default async function ProductList() {
                 key={product.id} 
                 className="group relative bg-[#0F172A] border border-[#8B95AC] rounded-[16px] p-[24px] flex flex-col hover:bg-[#2B3755] transition-all duration-300"
               >
-                {/* Neviditelný odkaz přes celou kartu */}
                 <Link href={`/produkt/${product.id}`} className="absolute inset-0 z-0 rounded-[16px]" aria-label={`Detail produktu ${product.name}`}></Link>
 
-                {/* TAGY - Absolutní pozice v pravém horním rohu, zarovnané doprava (items-end) */}
                 <div className="absolute top-[24px] right-[24px] z-20 flex flex-col items-end gap-2 pointer-events-none">
                   {isTop && (
                     <span className="bg-[#62BBE2] text-[#0F172A] px-3 py-1 rounded-full text-[11px] font-light tracking-[0.05em] shadow-sm">
@@ -64,7 +59,6 @@ export default async function ProductList() {
                   )}
                 </div>
 
-                {/* OBRÁZEK - Transparentní pozadí bez paddingu */}
                 <div className="relative w-full h-[144px] lg:h-[218px] bg-transparent mb-6 flex-shrink-0 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
                   <Image 
                     src={product.image_url || '/images/product-image_0001.jpg'} 
@@ -74,20 +68,16 @@ export default async function ProductList() {
                   />
                 </div>
 
-                {/* TEXTY */}
                 <div className="flex flex-col flex-grow items-center text-center relative z-10 pointer-events-none">
-                  {/* H4 - OPRAVENO: 16px pro mobil, 19px desktop */}
                   <h3 className="text-[16px] md:text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] mb-4">
                     {product.name}
                   </h3>
                   
-                  {/* Body - OPRAVENO: 12px pro mobil, 15px desktop */}
                   <p className="text-[12px] md:text-[15px] font-normal leading-[1.6] text-white/70 mb-6 line-clamp-3">
                     {product.description}
                   </p>
                 </div>
 
-                {/* CENA, SKLAD a TLAČÍTKO */}
                 <div className="mt-auto flex flex-col items-center relative z-10">
                   
                   <div className="flex flex-col items-center mb-6 h-[48px] justify-end pointer-events-none">
@@ -108,10 +98,8 @@ export default async function ProductList() {
                     </span>
                   </div>
 
-                  {/* NOVÝ BUTTON - Text s ikonkou košíku */}
                   <div className="w-full pointer-events-auto flex justify-center">
                     <button className="flex items-center gap-2 text-[#FF6B35] font-semibold text-[16px] hover:text-[#FF7F51] transition-colors group/btn">
-                      {/* SVG Ikonka košíku */}
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover/btn:scale-110 transition-transform">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
