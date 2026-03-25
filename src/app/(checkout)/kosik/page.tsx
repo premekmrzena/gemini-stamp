@@ -52,11 +52,20 @@ export default function CheckoutPage() {
   if (cartItems.length === 0) {
     return (
       <div className="w-full min-h-screen flex flex-col bg-[#0F172A]">
-        {/* Hlavička pro prázdný košík */}
-        <header className="w-full border-b border-[#8B95AC]/30 py-4 px-[24px] md:px-[44px] lg:px-[84px] flex justify-center lg:justify-start">
-          <Link href="/" aria-label="Zpět na hlavní stránku">
-            <Image src="/images/creative-stamp_logo.svg" alt="Creative Stamp Logo" width={150} height={40} priority className="h-10 w-auto object-contain" />
-          </Link>
+       {/* Hlavička pro prázdný košík */}
+        <header className="w-full bg-[#252C3C] border-b border-[#8B95AC]/30 h-[79px] md:h-[99px] lg:h-[133px] flex items-center justify-center">
+          <div className="w-full max-w-[1440px] mx-auto px-[24px] md:px-[44px] lg:px-[84px] flex items-center justify-center lg:justify-start">
+            <Link href="/" aria-label="Zpět na hlavní stránku">
+              <Image 
+                src="/images/creative-stamp_logo.svg" 
+                alt="Creative Stamp Logo" 
+                width={200} 
+                height={60} 
+                priority 
+                className="h-[40px] md:h-[45px] lg:h-[60px] w-auto object-contain" 
+              />
+            </Link>
+          </div>
         </header>
         {/* Obsah prázdného košíku */}
         <div className="flex-grow flex flex-col items-center justify-center py-[100px] px-4 gap-6 text-center">
@@ -124,22 +133,59 @@ export default function CheckoutPage() {
   return (
     <div className="w-full min-h-screen flex flex-col bg-[#0F172A] relative">
       
-      {/* --- NOVÁ HLAVIČKA (Logo + Stepper) --- */}
-      <header className="sticky top-0 z-40 w-full bg-[#0F172A]/95 backdrop-blur-md border-b border-[#8B95AC]/30 py-4 px-[24px] md:px-[44px] lg:px-[84px] flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
-        <Link href="/" aria-label="Zpět na hlavní stránku">
-          <Image src="/images/creative-stamp_logo.svg" alt="Creative Stamp Logo" width={150} height={40} priority className="h-10 w-auto object-contain" />
-        </Link>
-        
-        {/* Stepper */}
-        <div className="flex items-center gap-2 md:gap-3">
-          {[1, 2, 3].map(step => (
-            <div key={step} className="flex items-center gap-2 md:gap-3">
-              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold style-h4 text-sm md:text-base ${currentStep >= step ? 'bg-[#FF6B35] text-[#0F172A]' : 'bg-[#2B3755] text-white/50'}`}>
-                {step}
+      {/* --- NOVÁ HLAVIČKA (Logo + Stepper dle Figmy) --- */}
+      <header className="sticky top-0 z-40 w-full bg-[#252C3C] border-b border-[#8B95AC]/30 h-[79px] md:h-[99px] lg:h-[133px] flex items-center justify-center shadow-md">
+        <div className="w-full max-w-[1440px] mx-auto px-[24px] md:px-[44px] lg:px-[84px] flex items-center justify-between">
+          
+          <Link href="/" aria-label="Zpět na hlavní stránku" className="flex-shrink-0">
+            {/* Desktop / Tablet Logo */}
+            <Image 
+              src="/images/creative-stamp_logo.svg" 
+              alt="Creative Stamp Logo" 
+              width={240} 
+              height={60} 
+              priority 
+              className="hidden md:block h-[45px] lg:h-[60px] w-auto object-contain" 
+            />
+            {/* Mobile Logo */}
+            <Image 
+              src="/images/logo-black200_basked-mobile.svg" 
+              alt="Creative Stamp Logo Mobile" 
+              width={40} 
+              height={40} 
+              priority 
+              className="block md:hidden h-[40px] w-auto object-contain" 
+            />
+          </Link>
+          
+          {/* Stepper dle Figmy */}
+          <div className="flex items-center">
+            {[1, 2, 3].map((step, index) => (
+              <div key={step} className="flex items-center">
+                
+                {/* Samotný kruh s číslem */}
+                <div className={`
+                  flex items-center justify-center rounded-full font-medium tracking-[-0.02em] leading-none transition-colors duration-300
+                  w-[36px] h-[36px] text-[16px]
+                  md:w-[44px] md:h-[44px] md:text-[21px]
+                  lg:w-[48px] lg:h-[48px] lg:text-[28px]
+                  ${currentStep === step 
+                    ? 'bg-[#FF6B35] text-[#0F172A] border-none' 
+                    : 'bg-transparent text-[#8B95AC] border border-[#8B95AC]'
+                  }
+                `}>
+                  {step}
+                </div>
+
+                {/* Spojovací čára (kromě posledního kroku) */}
+                {index < 2 && (
+                  <div className="h-[1px] md:h-[1.5px] bg-[#8B95AC] w-[10px] md:w-[12px] lg:w-[16px] transition-colors duration-300" />
+                )}
+
               </div>
-              {step < 3 && <div className={`h-[2px] w-6 md:w-12 ${currentStep > step ? 'bg-[#FF6B35]' : 'bg-[#2B3755]'}`} />}
-            </div>
-          ))}
+            ))}
+          </div>
+
         </div>
       </header>
 
@@ -263,24 +309,26 @@ export default function CheckoutPage() {
         </div>
       </main>
 
-      {/* --- NOVÁ PATIČKA (Sticky akční lišta dole) --- */}
-      <footer className="fixed bottom-0 left-0 w-full z-50 bg-[#2B3755] border-t border-[#8B95AC]/30 px-[24px] md:px-[44px] lg:px-[84px] py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <div className="max-w-[1440px] mx-auto flex justify-between items-center gap-4">
+      {/* --- NOVÁ PATIČKA (Sticky akční lišta dole dle Figmy) --- */}
+      <footer className="fixed bottom-0 left-0 w-full z-50 bg-[#252c3c] border-t border-[#8B95AC]/30 py-[20px] md:py-[24px] lg:py-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center">
+        <div className="w-full max-w-[1440px] mx-auto px-[24px] md:px-[44px] lg:px-[84px] flex justify-between items-center gap-4">
           
           {/* Levé tlačítko: Zpět / Zpět k nákupu */}
           {currentStep === 1 ? (
-            <Link href="/" className="text-white/60 hover:text-white transition-colors style-body text-sm md:text-base underline underline-offset-4">
-              Zpět k nákupu
-            </Link>
+             <Link href="/">
+               <Button variant="outlined" arrow="left" className="!px-3 md:!px-6">
+                 <span className="hidden md:inline">Zpět k nákupu</span>
+               </Button>
+             </Link>
           ) : (
-            <Button onClick={prevStep} variant="outlined" arrow="left">
-              Zpět
+            <Button onClick={prevStep} variant="outlined" arrow="left" className="!px-3 md:!px-6">
+               <span className="hidden md:inline">Zpět</span>
             </Button>
           )}
 
           {/* Pravé tlačítko: Pokračovat */}
           <Button onClick={currentStep === 3 ? () => alert('Odesláno!') : nextStep} arrow="right">
-            {currentStep === 1 ? 'K dopravě' : currentStep === 2 ? 'K údajům' : 'Dokončit objednávku'}
+            {currentStep === 1 ? 'K dopravě' : currentStep === 2 ? 'K údajům' : 'Dokončit'}
           </Button>
 
         </div>
