@@ -18,6 +18,7 @@ type CartContextType = {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void; // <-- TOTO PŘIDEJ
   cartCount: number;
   cartTotal: number;
 };
@@ -84,9 +85,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const clearCart = () => {
+    setCartItems([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('razitka-cart'); // Nekompromisně smaže i zálohu v prohlížeči
+    }
+  };
 
-  return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, cartCount, cartTotal }}>
+return (
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
       {children}
 
       {/* --- TOAST NOTIFIKACE (UI) --- */}

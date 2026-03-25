@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
+import StripePaymentForm from '@/components/StripePaymentForm'; // <-- TOTO PŘIDEJ
 
 // --- MOCK DATA PRO DOPRAVU A PLATBU ---
 const shippingOptions = [
@@ -38,6 +39,8 @@ export default function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] = useState(shippingOptions[0].id);
   const [selectedPayment, setSelectedPayment] = useState(paymentOptions[0].id);
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  // TOTO PŘIDEJ: Stav pro zobrazení platebního modalu
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // --- VÝPOČTY CELKOVÉ CENY ---
   const shippingCost = shippingOptions.find(o => o.id === selectedShipping)?.price || 0;
@@ -299,6 +302,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 )}
+                
               </div>
             )}
 
@@ -310,7 +314,8 @@ export default function CheckoutPage() {
       </main>
 
       {/* --- NOVÁ PATIČKA (Sticky akční lišta dole dle Figmy) --- */}
-      <footer className="fixed bottom-0 left-0 w-full z-50 bg-[#252c3c] border-t border-[#8B95AC]/30 py-[20px] md:py-[24px] lg:py-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center">
+      {/* --- NOVÁ PATIČKA (Sticky akční lišta dole dle Figmy) --- */}
+      <footer className="fixed bottom-0 left-0 w-full z-50 bg-[#2B3755] border-t border-[#8B95AC]/30 py-[20px] md:py-[24px] lg:py-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center">
         <div className="w-full max-w-[1440px] mx-auto px-[24px] md:px-[44px] lg:px-[84px] flex justify-between items-center gap-4">
           
           {/* Levé tlačítko: Zpět / Zpět k nákupu */}
@@ -326,23 +331,61 @@ export default function CheckoutPage() {
             </Button>
           )}
 
-          {/* Pravé tlačítko: Pokračovat */}
-          <Button onClick={currentStep === 3 ? () => alert('Odesláno!') : nextStep} arrow="right">
-            {currentStep === 1 ? 'K dopravě' : currentStep === 2 ? 'K údajům' : 'Dokončit'}
+          {/* Pravé tlačítko: Pokračovat / Zaplatit */}
+          <Button 
+            onClick={() => {
+              if (currentStep < 3) {
+                nextStep();
+              } else {
+                // Jsme ve 3. kroku
+                if (selectedPayment === 'karta') {
+                  setIsPaymentModalOpen(true); // Otevře okno s platbou
+                } else {
+                  alert('Objednávka odeslána (zvolen převod / dobírka)!');
+                }
+              }
+            }} 
+            arrow="right"
+          >
+            {currentStep === 1 
+              ? 'K dopravě' 
+              : currentStep === 2 
+                ? 'K údajům' 
+                : (selectedPayment === 'karta' ? 'Zaplatit' : 'Dokončit objednávku')}
           </Button>
 
         </div>
       </footer>
 
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.4s ease-out forwards;
-        }
-      `}</style>
+      {/* --- PLATEBNÍ MODAL (Zobrazí se po kliknutí na "Zaplatit") --- */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#0F172A]/80 backdrop-blur-sm p-4 animate-fadeIn">
+          {/* Box modalu */}
+          <div className="bg-[#2B3755] w-full max-w-[500px] rounded-[16px] border border-[#8B95AC]/30 shadow-2xl flex flex-col overflow-hidden relative">
+            
+            {/* Hlavička modalu s křížkem */}
+            <div className="flex justify-between items-center p-5 md:p-6 border-b border-[#8B95AC]/30 bg-[#252C3C]">
+              <h3 className="style-h3 text-lg m-0">Bezpečná platba kartou</h3>
+              <button 
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="text-[#8B95AC] hover:text-[#FF6B35] transition-colors p-1"
+                aria-label="Zavřít"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Samotný Stripe Formulář */}
+            <div className="p-5 md:p-6 bg-[#0F172A]">
+              <StripePaymentForm amount={totalOrderPrice} />
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
