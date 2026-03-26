@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 // Inicializace Stripe s tvým tajným klíčem z .env.local
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16', // Používáme stabilní verzi API
+  apiVersion: '2026-02-25.clover', // Aktualizováno na verzi, kterou vyžaduje nové SDK
 });
 
 export async function POST(request: Request) {
