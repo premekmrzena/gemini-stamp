@@ -21,12 +21,12 @@ const paymentOptions = [
 ];
 
 // --- POMOCNÁ KOMPONENTA PRO FORMULÁŘ ---
-const InputField = ({ label, ...props }: any) => (
-  <div className="w-full flex flex-col gap-2">
-    <label className="style-body text-sm text-white/80">{label}</label>
+const InputField = ({ label, className = "", ...props }: any) => (
+  <div className={`w-full flex flex-col gap-2 ${className}`}>
+    <label className="style-body text-black300">{label}</label>
     <input 
       {...props} 
-      className="bg-[#2B3755] border border-[#8B95AC]/50 rounded-[8px] p-3 style-body text-[#FDFBF7] placeholder:text-white/30 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35] outline-none transition-all"
+      className="bg-transparent border border-black200 rounded-[8px] p-3 style-body text-black-custom placeholder:text-black300 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
     />
   </div>
 );
@@ -89,46 +89,64 @@ export default function CheckoutPage() {
     );
   }
 
-  // --- SOUHRN OBJEDNÁVKY (Pravý sloupec) ---
+  // --- SOUHRN OBJEDNÁVKY (Pravý sloupec dle Figmy) ---
   const renderOrderSummary = () => (
-    <aside className="w-full lg:w-1/3 flex flex-col gap-6 lg:sticky lg:top-24 h-fit lg:order-2">
-      <div className="bg-[#2B3755] border border-[#8B95AC]/30 rounded-[16px] p-6 flex flex-col gap-6 shadow-xl">
-        <h2 className="style-h3 text-center">Shrnutí objednávky</h2>
+    <aside className="w-full lg:w-1/3 flex flex-col gap-6 lg:sticky lg:top-32 h-fit lg:order-2">
+      <div className="bg-secondary rounded-[4px] p-4 shadow-xl text-black-custom flex flex-col">
+        <h2 className="style-h3 text-center mb-4">Shrnutí objednávky</h2>
         
-        <div className="flex flex-col gap-4 border-b border-[#8B95AC]/20 pb-6">
-          {cartItems.map(item => (
-            <div key={item.id} className="flex items-center gap-4">
-              <div className="relative w-16 h-16 shrink-0 border border-[#8B95AC]/30 rounded-[8px] overflow-hidden bg-white/5 p-1">
-                <Image src={item.image_url} alt={item.name} fill className="object-contain" />
-              </div>
-              <div className="flex-grow flex flex-col gap-1">
-                <h4 className="style-body text-sm font-semibold leading-tight line-clamp-2">{item.name}</h4>
-                <p className="style-body text-xs text-white/70">{item.quantity} ks</p>
-              </div>
-              <p className="style-body text-sm font-semibold shrink-0">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
+        {/* Výpis produktů ve shrnutí */}
+        {cartItems.map(item => (
+          <div key={item.id} className="flex items-center gap-4 py-4 border-t border-black200">
+            <div className="relative w-12 h-12 shrink-0 border border-black200 rounded-[4px] overflow-hidden bg-white p-1">
+              <Image src={item.image_url} alt={item.name} fill className="object-contain" />
             </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-3 style-body text-sm">
-          <div className="flex justify-between"><span>Mezisoučet</span><span>{cartTotal.toLocaleString('cs-CZ')} Kč</span></div>
-          <div className="flex justify-between"><span>Doprava</span><span>{shippingCost > 0 ? `${shippingCost} Kč` : 'Zdarma'}</span></div>
-          {paymentCost > 0 && <div className="flex justify-between"><span>Platba</span><span>{paymentCost} Kč</span></div>}
-          
-          <div className="flex flex-col gap-3 mt-2 pt-5 border-t border-[#8B95AC]/20">
-            <InputField label="Mám slevový kód" placeholder="Vložte kód" />
-            <button className="style-body text-xs font-semibold text-[#FF6B35] hover:text-[#FF7F51] self-end transition-colors">Uplatnit kód</button>
+            <div className="flex-grow flex flex-col gap-1">
+              <h4 className="style-body text-black-custom line-clamp-2">{item.name}</h4>
+              <p className="style-body text-black300">{item.quantity} ks</p>
+            </div>
+            {/* Tady používáme jen style-body přesně podle tvého mapování fontů */}
+            <p className="style-body text-black-custom shrink-0">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
           </div>
+        ))}
+
+        {/* Mezisoučet a Doprava */}
+        <div className="flex flex-col gap-2 py-4 border-t border-black200 style-body text-black-custom">
+          <div className="flex justify-between items-center">
+            <span>Mezisoučet</span>
+            <span>{cartTotal.toLocaleString('cs-CZ')} Kč</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Doprava</span>
+            <span>{shippingCost > 0 ? `${shippingCost} Kč` : '0 Kč'}</span>
+          </div>
+          {paymentCost > 0 && (
+            <div className="flex justify-between items-center">
+              <span>Platba</span>
+              <span>{paymentCost} Kč</span>
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-between items-center pt-6 border-t border-[#8B95AC]/20 mt-2">
-          <span className="style-h3 text-lg">Celkem</span>
-          <span className="style-product-price text-2xl text-[#059669]">{totalOrderPrice.toLocaleString('cs-CZ')} Kč</span>
+        {/* Slevový kupon */}
+        <div className="flex flex-col gap-2 py-4 border-t border-black200">
+          <label className="style-body text-black-custom">Mám slevový kupon</label>
+          <input 
+            type="text" 
+            placeholder="Mám slevový kupon" 
+            className="w-full border border-black200 rounded-[4px] px-3 py-2 style-body text-black-custom placeholder:text-black300 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+          />
+          {/* Zde je použit tvůj nový styl Body bold */}
+          <button className="style-body-bold text-primary hover:text-primary-hover self-end transition-colors mt-1">
+            Uplatnit kód
+          </button>
         </div>
 
-        {currentStep < 3 && (
-          <p className="text-xs text-white/50 text-center italic mt-[-10px]">Cena nezahrnuje případnou dopravu a platbu.</p>
-        )}
+        {/* Celkem */}
+        <div className="flex justify-between items-center pt-4 border-t border-black200">
+          <span className="style-body-bold text-black-custom">Celkem</span>
+          <span className="style-product-price text-success">{totalOrderPrice.toLocaleString('cs-CZ')} Kč</span>
+        </div>
       </div>
     </aside>
   );
@@ -201,31 +219,68 @@ export default function CheckoutPage() {
             
             {/* KROK 1 */}
             {currentStep === 1 && (
-              <div className="flex flex-col gap-6">
-                <h1 className="style-h2 mb-2">Košík</h1>
-                {cartItems.map(item => (
-                  <div key={item.id} className="bg-[#2B3755]/50 border border-[#8B95AC]/30 rounded-[12px] p-4 md:p-5 flex items-center gap-4 md:gap-5 group hover:bg-[#2B3755] transition-colors relative">
-                    <div className="relative w-[70px] h-[70px] md:w-[90px] md:h-[90px] shrink-0 border border-[#8B95AC]/30 rounded-[8px] overflow-hidden bg-white/5 p-1">
-                      <Image src={item.image_url} alt={item.name} fill className="object-contain" />
-                    </div>
-                    <div className="flex-grow flex flex-col gap-3">
-                      <div className="flex justify-between items-start gap-2">
-                        <h4 className="style-h4 text-sm md:text-base line-clamp-2 pr-4">{item.name}</h4>
-                        <button onClick={() => removeFromCart(item.id)} className="absolute right-4 top-4 text-white/40 hover:text-red-400 transition-colors p-1" aria-label="Odstranit z košíku">
-                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+              <div className="flex flex-col gap-2">
+                {/* Nadpis je nyní H3 přesně podle návrhu */}
+                <h3 className="style-h3 text-secondary mb-2">Košík</h3>
+                
+                <div className="flex flex-col">
+                  {cartItems.map(item => (
+                    <div key={item.id} className="py-5 border-b border-black400 flex items-stretch gap-5">
+                      
+                      {/* Fotka produktu v bílém rámečku */}
+                      <div className="relative w-[80px] h-[80px] shrink-0 bg-white rounded-[4px] p-1">
+                        <Image src={item.image_url} alt={item.name} fill className="object-contain" />
                       </div>
-                      <div className="flex items-center justify-between mt-auto">
-                        <div className="flex items-center gap-3 border border-[#8B95AC]/50 rounded-full px-2 py-1 bg-[#0F172A]/50">
-                          <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 flex items-center justify-center text-white/70 hover:text-[#FF6B35] transition-colors">-</button>
-                          <span className="style-body font-medium w-4 text-center text-sm">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 flex items-center justify-center text-white/70 hover:text-[#FF6B35] transition-colors">+</button>
+                      
+                      {/* Obsah položky (Název, ovládání, cena) */}
+                      <div className="flex-grow flex flex-col justify-between py-1">
+                        
+                        {/* Horní řádek: Název a křížek */}
+                        <div className="flex justify-between items-start gap-4">
+                          <h4 className="style-h4 text-secondary line-clamp-2">{item.name}</h4>
+                          <button 
+                            onClick={() => removeFromCart(item.id)} 
+                            className="text-black300 hover:text-primary transition-colors shrink-0 mt-1" 
+                            aria-label="Odstranit z košíku"
+                          >
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         </div>
-                        <p className="style-product-price text-[#059669] text-base md:text-lg">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
+                        
+                        {/* Spodní řádek: Počet kusů a Cena */}
+                        <div className="flex justify-between items-center mt-2">
+                          
+                          {/* Ovládání počtu kusů v bílé pilulce */}
+                          <div className="flex items-center bg-secondary rounded-full px-3 py-1 gap-3">
+                            <button 
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)} 
+                              className="text-black-custom text-lg font-medium hover:text-primary transition-colors leading-none"
+                              aria-label="Odebrat jeden kus"
+                            >
+                              −
+                            </button>
+                            <span className="style-body-bold text-black-custom min-w-[16px] text-center">{item.quantity}</span>
+                            <button 
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)} 
+                              className="text-black-custom text-lg font-medium hover:text-primary transition-colors leading-none"
+                              aria-label="Přidat jeden kus"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* Cena */}
+                          <p className="style-product-price text-success">
+                            {(item.price * item.quantity).toLocaleString('cs-CZ')} Kč
+                          </p>
+                        </div>
+
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
