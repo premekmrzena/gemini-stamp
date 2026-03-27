@@ -24,13 +24,11 @@ const CheckoutForm = ({ amount }: { amount: number }) => {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // Sem uživatele přesměrujeme, když platba úspěšně projde.
-        // Tuto stránku si vytvoříme hned potom.
+        // Přesměrování po úspěšné platbě
         return_url: `${window.location.origin}/dekujeme`,
       },
     });
 
-    // Pokud dojde k chybě (např. zamítnutá karta), ukážeme ji
     if (error) {
       setErrorMessage(error.message || 'Došlo k nečekané chybě při platbě.');
     }
@@ -40,18 +38,19 @@ const CheckoutForm = ({ amount }: { amount: number }) => {
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 animate-fadeIn">
-      {/* Toto je to magické bezpečné políčko od Stripe */}
+      {/* Políčko od Stripe s opravenými styly */}
       <PaymentElement />
       
+      {/* Tlačítko upraveno tak, aby mělo tmavý text na oranžovém pozadí (dle návrhu) */}
       <button
         disabled={!stripe || isLoading}
-        className="w-full bg-[#FF6B35] text-[#FDFBF7] style-body font-bold py-4 rounded-full hover:bg-[#FF7F51] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+        className="w-full bg-[#FF6B35] text-[#0F172A] style-body-bold py-[14px] rounded-full hover:bg-[#FF7F51] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
       >
         {isLoading ? 'Zpracovávám platbu...' : `Zaplatit ${amount.toLocaleString('cs-CZ')} Kč`}
       </button>
 
       {errorMessage && (
-        <div className="text-red-400 text-sm text-center font-medium bg-red-400/10 py-3 rounded-[8px]">
+        <div className="text-[#F95755] text-sm text-center font-medium bg-[#F95755]/10 py-3 rounded-[8px]">
           {errorMessage}
         </div>
       )}
@@ -59,12 +58,11 @@ const CheckoutForm = ({ amount }: { amount: number }) => {
   );
 };
 
-// --- HLAVNÍ KOMPONENTA: Obal, který se stará o komunikaci s backendem ---
+// --- HLAVNÍ KOMPONENTA: Obal, komunikace s backendem a předání designu ---
 export default function StripePaymentForm({ amount }: { amount: number }) {
   const [clientSecret, setClientSecret] = useState('');
 
   useEffect(() => {
-    // Hned po načtení komponenty si řekneme backendu o vytvoření Záměru platby
     fetch('/api/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,32 +72,77 @@ export default function StripePaymentForm({ amount }: { amount: number }) {
       .then((data) => setClientSecret(data.clientSecret));
   }, [amount]);
 
-  // Dokud nemáme tajný klíč ze serveru, ukážeme načítání
+  // Loading state
   if (!clientSecret) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-10 gap-4">
         <div className="w-8 h-8 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin"></div>
-        <p className="style-body text-sm text-white/50">Načítám bezpečnou platební bránu...</p>
+        <p className="style-body text-[#FDFBF7]/50">Načítám bezpečnou platební bránu...</p>
       </div>
     );
   }
 
-  // Jakmile máme klíč, vykreslíme formulář a nastavíme rovnou tmavý režim (night)
+  // Vykreslení formuláře s opraveným Appearance API
   return (
-    <div className="bg-[#0F172A] p-1 md:p-6 rounded-[16px] border border-[#8B95AC]/30 shadow-lg">
+    <div className="w-full">
       <Elements 
         stripe={stripePromise} 
         options={{ 
           clientSecret, 
           appearance: { 
-            theme: 'night',
+            theme: 'night', // Použijeme Stripe 'night' téma jako bezpečný základ
             variables: {
-              colorPrimary: '#FF6B35',
-              colorBackground: '#2B3755',
-              colorText: '#FDFBF7',
-              colorDanger: '#ef4444',
               fontFamily: 'Poppins, system-ui, sans-serif',
-              borderRadius: '8px',
+              borderRadius: '4px',
+              colorPrimary: '#FF6B35', 
+              colorDanger: '#F95755', 
+              colorBackground: '#0F172A', // Pozadí se sjednotí s naším černým modalem
+              colorText: '#FDFBF7', // Bílý text pro nadpisy a labely
+              colorTextSecondary: '#8B95AC', // Šedé podtitulky
+              colorTextPlaceholder: '#8B95AC', // Šedé placeholdery
+            },
+            rules: {
+              // 1. Políčka formuláře (bílé s černým textem)
+              '.Input': {
+                backgroundColor: '#FDFBF7', 
+                color: '#0F172A', 
+                border: '1px solid #2B3755', 
+                padding: '12px 16px',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+              },
+              '.Input:focus': {
+                border: '1px solid #FF6B35', 
+                boxShadow: '0 0 0 1px #FF6B35', 
+              },
+              '.Label': {
+                fontWeight: '600',
+                fontSize: '15px',
+                marginBottom: '8px',
+              },
+              // 2. Taby nahoře (Karta, Klarna...)
+              '.Tab': {
+                backgroundColor: '#2B3755', // Tmavé tlačítko pro nevybrané metody
+                border: '1px solid #2B3755',
+                color: '#FDFBF7',
+              },
+              '.Tab:hover': {
+                backgroundColor: '#3b4b75',
+              },
+              '.Tab--selected': {
+                backgroundColor: '#0F172A', // Ztmavne a získá oranžový okraj, když je vybráno
+                borderColor: '#FF6B35',
+                color: '#FF6B35',
+              },
+              // 3. Checkboxy (např. Uložit kartu pro příště)
+              '.CheckboxInput': {
+                backgroundColor: '#FDFBF7',
+                border: '1px solid #2B3755',
+              },
+              '.CheckboxInput--checked': {
+                backgroundColor: '#FF6B35',
+                borderColor: '#FF6B35',
+              }
             }
           } 
         }}
