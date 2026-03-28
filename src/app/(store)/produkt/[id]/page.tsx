@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
+// TÍMTO ŘÁDKEM VYPNEME CACHOVÁNÍ - web bude vždy 100% aktuální
+export const revalidate = 0;
 
 export default async function ProductPage({
   params,
