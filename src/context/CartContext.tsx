@@ -1,8 +1,7 @@
 'use client';
 
-// Přidali jsme useRef pro časovač
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import Image from 'next/image'; // Přidáno pro obrázek v notifikaci
+import Image from 'next/image';
 
 // Jak vypadá jedna položka v košíku
 export type CartItem = {
@@ -18,7 +17,7 @@ type CartContextType = {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
-  clearCart: () => void; // <-- TOTO PŘIDEJ
+  clearCart: () => void;
   cartCount: number;
   cartTotal: number;
 };
@@ -50,7 +49,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cartItems, isLoaded]);
 
   const addToCart = (newItem: CartItem) => {
-    // 1. Přidání do košíku (původní logika)
+    // 1. Přidání do košíku
     setCartItems((prev) => {
       const existing = prev.find((item) => item.id === newItem.id);
       if (existing) {
@@ -83,36 +82,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const clearCart = () => {
     setCartItems([]);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('razitka-cart'); // Nekompromisně smaže i zálohu v prohlížeči
+      localStorage.removeItem('razitka-cart'); 
     }
   };
 
-return (
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
     <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
       {children}
 
-      {/* --- TOAST NOTIFIKACE (UI) --- */}
+      {/* --- PŘESNÝ DESIGN TOAST NOTIFIKACE (Dle Náhledu a Inspectu) --- */}
       {toast.visible && toast.item && (
         <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[9999] animate-slideUp">
-          <div className="bg-[#2B3755] border border-[#059669]/50 shadow-2xl rounded-[12px] p-4 flex items-center gap-4 min-w-[300px] max-w-[400px]">
+          {/* Obal: Pozadí Secondary, Radius 4px, Padding 16px, Vertikální layout, Gap 10px */}
+          <div className="bg-secondary shadow-xl rounded-[4px] p-4 flex flex-col gap-[10px] min-w-[320px] max-w-[450px]">
             
-            {/* OBRÁZEK PRODUKTU */}
-            <div className="relative w-12 h-12 rounded-[6px] overflow-hidden bg-[#0F172A] border border-[#8B95AC]/30 shrink-0 p-1">
-              <Image src={toast.item.image_url} alt={toast.item.name} fill className="object-contain" />
+            {/* PRVNÍ ŘÁDEK: Ikona check-circle + Titulek H4 */}
+            <div className="flex items-center gap-[10px]">
+              {/* Ikona check-circle v barvě Success */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-success shrink-0">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              {/* Titulek H4 v barvě Success pro vizuální potvrzení */}
+              <h4 className="style-h4 text-success m-0">Přidáno do košíku</h4>
             </div>
-            
-            {/* TEXTY */}
-            <div className="flex flex-col flex-grow">
-              <span className="style-body text-xs text-[#059669] font-bold flex items-center gap-1 mb-1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Přidáno do košíku
-              </span>
-              <span className="style-body text-sm text-[#FDFBF7] line-clamp-1">{toast.item.name}</span>
+
+            {/* DĚLÍCÍ LINKA */}
+            <hr className="border-black200 w-full m-0" />
+
+            {/* DRUHÝ ŘÁDEK: Obrázek + Název známky (Body) */}
+            <div className="flex items-center gap-[10px]">
+              {/* Obrázek: Rám Black200, Radius 4px */}
+              <div className="relative w-12 h-12 border border-black200 rounded-[4px] overflow-hidden bg-white p-1 shrink-0">
+                <Image src={toast.item.image_url} alt={toast.item.name} fill className="object-contain" />
+              </div>
+              {/* Název známky Body v barvě Black-custom */}
+              <p className="style-body text-black-custom m-0 line-clamp-2">{toast.item.name}</p>
             </div>
 
           </div>

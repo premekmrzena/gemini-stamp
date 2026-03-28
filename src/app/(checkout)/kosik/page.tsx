@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -79,6 +79,14 @@ const CheckoutPage = () => {
   // --- LOGIKA KROKŮ ---
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
+  // --- AUTOMATICKÝ SCROLL NAHORU PŘI ZMĚNĚ KROKU ---
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' // Můžeš změnit na 'auto', pokud chceš okamžitý skok bez animace
+    });
+  }, [currentStep]); // Spustí se pokaždé, když se změní proměnná currentStep
 
   // --- STAV: PRÁZDNÝ KOŠÍK ---
   if (cartItems.length === 0) {
