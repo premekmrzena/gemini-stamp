@@ -137,6 +137,7 @@ const CheckoutPage = () => {
   // --- FUNKCE PRO ODESLÁNÍ OBJEDNÁVKY DO SUPABASE ---
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null); // <--- TENTO ŘÁDEK PŘIDEJ
 
   const submitOrder = async () => {
     // 1. Ochrana proti vícenásobnému kliknutí
@@ -168,26 +169,28 @@ const CheckoutPage = () => {
     };
 
     try {
-      // 5. Samotné odeslání do tabulky 'orders'
-      const { error } = await supabase
+      // 5. Samotné odeslání do tabulky 'orders' + vyžádání ID
+      const { data, error } = await supabase
         .from('orders')
-        .insert([orderData]);
+        .insert([orderData])
+        .select('id')   // <--- Řekneme si o ID
+        .single();      // <--- Chceme ho jako jeden objekt
 
       if (error) throw error;
 
-      // 6. Pokud vše prošlo, co se stane dál?
-      console.log('Objednávka úspěšně uložena!');
+      // Log pro kontrolu v konzoli
+      console.log('Objednávka úspěšně uložena s ID:', data.id);
+      setCreatedOrderId(data.id);
       
-      // TADY SE ROZHODNEME PODLE PLATBY:
+      // 6. TADY SE ROZHODNEME PODLE PLATBY:
       if (selectedPayment === 'karta') {
-        // Pokud chtěl platit kartou, teprve teď mu otevřeme platební bránu
+        // Pokud chtěl platit kartou, otevřeme modal (Stripe pořešíme v dalším kroku)
         setIsPaymentModalOpen(true);
-        setIsSubmitting(false); // Odblokujeme tlačítko
-      } else {
-        // Pokud vybral třeba převod/Google Pay, rovnou ho přesměrujeme na děkovací stránku
-        // window.location.href = '/dekujeme'; // (Zatím jen vymažeme košík a ukážeme Alert pro testování)
-        alert('Objednávka byla úspěšně odeslána!');
         setIsSubmitting(false);
+      } else {
+        // PŘESMĚROVÁNÍ NA DĚKOVAČKU S REÁLNÝM ID
+        // Používáme window.location, aby se stránka "čistě" načetla a useEffect v /dekujeme mohl smazat košík
+        window.location.href = `/dekujeme?orderId=${data.id}`;
       }
 
     } catch (error: any) {
@@ -584,8 +587,8 @@ const CheckoutPage = () => {
 
             {/* ZDE JE OPRAVA: overflow-y-auto umožní scrollovat pouze obsah, pokud je moc dlouhý */}
             <div className="p-5 md:p-6 bg-black-custom overflow-y-auto rounded-b-[16px]">
-              <StripePaymentForm amount={totalOrderPrice} />
-            </div>
+  <StripePaymentForm amount={totalOrderPrice} orderId={createdOrderId || ''} />
+</div>
 
           </div>
         </div>

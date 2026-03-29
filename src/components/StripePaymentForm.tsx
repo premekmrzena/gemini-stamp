@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-// 1. Inicializace Stripe pomocí tvého veřejného klíče z .env.local
+// 1. Inicializace Stripe pomocí tvého veřejného klíče
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // --- VNITŘNÍ KOMPONENTA: Samotný formulář s tlačítkem ---
-const CheckoutForm = ({ amount }: { amount: number }) => {
+// Přidali jsme orderId do props
+const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -24,11 +25,12 @@ const CheckoutForm = ({ amount }: { amount: number }) => {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // Přesměrování po úspěšné platbě
-        return_url: `${window.location.origin}/dekujeme`,
+        // PŘESMĚROVÁNÍ PO ÚSPĚŠNÉ PLATBĚ S ID OBJEDNÁVKY
+        return_url: `${window.location.origin}/dekujeme?orderId=${orderId}`,
       },
     });
 
+    // Pokud dojde k chybě (např. zamítnutá karta), kód pokračuje zde
     if (error) {
       setErrorMessage(error.message || 'Došlo k nečekané chybě při platbě.');
     }
@@ -38,10 +40,8 @@ const CheckoutForm = ({ amount }: { amount: number }) => {
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 animate-fadeIn">
-      {/* Políčko od Stripe s opravenými styly */}
       <PaymentElement />
       
-      {/* Tlačítko upraveno tak, aby mělo tmavý text na oranžovém pozadí (dle návrhu) */}
       <button
         disabled={!stripe || isLoading}
         className="w-full bg-[#FF6B35] text-[#0F172A] style-body-bold py-[14px] rounded-full hover:bg-[#FF7F51] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
@@ -58,21 +58,27 @@ const CheckoutForm = ({ amount }: { amount: number }) => {
   );
 };
 
-// --- HLAVNÍ KOMPONENTA: Obal, komunikace s backendem a předání designu ---
-export default function StripePaymentForm({ amount }: { amount: number }) {
+// --- HLAVNÍ KOMPONENTA ---
+// Přidali jsme orderId do parametrů funkce
+export default function StripePaymentForm({ amount, orderId }: { amount: number, orderId: string }) {
   const [clientSecret, setClientSecret] = useState('');
 
   useEffect(() => {
+    // Voláme naše API pro vytvoření platby s reálnou částkou
     fetch('/api/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount }),
     })
       .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
+      .then((data) => {
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+        }
+      })
+      .catch(err => console.error("Chyba při načítání platby:", err));
   }, [amount]);
 
-  // Loading state
   if (!clientSecret) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-10 gap-4">
@@ -82,7 +88,6 @@ export default function StripePaymentForm({ amount }: { amount: number }) {
     );
   }
 
-  // Vykreslení formuláře s opraveným Appearance API
   return (
     <div className="w-full">
       <Elements 
@@ -90,64 +95,38 @@ export default function StripePaymentForm({ amount }: { amount: number }) {
         options={{ 
           clientSecret, 
           appearance: { 
-            theme: 'night', // Použijeme Stripe 'night' téma jako bezpečný základ
+            theme: 'night',
             variables: {
               fontFamily: 'Poppins, system-ui, sans-serif',
               borderRadius: '4px',
               colorPrimary: '#FF6B35', 
               colorDanger: '#F95755', 
-              colorBackground: '#0F172A', // Pozadí se sjednotí s naším černým modalem
-              colorText: '#FDFBF7', // Bílý text pro nadpisy a labely
-              colorTextSecondary: '#8B95AC', // Šedé podtitulky
-              colorTextPlaceholder: '#8B95AC', // Šedé placeholdery
+              colorBackground: '#0F172A', 
+              colorText: '#FDFBF7', 
+              colorTextSecondary: '#8B95AC',
             },
             rules: {
-              // 1. Políčka formuláře (bílé s černým textem)
               '.Input': {
                 backgroundColor: '#FDFBF7', 
                 color: '#0F172A', 
                 border: '1px solid #2B3755', 
                 padding: '12px 16px',
-                outline: 'none',
-                transition: 'all 0.2s ease',
               },
               '.Input:focus': {
                 border: '1px solid #FF6B35', 
                 boxShadow: '0 0 0 1px #FF6B35', 
               },
-              '.Label': {
-                fontWeight: '600',
-                fontSize: '15px',
-                marginBottom: '8px',
-              },
-              // 2. Taby nahoře (Karta, Klarna...)
-              '.Tab': {
-                backgroundColor: '#2B3755', // Tmavé tlačítko pro nevybrané metody
-                border: '1px solid #2B3755',
-                color: '#FDFBF7',
-              },
-              '.Tab:hover': {
-                backgroundColor: '#3b4b75',
-              },
               '.Tab--selected': {
-                backgroundColor: '#0F172A', // Ztmavne a získá oranžový okraj, když je vybráno
+                backgroundColor: '#0F172A', 
                 borderColor: '#FF6B35',
                 color: '#FF6B35',
               },
-              // 3. Checkboxy (např. Uložit kartu pro příště)
-              '.CheckboxInput': {
-                backgroundColor: '#FDFBF7',
-                border: '1px solid #2B3755',
-              },
-              '.CheckboxInput--checked': {
-                backgroundColor: '#FF6B35',
-                borderColor: '#FF6B35',
-              }
             }
           } 
         }}
       >
-        <CheckoutForm amount={amount} />
+        {/* Předáme orderId dolů do vnitřního formuláře */}
+        <CheckoutForm amount={amount} orderId={orderId} />
       </Elements>
     </div>
   );
