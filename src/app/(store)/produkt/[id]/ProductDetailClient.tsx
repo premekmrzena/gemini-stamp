@@ -109,7 +109,8 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                     name: product.name,
                     price: product.price,
                     quantity: 1,
-                    image_url: mainImage
+                    image_url: mainImage,
+                    weight_grams: product.weight_grams // <--- TENTO ŘÁDEK PŘIDEJ (nezapomeň na čárku nad ním)
                   });
                 }}
               >
