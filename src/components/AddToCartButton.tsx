@@ -10,6 +10,7 @@ type AddToCartButtonProps = {
     name: string;
     price: number;
     image_url: string;
+    weight_grams: number; // <--- TOTO JSME PŘIDALI
   };
 };
 
@@ -30,7 +31,8 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
       name: product.name,
       price: product.price,
       quantity: 1,
-      image_url: product.image_url || '/images/product-image_0001.jpg'
+      image_url: product.image_url || '/images/product-image_0001.jpg',
+      weight_grams: product.weight_grams // <--- TOTO JSME PŘIDALI (nezapomeň na čárku na řádku nad tím!)
     });
 
     // 2. Spustíme mikro-interakci

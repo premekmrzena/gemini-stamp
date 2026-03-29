@@ -6,29 +6,39 @@ import Link from 'next/link';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import StripePaymentForm from '@/components/StripePaymentForm';
+import { supabase } from '@/lib/supabase'; // <--- TENTO ŘÁDEK PŘIDEJ
 
-// --- MOCK DATA PRO DOPRAVU A PLATBU (dle Figmy) ---
-const shippingOptions = [
-  { 
-    id: 'osobni', 
-    name: 'Osobní odběr (Praha)', 
-    price: 280, 
-    desc: 'Svoji objednávku si můžete vyzvednout na adrese: Jindřišská 126/15, Praha 1' 
-  },
-  { 
-    id: 'ceska', 
-    name: 'Česká republika', 
-    price: 280, 
-    desc: 'Vnitrostátní doprava' 
-  },
-  { 
-    id: 'mezinarodni', 
-    name: 'Mezinárodní doprava', 
-    price: 280, 
-    desc: 'Vyberte cílovou zemi',
-    hasSelect: true
-  },
-];
+// --- CHYTRÁ DATA PRO DOPRAVU (Závislá na váze) ---
+const getShippingOptions = (weight: number) => {
+  // 1. Výpočet ceny pro ČR
+  let czPrice = 120; // Výchozí cena (těžký balík)
+  if (weight <= 50) czPrice = 40; // Obyčejné psaní
+  else if (weight <= 500) czPrice = 80; // Doporučené psaní
+
+  // 2. Výpočet ceny pro Zahraničí
+  let intPrice = weight <= 500 ? 150 : 300;
+
+  return [
+    { 
+      id: 'osobni', 
+      name: 'Osobní odběr (Praha)', 
+      price: 0, 
+      desc: 'Svoji objednávku si můžete vyzvednout na adrese: Jindřišská 126/15, Praha 1' 
+    },
+    { 
+      id: 'ceska', 
+      name: `Česká republika (${weight} g)`, 
+      price: czPrice, 
+      desc: czPrice === 40 ? 'Obyčejné psaní' : (czPrice === 80 ? 'Doporučené psaní' : 'Balíček')
+    },
+    { 
+      id: 'mezinarodni', 
+      name: `Mezinárodní doprava (${weight} g)`, 
+      price: intPrice, 
+      desc: 'Zemi doručení zadáte v dalším kroku'
+    },
+  ];
+};
 
 const paymentOptions = [
   { id: 'karta', name: 'Online platba kartou', price: 280, desc: 'Vnitrostátní doprava' },
@@ -56,23 +66,148 @@ const TextAreaField = ({ label, ...props }: any) => (
   </div>
 );
 
+// --- SEZNAM STÁTŮ PRO MEZINÁRODNÍ DOPRAVU ---
+const internationalCountries = [
+  "", // Prázdná volba jako placeholder
+  "Japonsko", 
+  "Jižní Korea", 
+  "Čína", 
+  "Vietnam",
+  "---", // Oddělovač
+  "Austrálie", "Belgie", "Francie", "Itálie", "Kanada", "Německo", 
+  "Nizozemsko", "Polsko", "Rakousko", "Slovensko", "Spojené království", 
+  "Spojené státy (USA)", "Španělsko", "Švýcarsko"
+];
+
+// --- NOVÁ KOMPONENTA PRO VÝBĚR Z ROLETKY ---
+const SelectField = ({ label, options, ...props }: any) => (
+  <div className="w-full flex flex-col gap-2">
+    <label className="style-body-bold text-secondary">{label}</label>
+    <div className="relative">
+      <select 
+        {...props} 
+        className="w-full bg-secondary border border-black400 rounded-[4px] px-4 h-[48px] style-body text-black-custom outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {options.map((opt: string, i: number) => (
+          <option key={i} value={opt} disabled={opt === '---' || opt === ''}>
+            {opt === '' ? 'Vyberte zemi...' : opt}
+          </option>
+        ))}
+      </select>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black-custom">
+        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+);
+
 // --- HLAVNÍ KOMPONENTA STRÁNKY ---
 const CheckoutPage = () => {
   const { cartItems, cartTotal, removeFromCart, updateQuantity } = useCart();
 
   // --- STAVY POKLADNY ---
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedShipping, setSelectedShipping] = useState(shippingOptions[0].id);
+  const [selectedShipping, setSelectedShipping] = useState('osobni');
   const [selectedPayment, setSelectedPayment] = useState(paymentOptions[0].id);
   
   // --- STAVY PRO KROK 3 (Objednatel / Adresát) ---
   const [showCompanyFields, setShowCompanyFields] = useState(false);
   const [shippingDifferentThanOrdering, setShippingDifferentThanOrdering] = useState(false);
+  const [customerNote, setCustomerNote] = useState('');
+
+  // Paměť pro všechna políčka z tvé profi tabulky
+  const [formData, setFormData] = useState({
+    billing_first_name: '', billing_last_name: '', billing_email: '', billing_phone: '',
+    billing_company_name: '', billing_company_id: '', billing_company_tax_id: '',
+    billing_address_line1: '', billing_address_line2: '', billing_city: '', billing_region: '', billing_zip: '', billing_country: 'Česká republika',
+    
+    shipping_first_name: '', shipping_last_name: '', shipping_phone: '', shipping_company_name: '',
+    shipping_address_line1: '', shipping_address_line2: '', shipping_city: '', shipping_region: '', shipping_zip: '', shipping_country: ''
+  });
+
+  // Univerzální funkce pro automatický zápis do políček
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Pomocné proměnné pro chytrou logiku zobrazení
+  const isMezinarodni = selectedShipping === 'mezinarodni';
+  const isOsobni = selectedShipping === 'osobni';
+  // --- FUNKCE PRO ODESLÁNÍ OBJEDNÁVKY DO SUPABASE ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+
+  const submitOrder = async () => {
+    // 1. Ochrana proti vícenásobnému kliknutí
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setOrderError(null);
+
+    // 2. Příprava dat (co přesně pošleme do databáze)
+    const orderData = {
+      // Základní data o penězích a košíku
+      total_price: totalOrderPrice,
+      shipping_method: currentShippingOptions.find(o => o.id === selectedShipping)?.name || 'Neznámá',
+      shipping_cost: shippingCost,
+      payment_method: paymentOptions.find(o => o.id === selectedPayment)?.name || 'Neznámá',
+      payment_cost: paymentCost,
+      cart_items: cartItems, // Celý obsah košíku se uloží jako JSON
+      customer_note: customerNote,
+      status: 'Nová', // Výchozí stav objednávky
+
+      // 3. Fakturační údaje (Objednatel) - Zkopírujeme rovnou z našeho formData
+      ...formData,
+      
+      // 4. Doručovací údaje (Adresát)
+      // Pokud se neliší, pošleme informaci do DB, že je to stejné
+      shipping_is_different: shippingDifferentThanOrdering,
+      
+      // A pokud je to Osobní odběr, natvrdo zrušíme jinou doručovací adresu
+      ...(isOsobni && { shipping_is_different: false })
+    };
+
+    try {
+      // 5. Samotné odeslání do tabulky 'orders'
+      const { error } = await supabase
+        .from('orders')
+        .insert([orderData]);
+
+      if (error) throw error;
+
+      // 6. Pokud vše prošlo, co se stane dál?
+      console.log('Objednávka úspěšně uložena!');
+      
+      // TADY SE ROZHODNEME PODLE PLATBY:
+      if (selectedPayment === 'karta') {
+        // Pokud chtěl platit kartou, teprve teď mu otevřeme platební bránu
+        setIsPaymentModalOpen(true);
+        setIsSubmitting(false); // Odblokujeme tlačítko
+      } else {
+        // Pokud vybral třeba převod/Google Pay, rovnou ho přesměrujeme na děkovací stránku
+        // window.location.href = '/dekujeme'; // (Zatím jen vymažeme košík a ukážeme Alert pro testování)
+        alert('Objednávka byla úspěšně odeslána!');
+        setIsSubmitting(false);
+      }
+
+    } catch (error: any) {
+      console.error('Chyba při ukládání objednávky:', error);
+      setOrderError(error.message || 'Něco se pokazilo při odesílání objednávky.');
+      setIsSubmitting(false);
+    }
+  };
   
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  // --- VÝPOČTY CELKOVÉ CENY ---
-  const shippingCost = shippingOptions.find(o => o.id === selectedShipping)?.price || 0;
+  // ZDE JE NOVÝ ŘÁDEK - Sečte váhu všech produktů v košíku
+  const totalWeightGrams = cartItems.reduce((sum, item) => sum + (item.weight_grams || 0) * item.quantity, 0);
+
+// --- VÝPOČTY CELKOVÉ CENY ---
+  // Nejdříve vygenerujeme možnosti dopravy podle naší aktuální váhy v košíku
+  const currentShippingOptions = getShippingOptions(totalWeightGrams);
+
+  // Z nich pak vytáhneme cenu té dopravy, kterou má uživatel zrovna zakliknutou
+  const shippingCost = currentShippingOptions.find(o => o.id === selectedShipping)?.price || 0;
   const paymentCost = paymentOptions.find(o => o.id === selectedPayment)?.price || 0;
   const totalOrderPrice = cartTotal + shippingCost + paymentCost;
 
@@ -199,12 +334,14 @@ const CheckoutPage = () => {
                 <div className="flex flex-col">
                   {cartItems.map(item => (
                     <div key={item.id} className="py-5 border-b border-black400 flex items-stretch gap-5">
-                      <div className="relative w-[80px] h-[80px] shrink-0 bg-white rounded-[4px] p-1">
-                        <Image src={item.image_url} alt={item.name} fill className="object-contain" />
-                      </div>
+                      <Link href={`/produkt/${item.id}`} className="relative w-[80px] h-[80px] shrink-0 bg-white rounded-[4px] p-1 hover:opacity-80 transition-opacity cursor-pointer block">
+  <Image src={item.image_url} alt={item.name} fill className="object-contain" />
+</Link>
                       <div className="flex-grow flex flex-col justify-between py-1">
                         <div className="flex justify-between items-start gap-4">
-                          <h4 className="style-h4 text-secondary line-clamp-2">{item.name}</h4>
+                          <Link href={`/produkt/${item.id}`} className="style-h4 text-secondary line-clamp-2 hover:text-primary transition-colors cursor-pointer block w-fit">
+  {item.name}
+</Link>
                           <button onClick={() => removeFromCart(item.id)} className="text-black300 hover:text-primary transition-colors shrink-0 mt-1" aria-label="Odstranit">
                             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
@@ -230,7 +367,7 @@ const CheckoutPage = () => {
                 <div className="flex flex-col">
                   <h3 className="style-h3 text-secondary mb-2">Doprava</h3>
                   <div className="flex flex-col">
-                    {shippingOptions.map(option => {
+                    {currentShippingOptions.map(option => {
                       const isSelected = selectedShipping === option.id;
                       return (
                         <label key={option.id} className="py-5 flex items-start gap-4 cursor-pointer border-b border-black400 group">
@@ -291,7 +428,7 @@ const CheckoutPage = () => {
             {currentStep === 3 && (
               <div className="flex flex-col gap-[16px] animate-fadeIn">
                 
-                {/* --- SEKCJE 1: OBJEDNATEL --- */}
+                {/* --- SEKCE 1: OBJEDNATEL --- */}
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-1">
                     <h3 className="style-h3 text-secondary">Objednatel</h3>
@@ -299,98 +436,108 @@ const CheckoutPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField label="Jméno" placeholder="Jméno" type="text" required />
-                    <InputField label="Příjmení" placeholder="Příjmení" type="text" required />
-                    <InputField label="Telefon" placeholder="Telefon" type="tel" required />
-                    <InputField label="E-mail" placeholder="E-mail" type="email" required />
+                    <InputField label="Jméno" name="billing_first_name" value={formData.billing_first_name} onChange={handleInputChange} required />
+                    <InputField label="Příjmení" name="billing_last_name" value={formData.billing_last_name} onChange={handleInputChange} required />
+                    <InputField label="Telefon" name="billing_phone" value={formData.billing_phone} onChange={handleInputChange} placeholder={isMezinarodni ? "+81 / +82 ..." : "+420 ..."} required />
+                    <InputField label="E-mail" name="billing_email" value={formData.billing_email} onChange={handleInputChange} type="email" required />
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField label="Ulice a číslo popisné" placeholder="Ulice a číslo popisné" type="text" required />
-                    <InputField label="Město" placeholder="Město" type="text" required />
-                    <InputField label="PSČ" placeholder="PSČ" type="text" required />
-                    <InputField label="Stát" placeholder="Stát" type="text" required />
+                    <InputField label="Adresa – řádek 1 (Ulice a č.p.)" name="billing_address_line1" value={formData.billing_address_line1} onChange={handleInputChange} required />
+                    <InputField label="Adresa – řádek 2 (Patro, byt, budova)" name="billing_address_line2" value={formData.billing_address_line2} onChange={handleInputChange} placeholder={isMezinarodni ? "Doporučeno pro Asii" : "Nepovinné"} />
+                    <InputField label="Město / Čtvrť / Ward" name="billing_city" value={formData.billing_city} onChange={handleInputChange} required />
+                    <InputField label="PSČ" name="billing_zip" value={formData.billing_zip} onChange={handleInputChange} required />
+                    
+                    {/* Logika zobrazení pro zahraničí */}
+                    {isMezinarodni && (
+                      <InputField label="Provincie / Prefektura / Region" name="billing_region" value={formData.billing_region} onChange={handleInputChange} required />
+                    )}
+                    {isMezinarodni ? (
+  <SelectField label="Země" name="billing_country" value={formData.billing_country} onChange={handleInputChange} options={internationalCountries} required />
+) : (
+  <InputField label="Země" name="billing_country" value="Česká republika" disabled={true} onChange={() => {}} />
+)}
                   </div>
 
+                  {/* Nakupuji na firmu */}
                   <div className="pt-2">
                     <label className="flex items-start gap-3 cursor-pointer group w-fit">
                       <div className={`mt-1 w-5 h-5 shrink-0 rounded-[4px] border flex items-center justify-center transition-colors ${showCompanyFields ? 'border-primary bg-transparent' : 'border-black200 bg-black200 group-hover:bg-black300'}`}>
-                        {showCompanyFields && (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary stroke-[3px] stroke-linecap-round stroke-linejoin-round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        )}
+                        {showCompanyFields && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary stroke-[3px] stroke-linecap-round stroke-linejoin-round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                       </div>
                       <div className="flex flex-col">
                         <span className="style-body text-secondary">Nakupuji na firmu</span>
-                        <span className="style-body text-black200">Můžete zadat jinou fakturační adresu</span>
+                        <span className="style-body text-black200">Můžete zadat firemní údaje k fakturaci</span>
                       </div>
                       <input type="checkbox" checked={showCompanyFields} onChange={() => setShowCompanyFields(!showCompanyFields)} className="sr-only" />
                     </label>
                   </div>
 
                   {showCompanyFields && (
-                    <div className="flex flex-col gap-4 animate-fadeIn">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputField label="Název firmy" placeholder="Název firmy" />
-                        <InputField label="IČO" placeholder="IČO" />
-                        <InputField label="DIČ" placeholder="DIČ" />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputField label="Ulice a číslo popisné" placeholder="Ulice a číslo popisné" />
-                        <InputField label="Město" placeholder="Město" />
-                        <InputField label="PSČ" placeholder="PSČ" />
-                        <InputField label="Stát" placeholder="Stát" />
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeIn border-l-2 border-primary pl-4 ml-2">
+                      <InputField label="Název firmy" name="billing_company_name" value={formData.billing_company_name} onChange={handleInputChange} required />
+                      <div className="hidden md:block"></div> {/* Prázdné místo pro zarovnání */}
+                      <InputField label="IČO / Business Number" name="billing_company_id" value={formData.billing_company_id} onChange={handleInputChange} required />
+                      <InputField label="DIČ / Tax ID" name="billing_company_tax_id" value={formData.billing_company_tax_id} onChange={handleInputChange} />
                     </div>
                   )}
                 </div>
 
-                <hr className="border-black400 w-full" />
-
-                {/* --- SEKCJE 2: ADRESÁT --- */}
-                <div className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="style-h3 text-secondary">Adresát</h3>
-                    <p className="style-body text-secondary">Zadejte kontaktní údaje osoby, které máme zásilku doručit.</p>
-                  </div>
-
-                  <div className="mb-2">
-                    <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                      <div className={`w-5 h-5 shrink-0 rounded-[4px] border flex items-center justify-center transition-colors ${shippingDifferentThanOrdering ? 'border-primary bg-transparent' : 'border-black200 bg-black200 group-hover:bg-black300'}`}>
-                        {shippingDifferentThanOrdering && (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary stroke-[3px] stroke-linecap-round stroke-linejoin-round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        )}
+                {/* --- SEKCJE 2: ADRESÁT (Skryto při osobním odběru!) --- */}
+                {!isOsobni && (
+                  <>
+                    <hr className="border-black400 w-full mt-4" />
+                    <div className="flex flex-col gap-6">
+                      <div className="flex flex-col gap-1">
+                        <h3 className="style-h3 text-secondary">Adresát</h3>
+                        <p className="style-body text-secondary">Zadejte kontaktní údaje osoby, které máme zásilku doručit.</p>
                       </div>
-                      <span className="style-body text-secondary">Doručit na jinou adresu</span>
-                      <input type="checkbox" checked={shippingDifferentThanOrdering} onChange={() => setShippingDifferentThanOrdering(!shippingDifferentThanOrdering)} className="sr-only" />
-                    </label>
-                  </div>
 
-                  {!shippingDifferentThanOrdering && (
-                    <p className="style-body text-black200 italic p-4 bg-black400 rounded-[8px]">
-                      Bude doručeno na adresu objednatele.
-                    </p>
-                  )}
+                      <div className="mb-2">
+                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                          <div className={`w-5 h-5 shrink-0 rounded-[4px] border flex items-center justify-center transition-colors ${shippingDifferentThanOrdering ? 'border-primary bg-transparent' : 'border-black200 bg-black200 group-hover:bg-black300'}`}>
+                            {shippingDifferentThanOrdering && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary stroke-[3px] stroke-linecap-round stroke-linejoin-round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                          </div>
+                          <span className="style-body text-secondary">Doručit na jinou adresu</span>
+                          <input type="checkbox" checked={shippingDifferentThanOrdering} onChange={() => setShippingDifferentThanOrdering(!shippingDifferentThanOrdering)} className="sr-only" />
+                        </label>
+                      </div>
 
-                  {shippingDifferentThanOrdering && (
-                    <div className="flex flex-col gap-4 animate-fadeIn">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputField label="Jméno" placeholder="Jméno" />
-                        <InputField label="Příjmení" placeholder="Příjmení" />
-                        <InputField label="Telefon" placeholder="Telefon" />
-                        <InputField label="E-mail" placeholder="E-mail" />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputField label="Ulice a číslo popisné" placeholder="Ulice a číslo popisné" />
-                        <InputField label="Město" placeholder="Město" />
-                        <InputField label="PSČ" placeholder="PSČ" />
-                        <InputField label="Stát" placeholder="Stát" />
-                      </div>
+                      {!shippingDifferentThanOrdering ? (
+                        <p className="style-body text-black200 italic p-4 bg-black400 rounded-[8px]">
+                          Bude doručeno na adresu objednatele.
+                        </p>
+                      ) : (
+                        <div className="flex flex-col gap-4 animate-fadeIn border-l-2 border-primary pl-4 ml-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InputField label="Jméno" name="shipping_first_name" value={formData.shipping_first_name} onChange={handleInputChange} required />
+                            <InputField label="Příjmení" name="shipping_last_name" value={formData.shipping_last_name} onChange={handleInputChange} required />
+                            <InputField label="Telefon" name="shipping_phone" value={formData.shipping_phone} onChange={handleInputChange} required />
+                            <InputField label="Název firmy (nepovinné)" name="shipping_company_name" value={formData.shipping_company_name} onChange={handleInputChange} />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InputField label="Adresa – řádek 1" name="shipping_address_line1" value={formData.shipping_address_line1} onChange={handleInputChange} required />
+                            <InputField label="Adresa – řádek 2" name="shipping_address_line2" value={formData.shipping_address_line2} onChange={handleInputChange} />
+                            <InputField label="Město / Čtvrť / Ward" name="shipping_city" value={formData.shipping_city} onChange={handleInputChange} required />
+                            <InputField label="PSČ" name="shipping_zip" value={formData.shipping_zip} onChange={handleInputChange} required />
+                            {isMezinarodni && (
+                              <InputField label="Provincie / Prefektura" name="shipping_region" value={formData.shipping_region} onChange={handleInputChange} required />
+                            )}
+                            {isMezinarodni ? (
+  <SelectField label="Země" name="shipping_country" value={formData.shipping_country} onChange={handleInputChange} options={internationalCountries} required />
+) : (
+  <InputField label="Země" name="shipping_country" value="Česká republika" disabled={true} onChange={() => {}} />
+)}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </>
+                )}
 
-                  {/* Poznámka vždy nakonec */}
-                  <TextAreaField label="Poznámka" placeholder="Poznámka" />
-                </div>
+                {/* Poznámka vždy nakonec */}
+                <hr className="border-black400 w-full mt-4" />
+                <TextAreaField label="Poznámka pro nás" name="customerNote" value={customerNote} onChange={(e: any) => setCustomerNote(e.target.value)} placeholder="Zde můžete připsat jakékoliv detaily k objednávce..." />
               </div>
             )}
 
@@ -412,13 +559,20 @@ const CheckoutPage = () => {
           <Button 
             onClick={() => {
               if (currentStep < 3) nextStep();
-              else if (selectedPayment === 'karta') setIsPaymentModalOpen(true);
-              else alert('Objednávka odeslána!');
+              else submitOrder(); // TADY SPOUŠTÍME ULOŽENÍ DO DATABÁZE V KROKU 3
             }} 
             arrow="right"
+            disabled={isSubmitting} // Zablokuje klikání, dokud se ukládá
           >
-            {currentStep === 1 ? 'Další krok' : currentStep === 2 ? 'K údajům' : (selectedPayment === 'karta' ? 'Zaplatit' : 'Dokončit objednávku')}
+            {isSubmitting ? 'Odesílám...' : (
+              currentStep === 1 ? 'Další krok' : currentStep === 2 ? 'K údajům' : (selectedPayment === 'karta' ? 'Zaplatit' : 'Dokončit objednávku')
+            )}
           </Button>
+          
+          {/* Zobrazení případné chyby u tlačítka */}
+          {orderError && (
+             <p className="text-error style-body-bold absolute bottom-24">{orderError}</p>
+          )}
         </div>
       </footer>
 
