@@ -27,13 +27,13 @@ const getShippingOptions = (weight: number) => {
     },
     { 
       id: 'ceska', 
-      name: `Česká republika (${weight} g)`, 
+      name: `Česká republika`, // Odstraněno (${weight} g)
       price: czPrice, 
       desc: czPrice === 40 ? 'Obyčejné psaní' : (czPrice === 80 ? 'Doporučené psaní' : 'Balíček')
     },
     { 
       id: 'mezinarodni', 
-      name: `Mezinárodní doprava (${weight} g)`, 
+      name: `Mezinárodní doprava`, // Odstraněno (${weight} g)
       price: intPrice, 
       desc: 'Zemi doručení zadáte v dalším kroku'
     },
@@ -474,61 +474,60 @@ const CheckoutPage = () => {
                   )}
                 </div>
 
-                {/* --- SEKCJE 2: ADRESÁT (Skryto při osobním odběru!) --- */}
+                {/* --- SEKCE 2: ADRESÁT (Skryto při osobním odběru!) --- */}
                 {!isOsobni && (
-                  <>
-                    <hr className="border-black400 w-full mt-4" />
-                    <div className="flex flex-col gap-6">
-                      <div className="flex flex-col gap-1">
-                        <h3 className="style-h3 text-secondary">Adresát</h3>
-                        <p className="style-body text-secondary">Zadejte kontaktní údaje osoby, které máme zásilku doručit.</p>
-                      </div>
-
-                      <div className="mb-2">
-                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                          <div className={`w-5 h-5 shrink-0 rounded-[4px] border flex items-center justify-center transition-colors ${shippingDifferentThanOrdering ? 'border-primary bg-transparent' : 'border-black200 bg-black200 group-hover:bg-black300'}`}>
-                            {shippingDifferentThanOrdering && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary stroke-[3px] stroke-linecap-round stroke-linejoin-round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
-                          </div>
-                          <span className="style-body text-secondary">Doručit na jinou adresu</span>
-                          <input type="checkbox" checked={shippingDifferentThanOrdering} onChange={() => setShippingDifferentThanOrdering(!shippingDifferentThanOrdering)} className="sr-only" />
-                        </label>
-                      </div>
-
-                      {!shippingDifferentThanOrdering ? (
-                        <p className="style-body text-black200 italic p-4 bg-black400 rounded-[8px]">
-                          Bude doručeno na adresu objednatele.
-                        </p>
-                      ) : (
-                        <div className="flex flex-col gap-4 animate-fadeIn border-l-2 border-primary pl-4 ml-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Jméno" name="shipping_first_name" value={formData.shipping_first_name} onChange={handleInputChange} required />
-                            <InputField label="Příjmení" name="shipping_last_name" value={formData.shipping_last_name} onChange={handleInputChange} required />
-                            <InputField label="Telefon" name="shipping_phone" value={formData.shipping_phone} onChange={handleInputChange} required />
-                            <InputField label="Název firmy (nepovinné)" name="shipping_company_name" value={formData.shipping_company_name} onChange={handleInputChange} />
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Adresa – řádek 1" name="shipping_address_line1" value={formData.shipping_address_line1} onChange={handleInputChange} required />
-                            <InputField label="Adresa – řádek 2" name="shipping_address_line2" value={formData.shipping_address_line2} onChange={handleInputChange} />
-                            <InputField label="Město / Čtvrť / Ward" name="shipping_city" value={formData.shipping_city} onChange={handleInputChange} required />
-                            <InputField label="PSČ" name="shipping_zip" value={formData.shipping_zip} onChange={handleInputChange} required />
-                            {isMezinarodni && (
-                              <InputField label="Provincie / Prefektura" name="shipping_region" value={formData.shipping_region} onChange={handleInputChange} required />
-                            )}
-                            {isMezinarodni ? (
-  <SelectField label="Země" name="shipping_country" value={formData.shipping_country} onChange={handleInputChange} options={internationalCountries} required />
-) : (
-  <InputField label="Země" name="shipping_country" value="Česká republika" disabled={true} onChange={() => {}} />
-)}
-                          </div>
+                  <div className="flex flex-col gap-6 mt-4">
+                    {/* Checkbox "Doručit na jinou adresu" ve stejném stylu jako firemní údaje */}
+                    <div className="mb-2">
+                      <label className="flex items-start gap-3 cursor-pointer group w-fit">
+                        <div className={`mt-1 w-5 h-5 shrink-0 rounded-[4px] border flex items-center justify-center transition-colors ${shippingDifferentThanOrdering ? 'border-primary bg-transparent' : 'border-black200 bg-black200 group-hover:bg-black300'}`}>
+                          {shippingDifferentThanOrdering && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary stroke-[3px] stroke-linecap-round stroke-linejoin-round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                         </div>
-                      )}
+                        <div className="flex flex-col">
+                          <span className="style-body text-secondary">Doručit na jinou adresu</span>
+                          <span className="style-body text-black200">Zadejte kontaktní údaje osoby, které máme zásilku doručit.</span>
+                        </div>
+                        <input type="checkbox" checked={shippingDifferentThanOrdering} onChange={() => setShippingDifferentThanOrdering(!shippingDifferentThanOrdering)} className="sr-only" />
+                      </label>
                     </div>
-                  </>
+
+                    {/* Formulář se ukáže jen při zaškrtnutí - text "Bude doručeno..." byl odstraněn */}
+                    {shippingDifferentThanOrdering && (
+                      <div className="flex flex-col gap-4 animate-fadeIn border-l-2 border-primary pl-4 ml-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InputField label="Jméno" name="shipping_first_name" value={formData.shipping_first_name} onChange={handleInputChange} required />
+                          <InputField label="Příjmení" name="shipping_last_name" value={formData.shipping_last_name} onChange={handleInputChange} required />
+                          <InputField label="Telefon" name="shipping_phone" value={formData.shipping_phone} onChange={handleInputChange} required />
+                          <InputField label="Název firmy (nepovinné)" name="shipping_company_name" value={formData.shipping_company_name} onChange={handleInputChange} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InputField label="Adresa – řádek 1" name="shipping_address_line1" value={formData.shipping_address_line1} onChange={handleInputChange} required />
+                          <InputField label="Adresa – řádek 2" name="shipping_address_line2" value={formData.shipping_address_line2} onChange={handleInputChange} />
+                          <InputField label="Město / Čtvrť / Ward" name="shipping_city" value={formData.shipping_city} onChange={handleInputChange} required />
+                          <InputField label="PSČ" name="shipping_zip" value={formData.shipping_zip} onChange={handleInputChange} required />
+                          {isMezinarodni && (
+                            <InputField label="Provincie / Prefektura" name="shipping_region" value={formData.shipping_region} onChange={handleInputChange} required />
+                          )}
+                          {isMezinarodni ? (
+                            <SelectField label="Země" name="shipping_country" value={formData.shipping_country} onChange={handleInputChange} options={internationalCountries} required />
+                          ) : (
+                            <InputField label="Země" name="shipping_country" value="Česká republika" disabled={true} onChange={() => {}} />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
-                {/* Poznámka vždy nakonec */}
+                {/* Poznámka vždy nakonec s novým textem */}
                 <hr className="border-black400 w-full mt-4" />
-                <TextAreaField label="Poznámka pro nás" name="customerNote" value={customerNote} onChange={(e: any) => setCustomerNote(e.target.value)} placeholder="Zde můžete připsat jakékoliv detaily k objednávce..." />
+                <TextAreaField 
+                  label="Vaše poznámka k doručení zásilky" 
+                  name="customerNote" 
+                  value={customerNote} 
+                  onChange={(e: any) => setCustomerNote(e.target.value)} 
+                  placeholder="Zde můžete připsat jakékoliv detaily k doručení..." 
+                />
               </div>
             )}
 
