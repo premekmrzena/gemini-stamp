@@ -13,6 +13,7 @@ type ProductType = {
   stock_quantity: number;
   tag_new: boolean;
   tag_top: boolean;
+  weight_grams: number; // <--- TENTO ŘÁDEK JSEM PŘIDAL
 };
 
 // Přidali jsme přijímání props 'products'
