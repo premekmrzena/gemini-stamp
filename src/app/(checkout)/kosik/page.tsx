@@ -380,16 +380,7 @@ const CheckoutPage = () => {
                               <span className="style-body text-secondary shrink-0">{option.price > 0 ? `${option.price} Kč` : 'Zdarma'}</span>
                             </div>
                             <p className="style-body text-black200">{option.desc}</p>
-                            {option.hasSelect && isSelected && (
-                              <div className="relative mt-4 w-full md:w-2/3 lg:w-1/2 animate-fadeIn">
-                                <select className="w-full bg-secondary border border-black200 text-black-custom rounded-[4px] px-4 h-[48px] style-body outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer">
-                                  <option value="" className="text-black300">Vyberte zemi...</option><option value="sk">Slovensko</option><option value="de">Německo</option>
-                                </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black-custom">
-                                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                </div>
-                              </div>
-                            )}
+                            
                           </div>
                           <input type="radio" name="shipping" value={option.id} checked={isSelected} onChange={(e) => setSelectedShipping(e.target.value)} className="sr-only" />
                         </label>
