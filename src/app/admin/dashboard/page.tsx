@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     } else {
       // Lokální aktualizace pro okamžitý efekt v UI
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+      setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
     }
   }
 
