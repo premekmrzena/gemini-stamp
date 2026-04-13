@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { resend } from '@/lib/resend';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { render } from '@react-email/render';
+import * as React from 'react'; // PŘIDÁNO: Nutné pro createElement
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    // Přidáváme cartItems do destrukce body
     const { email, orderId, customerName, totalPrice, cartItems } = body;
 
     // Kontrola základních dat
@@ -14,13 +14,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Chybí povinná data pro odeslání e-mailu' }, { status: 400 });
     }
 
-    // Převedeme React komponentu na HTML text a předáme i cartItems
-    const emailHtml = await render(OrderConfirmationEmail({ 
-      orderId, 
-      customerName, 
-      totalPrice,
-      cartItems 
-    }));
+    // OPRAVA PRO VERCEL: Používáme React.createElement místo přímého volání funkce
+    // To zajistí, že TypeScript pochopí, že předáváme React element, ne Promise
+    const emailHtml = await render(
+      React.createElement(OrderConfirmationEmail, {
+        orderId,
+        customerName,
+        totalPrice,
+        cartItems,
+      })
+    );
 
     const { data, error } = await resend.emails.send({
       from: 'Creative Stamp <onboarding@resend.dev>',
