@@ -36,21 +36,21 @@ export default function Header() {
       {/* Pravá část - Navigace a Košík (DESKTOP) */}
       <div className="hidden md:flex items-center gap-4 lg:gap-6">
         <nav className="flex items-center text-[15px] lg:text-[16px] font-medium tracking-[-0.02em] leading-none whitespace-nowrap">
-          <Link href="/znamky" className="pr-[22px] hover:text-[#FF7F51] transition">Známky</Link>
+          {/* ODKAZY NA KATEGORIE S ČISTÝMI SLUGY */}
+          <Link href="/kategorie/znamky" className="pr-[22px] hover:text-[#FF7F51] transition">Známky</Link>
           <span className="w-px h-5 bg-white/30"></span>
           
-          <Link href="/kreativni-archy" className="px-[22px] hover:text-[#FF7F51] transition">Kreativní archy</Link>
+          <Link href="/kategorie/kreativni-archy" className="px-[22px] hover:text-[#FF7F51] transition">Kreativní archy</Link>
           <span className="w-px h-5 bg-white/30"></span>
           
-          <Link href="/first-day-cover" className="px-[22px] hover:text-[#FF7F51] transition">First day cover</Link>
+          <Link href="/kategorie/fdc" className="px-[22px] hover:text-[#FF7F51] transition">First day cover</Link>
           <span className="w-px h-5 bg-white/30"></span>
           
-          <Link href="/darkove-sady" className="px-[22px] hover:text-[#FF7F51] transition">Dárkové sady</Link>
+          <Link href="/kategorie/plakety" className="px-[22px] hover:text-[#FF7F51] transition">Dárkové plakety</Link>
         </nav>
 
         {/* KOŠÍK - DESKTOP */}
         <Link href="/kosik" className="flex items-center group flex-shrink-0">
-          {/* Přidáno 'relative' pro pozicování odznáčku */}
           <div className="relative w-[52px] h-[52px] rounded-full bg-[#0F172A] group-hover:bg-[#FF6B35] transition flex items-center justify-center">
              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
@@ -71,7 +71,6 @@ export default function Header() {
         
         {/* KOŠÍK - MOBIL */}
         <Link href="/kosik">
-          {/* Přidáno 'relative' pro pozicování odznáčku */}
           <div className="relative w-[40px] h-[40px] rounded-full bg-[#0F172A] flex items-center justify-center">
              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
@@ -86,7 +85,7 @@ export default function Header() {
           </div>
         </Link>
         
-        {/* Hamburger Tlačítko - 3 horizontální linky */}
+        {/* Hamburger Tlačítko */}
         <button 
           onClick={toggleMenu} 
           className="text-white focus:outline-none w-[30px] h-[40px] flex items-center justify-center"
@@ -110,10 +109,10 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-[#1E2330] border-t border-[#2B3755] shadow-2xl md:hidden flex flex-col">
           <nav className="flex flex-col text-[16px] font-medium tracking-[-0.02em] p-4 gap-2">
-            <Link href="/znamky" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">Známky</Link>
-            <Link href="/kreativni-archy" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">Kreativní archy</Link>
-            <Link href="/first-day-cover" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">First day cover</Link>
-            <Link href="/darkove-sady" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">Dárkové sady</Link>
+            <Link href="/kategorie/znamky" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">Známky</Link>
+            <Link href="/kategorie/kreativni-archy" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">Kreativní archy</Link>
+            <Link href="/kategorie/fdc" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">First day cover</Link>
+            <Link href="/kategorie/plakety" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-[#FDFBF7] hover:bg-[#272D3D] hover:text-[#FF7F51]">Dárkové plakety</Link>
           </nav>
         </div>
       )}
