@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
-// TÍMTO ŘÁDKEM VYPNEME CACHOVÁNÍ - web bude vždy 100% aktuální
+
+// Vypne cachování pro 100% aktuálnost dat
 export const revalidate = 0;
 
 export default async function ProductPage({
@@ -8,11 +9,11 @@ export default async function ProductPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // Získání ID z URL (podle pravidel Next.js 15+)
+  // Získání ID z URL (pravidla Next.js 15+)
   const resolvedParams = await params;
   const productId = resolvedParams.id;
 
-  // 1. Stáhneme detail produktu
+  // 1. Stáhneme detail hlavního produktu
   const { data: product, error } = await supabase
     .from('products')
     .select('*')
@@ -28,27 +29,38 @@ export default async function ProductPage({
     );
   }
 
-  // 2. Stáhneme související
+  // 2. LOGIKA PRO SOUVISEJÍCÍ PRODUKTY (ARRAY VERSION)
   let relatedProducts: any[] = [];
-  if (product.related_stamp_id) {
-    const { data: related } = await supabase
+
+  // Kontrola, zda máme v poli related_stamp_id nějaká ID
+  const hasRelatedIds = product.related_stamp_id && 
+                        Array.isArray(product.related_stamp_id) && 
+                        product.related_stamp_id.length > 0;
+
+  if (hasRelatedIds) {
+    // Stáhneme všechna ID, která jsi ručně vybral v DB
+    const { data: related, error: relatedError } = await supabase
       .from('products')
       .select('id, name, price, image_url')
-      .eq('id', product.related_stamp_id)
-      .single();
-    
-    if (related) relatedProducts.push(related);
-  } else {
+      .in('id', product.related_stamp_id);
+
+    if (related && !relatedError) {
+      relatedProducts = related;
+    }
+  }
+
+  // FALLBACK: Pokud jsi nic nevybral (nebo se nic nenašlo), ukážeme 3 nejnovější jiné známky
+  if (relatedProducts.length === 0) {
     const { data: fallback } = await supabase
       .from('products')
       .select('id, name, price, image_url')
-      .neq('id', product.id)
+      .neq('id', product.id) // Vynecháme aktuální produkt
       .order('created_at', { ascending: false })
       .limit(3);
     
     if (fallback) relatedProducts = fallback;
   }
 
-  // 3. Vykreslíme klientskou komponentu
+  // 3. Vykreslení klientské komponenty (kterou jsme už zabezpečili proti stahování)
   return <ProductDetailClient product={product} relatedProducts={relatedProducts} />;
 }
