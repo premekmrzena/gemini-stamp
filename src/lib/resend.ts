@@ -1,3 +1,7 @@
 import { Resend } from 'resend';
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+// Tímto zajistíme, že build nespadne, pokud klíč chybí
+// Resend se zinicializuje s prázdným stringem jen pro potřeby buildu
+const apiKey = process.env.RESEND_API_KEY || 're_placeholder';
+
+export const resend = new Resend(apiKey);
