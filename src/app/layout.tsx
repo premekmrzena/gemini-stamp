@@ -2,9 +2,6 @@ import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext'; 
-// PŘIDÁNO: Importujeme Header a Footer
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'Creative Stamp | E-shop',
@@ -25,16 +22,8 @@ export default function RootLayout({
     <html lang="cs">
       <body className={`${poppins.className} flex flex-col min-h-screen bg-[#0F172A]`}>
         <CartProvider>
-          {/* PŘIDÁNO: Header bude nahoře na všech stránkách */}
-          <Header />
-          
-          {/* Main s flex-grow zajistí, že Footer bude vždy až dole, i když je málo obsahu */}
-          <main className="flex-grow">
-            {children}
-          </main>
-          
-          {/* PŘIDÁNO: Footer bude dole na všech stránkách */}
-          <Footer />
+          {/* Header a Footer odsud zmizely, aby se nepletly do checkoutu */}
+          {children}
         </CartProvider>
       </body>
     </html>

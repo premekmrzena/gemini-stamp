@@ -7,22 +7,22 @@ import ProductList from '@/components/ProductList';
 
 export default function CategoryPage() {
   const params = useParams();
-  const slug = params.slug as string;
+  // slug může být string nebo string[], zajistíme, že máme string
+  const slug = typeof params?.slug === 'string' ? params.slug : '';
   
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // KONFIGURACE KATEGORIÍ (Zde měň texty a odkazy na videa)
   const categoryContent: Record<string, { title: string; description: string; videoUrl: string }> = {
     'znamky': {
       title: 'Poštovní známky',
-      description: 'Zde doplň svůj vlastní text pro kategorii Poštovní známky. Tento text nahrazuje původní Lorem Ipsum.',
-      videoUrl: '/videos/znamky.mp4' // Cesta k souboru nebo YouTube embed link
+      description: 'Zde doplň svůj vlastní text pro kategorii Poštovní známky.',
+      videoUrl: '/videos/znamky.mp4'
     },
     'kreativni-archy': {
       title: 'Kreativní archy',
       description: 'Zde doplň svůj vlastní text pro kategorii Kreativní archy.',
-      videoUrl: '' // Pokud necháš prázdné, zůstane placeholder
+      videoUrl: 'https://www.youtube.com/embed/QBu6UyzPdHA' 
     },
     'fdc': {
       title: 'First Day Cover (FDC)',
@@ -36,7 +36,6 @@ export default function CategoryPage() {
     }
   };
 
-  // Pomocná proměnná pro aktuální obsah
   const current = categoryContent[slug] || { 
     title: slug, 
     description: 'Popis kategorie se připravuje...', 
@@ -44,6 +43,9 @@ export default function CategoryPage() {
   };
 
   useEffect(() => {
+    // Pokud slug ještě není k dispozici (router se inicializuje), nic neděláme
+    if (!slug) return;
+
     async function fetchCategoryProducts() {
       setLoading(true);
       const { data, error } = await supabase
@@ -56,18 +58,21 @@ export default function CategoryPage() {
       if (!error) setProducts(data || []);
       setLoading(false);
     }
-    if (slug) fetchCategoryProducts();
+
+    fetchCategoryProducts();
   }, [slug]);
+
+  // Pokud router ještě nepředal slug, zobrazíme loader místo chyby
+  if (!slug && loading) {
+    return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white">Načítám...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#0F172A] pb-20">
-      
-      {/* SEKCE S TITULKEM A VIDEEM */}
       <section className="px-[24px] md:px-[44px] lg:px-[84px] py-8 md:py-12">
         <div className="max-w-[1440px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             
-            {/* TEXTOVÁ ČÁST */}
             <div>
               <h1 className="style-h1 text-[#FDFBF7] mb-6 lowercase first-letter:uppercase leading-tight">
                 {current.title}
@@ -77,12 +82,16 @@ export default function CategoryPage() {
               </p>
             </div>
 
-            {/* VIDEO ČÁST */}
             <div className="relative aspect-video w-full overflow-hidden rounded-[16px] border border-[#8B95AC] bg-[#2B3755]">
               <div className="absolute inset-0 flex items-center justify-center">
                 {current.videoUrl ? (
-                  current.videoUrl.includes('youtube.com') || current.videoUrl.includes('vimeo.com') ? (
-                    <iframe src={current.videoUrl} className="w-full h-full" allowFullScreen />
+                  current.videoUrl.includes('youtube.com') || current.videoUrl.includes('youtu.be') ? (
+                    <iframe 
+                      src={current.videoUrl} 
+                      className="w-full h-full border-0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen 
+                    />
                   ) : (
                     <video src={current.videoUrl} controls className="w-full h-full object-cover" />
                   )
@@ -100,7 +109,6 @@ export default function CategoryPage() {
         </div>
       </section>
 
-      {/* SEZNAM PRODUKTŮ */}
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#FF7F51]"></div>
