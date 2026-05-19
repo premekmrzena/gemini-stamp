@@ -1,7 +1,7 @@
-/* 1. IMPORT FONTU MUSÍ BÝT ABSOLUTNĚ PRVNÍ ŘÁDEK V SOUBORU */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+/* 1. IMPORT FONTŮ - Vybráno 7 různorodých stylů pro editor */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Open+Sans:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Dancing+Script:wght@700&family=Montserrat:wght@800&family=Caveat:wght@400;700&family=EB+Garamond:ital,wght@0,400;1,400&family=Pacifico&display=swap');
 
-/* 2. Až potom importujeme Tailwind */
+/* 2. Import Tailwind */
 @import "tailwindcss";
 
 :root {
@@ -21,7 +21,7 @@
   --color-foreground: var(--foreground);
   --font-sans: 'Poppins', sans-serif;
 
-  /* --- NAŠE BARVY Z FIGMY PŘÍMO V THEME --- */
+  /* --- NAŠE BARVY Z FIGMY --- */
   --color-primary: #FF6B35;
   --color-primary-hover: #FF7F51;
   --color-secondary: #FDFBF7;
