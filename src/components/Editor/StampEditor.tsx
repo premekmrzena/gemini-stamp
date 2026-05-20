@@ -29,10 +29,8 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [showLandscapeHint, setShowLandscapeHint] = useState(false);
 
-  // KLÍČOVÝ FIX 1: ViewRatio drží poměr mezi reálnou velikostí šablony a tím, co vidíš na displeji.
   const [viewRatio, setViewRatio] = useState(1);
 
-  // Nastavení textu (Nyní v tiskovém rozlišení! Slider upraven na 40-400)
   const [mainText, setMainText] = useState('Vlastní text');
   const [textColor, setTextColor] = useState('#FF6B35');
   const [fontSize, setFontSize] = useState(120);
@@ -72,7 +70,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     }
   }, []);
 
-  // KLÍČOVÝ FIX 2: Vždy známe přesný poměr displeje vůči šabloně
   useEffect(() => {
     const updateRatio = () => {
       const isMobile = window.innerWidth < 1024;
@@ -90,7 +87,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     };
     updateRatio();
     window.addEventListener('resize', updateRatio);
-    const t = setTimeout(updateRatio, 50); // Timeout zajistí načtení DOMu
+    const t = setTimeout(updateRatio, 50);
     return () => { window.removeEventListener('resize', updateRatio); clearTimeout(t); };
   }, [mobileStep, isPreviewStep, activeTemplate]);
 
@@ -132,7 +129,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  // --- MYŠ (DESKTOP) ---
   const handleMouseDown = (type: 'photo' | 'text' | 'resize', slotId: string, e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
     isDragging.current = type; dragStart.current = { x: e.clientX, y: e.clientY };
@@ -148,7 +144,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     const dx = e.clientX - dragStart.current.x; const dy = e.clientY - dragStart.current.y;
 
     if (isDragging.current === 'photo' && photos[activeSlotId]) {
-      // Ukládáme pozici rovnou v tiskových pixelech!
       setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + (dx * safeRatio), y: photoStart.current.y + (dy * safeRatio) } }));
     } else if (isDragging.current === 'resize' && photos[activeSlotId]) {
       setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
@@ -162,7 +157,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     }
   };
 
-  // --- DOTYKY (MOBIL) ---
   const handleTouchStart = (type: 'photo' | 'text' | 'resize', slotId: string, e: React.TouchEvent) => {
     e.stopPropagation();
     setActiveSlotId(slotId); targetSlotIdRef.current = slotId;
@@ -207,7 +201,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   const handleMouseUp = () => { isDragging.current = false; initialTouchDistance.current = null; };
 
-  // --- NÁHLED A EXPORT ---
   const generateCanvasDataUrl = (): Promise<string> => {
     return new Promise((resolve) => {
       const tCanvas = document.createElement('canvas');
@@ -229,7 +222,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
               const baseScale = Math.max(slot.width / userImg.width, slot.height / userImg.height);
               const finalScale = baseScale * photo.scale;
               const w = userImg.width * finalScale; const h = userImg.height * finalScale;
-              // KLÍČOVÝ FIX 3: photo.x a photo.y už nepotřebují převádět, jsou uloženy nativně v tiskových pixelech!
               const posX = slot.x + (slot.width - w) / 2 + photo.x;
               const posY = slot.y + (slot.height - h) / 2 + photo.y;
               ctx.drawImage(userImg, posX, posY, w, h); ctx.restore(); res();
@@ -262,7 +254,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   const textShadowCSS = useShadow ? `4px 4px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none';
 
-  // KOMPONENTA MINI-MAPY (Proporcionální mockup archu)
+  // KOMPONENTA MINI-MAPY
   const MobileMiniMap = () => (
     <div 
       className="relative bg-black-custom/60 shadow-inner overflow-hidden shrink-0 border border-white/20" 
@@ -291,7 +283,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   return (
     <div 
-      className="flex-1 min-h-0 w-full flex flex-col justify-between font-sans text-secondary select-none"
+      className={`flex-1 min-h-0 w-full flex flex-col justify-between font-sans text-secondary select-none ${!isPreviewStep ? 'touch-none' : ''}`}
       onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}
     >
       {showLandscapeHint && (
@@ -353,11 +345,9 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
           </div>
         )}
         
-        {/* Odstraněno touch-none z tohoto kontejneru pro případ, že potřebujeme pinch-to-zoom v náhledu */}
         <div className={`flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4 md:p-6 bg-[#0F172A] ${!isPreviewStep ? 'touch-none' : ''}`}>
           {isPreviewStep ? (
             isGeneratingPreview ? <div className="animate-pulse text-xs text-primary">Generuji náhled...</div> : (
-              // PINCH TO ZOOM PRO NÁHLED ARCHU
               <TransformWrapper centerOnInit={true} initialScale={1} minScale={1} maxScale={5}>
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }} contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img src={previewUrl || ''} className="max-w-full max-h-full object-contain shadow-2xl border border-white/10" alt="Preview" />

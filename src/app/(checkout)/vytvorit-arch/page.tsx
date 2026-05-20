@@ -31,7 +31,8 @@ export default function EditorPage() {
       
       {!isMobileLandscape && <EditorHeader currentStep={currentStep} />}
       
-      <main className="flex-1 min-h-0 w-full flex flex-col pb-[80px] lg:pb-[116px] relative overflow-y-auto">
+      {/* KLÍČOVÝ FIX: Dynamické odstranění paddingu v landscape modu, aby tam nezůstával tmavý pruh */}
+      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${isMobileLandscape ? 'pb-0' : 'pb-[80px] lg:pb-[116px]'}`}>
         
         {currentStep === 1 && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 gap-8 animate-fadeIn">
