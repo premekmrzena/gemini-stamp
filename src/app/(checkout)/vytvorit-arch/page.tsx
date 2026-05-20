@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import EditorHeader from '@/components/Editor/EditorHeader';
 import Button from '@/components/Button';
@@ -12,16 +12,28 @@ const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
 
 export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isMobileLandscape, setIsMobileLandscape] = useState(false);
+
+  // Detekce otočení mobilu na šířku pro Full-Screen režim
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileLandscape(window.innerWidth < 768 && window.innerWidth > window.innerHeight);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleNextStep = () => setCurrentStep(prev => prev + 1);
 
   return (
-    // KLÍČOVÝ FIX PRO MOBIL: Použití h-[100dvh] místo h-screen (respektuje adresní řádek)
+    // Použití 100dvh řeší problém s vyskakovacím adresním řádkem na mobilu
     <div className="w-full h-[100dvh] flex flex-col bg-black-custom overflow-hidden">
-      <EditorHeader currentStep={currentStep} />
       
-      {/* Padding bottom zajišťuje, že obsah nezajede pod fixní patičku */}
-      <main className="flex-1 min-h-0 w-full flex flex-col pb-[80px] md:pb-[116px] relative overflow-y-auto">
+      {/* Hlavička zmizí, pokud je mobil otočen na šířku */}
+      {!isMobileLandscape && <EditorHeader currentStep={currentStep} />}
+      
+      <main className="flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto">
         
         {/* KROK 1: VÝBĚR ŠABLONY */}
         {currentStep === 1 && (
@@ -45,7 +57,7 @@ export default function EditorPage() {
 
         {/* KROK 2: EDITOR */}
         {currentStep === 2 && (
-          <StampEditor onComplete={handleNextStep} />
+          <StampEditor onComplete={handleNextStep} isMobileLandscape={isMobileLandscape} />
         )}
 
         {/* KROK 3: ÚSPĚCH A KOŠÍK */}

@@ -13,9 +13,13 @@ const FONT_OPTIONS = [
 ];
 
 interface PhotoState { url: string; scale: number; x: number; y: number; }
-interface StampEditorProps { onComplete: () => void; }
 
-export default function StampEditor({ onComplete }: StampEditorProps) {
+interface StampEditorProps {
+  onComplete: () => void;
+  isMobileLandscape?: boolean;
+}
+
+export default function StampEditor({ onComplete, isMobileLandscape = false }: StampEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeTemplate = TEMPLATES[0];
@@ -24,9 +28,13 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
   const targetSlotIdRef = useRef<string | null>(null);
 
+  // Bezpečný výpočet šířky textového slotu pro dokonalý export i při změně pohledu
+  const textSlotWidthRef = useRef<number>(activeTemplate.width);
+
   const [mobileStep, setMobileStep] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [showLandscapeHint, setShowLandscapeHint] = useState(false);
 
   // Nastavení textu
   const [mainText, setMainText] = useState('Vlastní text');
@@ -47,9 +55,6 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const textPercentStart = useRef({ x: 50, y: 50 });
   const initialTouchDistance = useRef<number | null>(null);
 
-  // Výpočty kroků
-  const requiredPhotoSlots = activeTemplate.slots.filter(s => s.id !== '1');
-  const allPhotosFilled = requiredPhotoSlots.every(slot => photos[slot.id]);
   const totalSlotsSteps = activeTemplate.slots.length;
   const isPreviewStep = mobileStep === totalSlotsSteps;
   const isLastSlotStep = mobileStep === totalSlotsSteps - 1;
@@ -58,22 +63,47 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const totalPhotoSlots = activeTemplate.slots.filter(s => s.id !== '1').length;
   const currentPhotoIndex = activeTemplate.slots.slice(0, mobileStep + 1).filter(s => s.id !== '1').length;
 
+  const requiredPhotoSlots = activeTemplate.slots.filter(s => s.id !== '1');
+  const allPhotosFilled = requiredPhotoSlots.every(slot => photos[slot.id]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const linkId = 'google-fonts-stamp-editor';
     if (!document.getElementById(linkId)) {
       const link = document.createElement('link');
-      link.id = linkId;
-      link.rel = 'stylesheet';
+      link.id = linkId; link.rel = 'stylesheet';
       link.href = 'https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Pacifico&family=Poppins:wght@600;700&family=Playfair+Display:wght@700&display=swap';
       document.head.appendChild(link);
     }
   }, []);
 
+  // Aktualizace reference o přesné renderované šířce textového boxu
+  useEffect(() => {
+    const updateTextSlotWidth = () => {
+      const isMobile = window.innerWidth < 768;
+      const slotEl = document.querySelector(isMobile ? '.mobile-slot-1' : '.desktop-slot-1');
+      if (slotEl) {
+        textSlotWidthRef.current = slotEl.getBoundingClientRect().width;
+      }
+    };
+    updateTextSlotWidth();
+    window.addEventListener('resize', updateTextSlotWidth);
+    return () => window.removeEventListener('resize', updateTextSlotWidth);
+  });
+
   useEffect(() => {
     if (isPreviewStep) { setActiveSlotId(null); return; }
     if (currentMobileSlot) { setActiveSlotId(currentMobileSlot.id); targetSlotIdRef.current = currentMobileSlot.id; }
   }, [mobileStep, currentMobileSlot, isPreviewStep]);
+
+  // Upozornění na návrat do portrétního módu
+  useEffect(() => {
+    if (isMobileLandscape) {
+      setShowLandscapeHint(true);
+      const timer = setTimeout(() => setShowLandscapeHint(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobileLandscape]);
 
   const handleSlotClick = (slotId: string) => {
     targetSlotIdRef.current = slotId; setActiveSlotId(slotId);
@@ -103,6 +133,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
     e.stopPropagation(); e.preventDefault();
     isDragging.current = type; dragStart.current = { x: e.clientX, y: e.clientY };
     setActiveSlotId(slotId); targetSlotIdRef.current = slotId;
+
     if (type === 'photo' && photos[slotId]) photoStart.current = { x: photos[slotId].x, y: photos[slotId].y };
     else if (type === 'resize' && photos[slotId]) scaleStart.current = photos[slotId].scale;
     else if (type === 'text') textPercentStart.current = { x: textPos.x, y: textPos.y };
@@ -111,10 +142,12 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current || !activeSlotId) return;
     const dx = e.clientX - dragStart.current.x; const dy = e.clientY - dragStart.current.y;
+
     if (isDragging.current === 'photo' && photos[activeSlotId]) {
       setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + dx, y: photoStart.current.y + dy } }));
     } else if (isDragging.current === 'resize' && photos[activeSlotId]) {
-      setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
+      const moveDistance = (dx + dy) * 0.005; 
+      setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + moveDistance), 5) } }));
     } else if (isDragging.current === 'text' && activeSlotId === '1') {
       const slotEl = document.querySelector('.desktop-slot-1');
       if (slotEl) {
@@ -124,9 +157,9 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
     }
   };
 
-  // --- DOTYKY (MOBIL + OPRAVY ROZMĚRŮ) ---
+  // --- DOTYKY (MOBIL) ---
   const handleTouchStart = (type: 'photo' | 'text' | 'resize', slotId: string, e: React.TouchEvent) => {
-    if (e.touches.length > 1) e.preventDefault(); // Blokování zoomu celé stránky
+    if (e.touches.length > 1) e.preventDefault();
     e.stopPropagation();
     setActiveSlotId(slotId); targetSlotIdRef.current = slotId;
 
@@ -157,11 +190,12 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
       if (isDragging.current === 'photo' && photos[activeSlotId]) {
         setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + dx, y: photoStart.current.y + dy } }));
       } else if (isDragging.current === 'resize' && photos[activeSlotId]) {
-        setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
+        const moveDistance = (dx + dy) * 0.005;
+        setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + moveDistance), 5) } }));
       } else if (isDragging.current === 'text') {
-        // KLÍČOVÝ FIX 1: Selektor inteligentně hledá rozměr pouze aktuálního prostředí
+        // KLÍČOVÝ FIX 1: Skákající text. Vybere jen ten slot, který je aktuálně viditelný na obrazovce.
         const isMobile = window.innerWidth < 768;
-        const slotEl = document.querySelector(isMobile ? `.mobile-slot-1` : `.desktop-slot-1`);
+        const slotEl = document.querySelector(isMobile ? '.mobile-slot-1' : '.desktop-slot-1');
         if (slotEl) {
           const rect = slotEl.getBoundingClientRect();
           setTextPos({
@@ -175,7 +209,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
 
   const handleMouseUp = () => { isDragging.current = false; initialTouchDistance.current = null; };
 
-  // --- NÁHLED A EXPORT ---
+  // --- NÁHLED A EXPORT (Nyní s perfektním zrcadlením fontu) ---
   const generateCanvasDataUrl = (): Promise<string> => {
     return new Promise((resolve) => {
       const tCanvas = document.createElement('canvas');
@@ -210,9 +244,8 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
           const textSlot = activeTemplate.slots.find(s => s.id === '1');
           if (textSlot) {
             ctx.save();
-            const isMobile = window.innerWidth < 768;
-            const slotEl = document.querySelector(isMobile ? `.mobile-slot-1` : `.desktop-slot-1`);
-            const textWebToPrintRatio = textSlot.width / (slotEl?.getBoundingClientRect().width || textSlot.width);
+            // KLÍČOVÝ FIX 2: Text se exportuje vždy vůči stabilní uložené referenci šířky slotu z doby editace
+            const textWebToPrintRatio = textSlot.width / textSlotWidthRef.current;
             if (useShadow) { ctx.shadowColor = shadowColor; ctx.shadowBlur = shadowBlur * textWebToPrintRatio; ctx.shadowOffsetX = 2 * textWebToPrintRatio; ctx.shadowOffsetY = 2 * textWebToPrintRatio; }
             ctx.fillStyle = textColor; ctx.font = `bold ${fontSize * textWebToPrintRatio}px ${fontFamily}`; ctx.textAlign = textAlign; ctx.textBaseline = 'middle';
             const textX = textSlot.x + (textPos.x / 100) * textSlot.width; const textY = textSlot.y + (textPos.y / 100) * textSlot.height;
@@ -240,6 +273,13 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
       className="flex-1 min-h-0 w-full flex flex-col justify-between font-sans text-secondary select-none touch-none"
       onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}
     >
+      {/* Vyskakovací nápověda pro mobilní landscape mode */}
+      {showLandscapeHint && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black-custom font-bold px-4 py-2 rounded-full shadow-2xl animate-pulse pointer-events-none whitespace-nowrap text-sm">
+          Otočte zpět na výšku pro zobrazení menu
+        </div>
+      )}
+
       <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="opacity-0 absolute w-0 h-0 pointer-events-none" accept="image/*" />
 
       {/* ======================================================== */}
@@ -281,22 +321,23 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
       {/* ======================================================== */}
       {/* 📱 MOBILNÍ REŽIM WIZARDU */}
       {/* ======================================================== */}
-      <div className="flex md:hidden flex-col flex-1 min-h-0 w-full relative">
-        <div className="w-full bg-[#1E293B] py-2.5 px-4 text-center border-b border-white/5 shadow-inner shrink-0">
-          <span className="text-xs uppercase tracking-widest font-semibold text-black300">
-            {isPreviewStep ? 'Náhled finálního archu' : isMobileTextStep ? 'Úprava hlavního textu' : `Fotografie ${currentPhotoIndex} z ${totalPhotoSlots}`}
-          </span>
-        </div>
+      <div className="flex md:hidden flex-col flex-1 min-h-0 w-full relative overflow-hidden">
+        
+        {/* Schováno, pokud je mobil naležato (landscape) */}
+        {!isMobileLandscape && (
+          <div className="w-full bg-[#1E293B] py-2.5 px-4 text-center border-b border-white/5 shadow-inner shrink-0">
+            <span className="text-xs uppercase tracking-widest font-semibold text-black300">
+              {isPreviewStep ? 'Náhled finálního archu' : isMobileTextStep ? 'Úprava hlavního textu' : `Fotografie ${currentPhotoIndex} z ${totalPhotoSlots}`}
+            </span>
+          </div>
+        )}
         
         <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-6 bg-[#0F172A]">
           {isPreviewStep ? (
             isGeneratingPreview ? <div className="animate-pulse text-xs text-primary">Generuji náhled...</div> : <img src={previewUrl || ''} className="max-w-full max-h-full object-contain shadow-2xl border border-white/10" alt="Preview" />
           ) : (
             <div className="relative shadow-2xl bg-white/5 border border-primary shrink-0 max-w-full max-h-full flex items-center justify-center" onClick={() => handleSlotClick(currentMobileSlot!.id)}>
-              
-              {/* KLÍČOVÝ FIX 2: SVG Letterboxing, který absolutně zamezí zborcení poměru stran! */}
               <svg viewBox={`0 0 ${currentMobileSlot!.width} ${currentMobileSlot!.height}`} className="w-[1000px] max-w-full max-h-full opacity-0 pointer-events-none" />
-              
               <div data-slot-id={currentMobileSlot?.id} className={`mobile-slot-${currentMobileSlot?.id} absolute inset-0 w-full h-full overflow-hidden`}>
                 {photos[currentMobileSlot!.id] ? (
                   <div className="absolute inset-0 w-full h-full overflow-hidden" onTouchStart={(e) => handleTouchStart('photo', currentMobileSlot!.id, e)}>
@@ -309,25 +350,28 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                 ) : !isMobileTextStep && <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 text-center gap-2"><div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl">+</div><span className="text-xs font-semibold text-primary uppercase">Nahrát fotku</span></div>}
                 
                 {isMobileTextStep && <div className="absolute cursor-move select-none p-2 whitespace-pre active:opacity-80 w-max max-w-full touch-none"
-                      style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize * 0.85}px`, fontFamily: fontFamily, fontWeight: 'bold', textAlign: textAlign, lineHeight: 1.05, textShadow: textShadowCSS, zIndex: 40 }}
+                      style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize}px`, fontFamily: fontFamily, fontWeight: 'bold', textAlign: textAlign, lineHeight: 1.05, textShadow: textShadowCSS, zIndex: 40 }}
                       onTouchStart={(e) => handleTouchStart('text', '1', e)}>
                   <span className="border border-primary bg-black-custom/30 p-1 rounded inline-block">{mainText}</span>
                 </div>}
               </div>
             </div>
           )}
-          {isMobileTextStep && !isPreviewStep && <p className="text-[10px] text-black300 mt-4 italic text-center shrink-0">💡 Nápis na známce můžete posouvat tažením prstu</p>}
+          {isMobileTextStep && !isPreviewStep && !isMobileLandscape && <p className="text-[10px] text-black300 mt-4 italic text-center shrink-0">💡 Nápis na známce můžete posouvat tažením prstu</p>}
         </div>
 
-        {isMobileTextStep && !isPreviewStep && <div className="shrink-0 w-full bg-[#131C2E] border-t border-white/5 p-4 flex flex-col gap-3 shadow-2xl z-50">
-          <textarea value={mainText} onChange={e => setMainText(e.target.value)} rows={2} className="w-full bg-black-custom/60 border border-white/10 text-secondary rounded-lg p-2 text-xs outline-none focus:border-primary resize-none"/>
-          <div className="flex items-center gap-2"><select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="flex-1 bg-black-custom/60 border border-white/10 rounded-lg p-2 text-xs text-secondary font-medium">{FONT_OPTIONS.map(f => <option key={f.value} value={f.value} className="bg-black-custom">{f.name}</option>)}</select><div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center shrink-0"><input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute w-12 h-12 cursor-pointer scale-150"/></div><div className="flex bg-black-custom/60 p-0.5 rounded-lg justify-between shrink-0">{(['left', 'center', 'right'] as const).map(a => <button key={a} type="button" onClick={() => setTextAlign(a)} className={`px-2.5 py-1 text-[9px] font-bold rounded ${textAlign === a ? 'bg-primary text-black-custom' : 'text-white/40'}`}>{{left:'L',center:'C',right:'R'}[a]}</button>)}</div></div>
-          <div className="flex items-center justify-between border-t border-white/5 pt-2"><div className="flex items-center gap-2"><input type="checkbox" id="mob-shadow" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-4 h-4 accent-primary"/><label htmlFor="mob-shadow" className="text-[10px] font-bold text-white opacity-50 uppercase">Stín</label></div><input type="range" min="16" max="64" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-24 accent-primary"/></div>
-        </div>}
+        {/* Schováno v landscape módu pro Full-Screen zážitek */}
+        {isMobileTextStep && !isPreviewStep && !isMobileLandscape && (
+          <div className="shrink-0 w-full bg-[#131C2E] border-t border-white/5 p-4 flex flex-col gap-3 shadow-2xl z-50">
+            <textarea value={mainText} onChange={e => setMainText(e.target.value)} rows={2} className="w-full bg-black-custom/60 border border-white/10 text-secondary rounded-lg p-2 text-xs outline-none focus:border-primary resize-none"/>
+            <div className="flex items-center gap-2"><select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="flex-1 bg-black-custom/60 border border-white/10 rounded-lg p-2 text-xs text-secondary font-medium">{FONT_OPTIONS.map(f => <option key={f.value} value={f.value} className="bg-black-custom">{f.name}</option>)}</select><div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center shrink-0"><input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute w-12 h-12 cursor-pointer scale-150"/></div><div className="flex bg-black-custom/60 p-0.5 rounded-lg justify-between shrink-0">{(['left', 'center', 'right'] as const).map(a => <button key={a} type="button" onClick={() => setTextAlign(a)} className={`px-2.5 py-1 text-[9px] font-bold rounded ${textAlign === a ? 'bg-primary text-black-custom' : 'text-white/40'}`}>{{left:'L',center:'C',right:'R'}[a]}</button>)}</div></div>
+            <div className="flex items-center justify-between border-t border-white/5 pt-2"><div className="flex items-center gap-2"><input type="checkbox" id="mob-shadow" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-4 h-4 accent-primary"/><label htmlFor="mob-shadow" className="text-[10px] font-bold text-white opacity-50 uppercase">Stín</label></div><input type="range" min="16" max="64" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-24 accent-primary"/></div>
+          </div>
+        )}
       </div>
 
       {/* ======================================================== */}
-      {/* 🏁 FIXNÍ PATIČKA PRO OBĚ VERZE */}
+      {/* 🏁 FIXNÍ PATIČKA */}
       {/* ======================================================== */}
       
       {/* DESKTOP FOOTER */}
@@ -338,26 +382,28 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
         </div>
       </footer>
 
-      {/* MOBILE FOOTER (KLÍČOVÝ FIX 3: Tlačítko se blokuje pouze na fotkách bez obrázku) */}
-      <footer className="flex md:hidden fixed bottom-0 left-0 w-full bg-[#252C3C] border-t border-[#2B3755] h-[80px] items-center justify-center z-50">
-        <div className="w-full px-4 flex justify-between items-center">
-          <Button 
-            onClick={() => { if (mobileStep > 0) setMobileStep(prev => prev - 1); else window.history.back(); }} 
-            variant="outlined" arrow="left"
-          >Zpět</Button>
-          <Button 
-            onClick={() => {
-              if (isPreviewStep) onComplete();
-              else if (isLastSlotStep) handleMobilePreview();
-              else setMobileStep(prev => prev + 1);
-            }} 
-            disabled={!isPreviewStep && currentMobileSlot?.id !== '1' && !photos[currentMobileSlot?.id as string]}
-            arrow="right"
-          >
-            {isPreviewStep ? 'Dokončit' : isLastSlotStep ? 'Náhled' : 'Další krok'}
-          </Button>
-        </div>
-      </footer>
+      {/* MOBILE FOOTER (Schováno v landscape pro Full-Screen zážitek) */}
+      {!isMobileLandscape && (
+        <footer className="flex md:hidden fixed bottom-0 left-0 w-full bg-[#252C3C] border-t border-[#2B3755] h-[80px] items-center justify-center z-50">
+          <div className="w-full px-4 flex justify-between items-center">
+            <Button 
+              onClick={() => { if (mobileStep > 0) setMobileStep(prev => prev - 1); else window.history.back(); }} 
+              variant="outlined" arrow="left"
+            >Zpět</Button>
+            <Button 
+              onClick={() => {
+                if (isPreviewStep) onComplete();
+                else if (isLastSlotStep) handleMobilePreview();
+                else setMobileStep(prev => prev + 1);
+              }} 
+              disabled={!isPreviewStep && currentMobileSlot?.id !== '1' && !photos[currentMobileSlot?.id as string]}
+              arrow="right"
+            >
+              {isPreviewStep ? 'Dokončit' : isLastSlotStep ? 'Náhled' : 'Další krok'}
+            </Button>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }
