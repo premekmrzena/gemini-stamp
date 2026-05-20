@@ -4,7 +4,6 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import EditorHeader from '@/components/Editor/EditorHeader';
 import Button from '@/components/Button';
-import Link from 'next/link';
 
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), { 
   ssr: false,
@@ -17,10 +16,12 @@ export default function EditorPage() {
   const handleNextStep = () => setCurrentStep(prev => prev + 1);
 
   return (
-    <div className="w-full h-screen flex flex-col bg-black-custom overflow-hidden">
+    // KLÍČOVÝ FIX PRO MOBIL: Použití h-[100dvh] místo h-screen (respektuje adresní řádek)
+    <div className="w-full h-[100dvh] flex flex-col bg-black-custom overflow-hidden">
       <EditorHeader currentStep={currentStep} />
       
-      <main className="flex-1 min-h-0 w-full flex flex-col">
+      {/* Padding bottom zajišťuje, že obsah nezajede pod fixní patičku */}
+      <main className="flex-1 min-h-0 w-full flex flex-col pb-[80px] md:pb-[116px] relative overflow-y-auto">
         
         {/* KROK 1: VÝBĚR ŠABLONY */}
         {currentStep === 1 && (
@@ -28,15 +29,15 @@ export default function EditorPage() {
             <h1 className="style-h1 text-secondary text-center">Vyberte si šablonu archu</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
               <div 
-                className="bg-[#1E293B] border-2 border-primary p-6 rounded-2xl cursor-pointer hover:scale-105 transition-transform"
+                className="bg-[#1E293B] border-2 border-primary p-6 rounded-2xl cursor-pointer hover:scale-105 transition-transform shadow-2xl shadow-primary/10"
                 onClick={handleNextStep}
               >
-                <div className="aspect-[4/3] bg-black-custom rounded mb-4 flex items-center justify-center text-black300">NÁHLED ŠABLONY 1</div>
-                <h3 className="style-h3 text-white">Klasický arch (8 známek)</h3>
+                <div className="aspect-[4/3] bg-black-custom rounded mb-4 flex items-center justify-center text-black300 uppercase tracking-widest font-bold text-xs">Náhled šablony 1</div>
+                <h3 className="style-h3 text-white text-center">Klasický arch (8 známek)</h3>
               </div>
               <div className="bg-[#1E293B] border border-white/10 opacity-50 p-6 rounded-2xl cursor-not-allowed">
                 <div className="aspect-[4/3] bg-black-custom rounded mb-4" />
-                <h3 className="style-h3 text-white">Brzy doplníme...</h3>
+                <h3 className="style-h3 text-white text-center">Brzy doplníme...</h3>
               </div>
             </div>
           </div>
@@ -50,7 +51,7 @@ export default function EditorPage() {
         {/* KROK 3: ÚSPĚCH A KOŠÍK */}
         {currentStep === 3 && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 gap-10 animate-fadeIn text-center">
-            <div className="w-20 h-20 bg-success rounded-full flex items-center justify-center text-white text-4xl shadow-xl shadow-success/20">✓</div>
+            <div className="w-24 h-24 bg-success rounded-full flex items-center justify-center text-white text-5xl shadow-xl shadow-success/20">✓</div>
             <div className="space-y-4">
               <h1 className="style-h1 text-secondary">Právě jste vytvořili svůj první arch!</h1>
               <p className="style-body text-black300 max-w-lg mx-auto">
@@ -58,7 +59,7 @@ export default function EditorPage() {
               </p>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 mt-4">
               <Button onClick={() => window.location.href = '/vytvorit-arch'} variant="outlined">
                 Vložit do košíku a vytvořit další arch
               </Button>
