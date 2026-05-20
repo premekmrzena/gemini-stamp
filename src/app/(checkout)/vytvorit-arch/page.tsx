@@ -14,10 +14,10 @@ export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
 
-  // Detekce otočení mobilu na šířku pro Full-Screen režim
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileLandscape(window.innerWidth < 768 && window.innerWidth > window.innerHeight);
+      // FIX: Kontrola až do 1024px (zahrne všechny telefony naležato i tablety na výšku)
+      setIsMobileLandscape(window.innerWidth < 1024 && window.innerWidth > window.innerHeight);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -27,15 +27,12 @@ export default function EditorPage() {
   const handleNextStep = () => setCurrentStep(prev => prev + 1);
 
   return (
-    // Použití 100dvh řeší problém s vyskakovacím adresním řádkem na mobilu
     <div className="w-full h-[100dvh] flex flex-col bg-black-custom overflow-hidden">
       
-      {/* Hlavička zmizí, pokud je mobil otočen na šířku */}
       {!isMobileLandscape && <EditorHeader currentStep={currentStep} />}
       
-      <main className="flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto">
+      <main className="flex-1 min-h-0 w-full flex flex-col pb-[80px] lg:pb-[116px] relative overflow-y-auto">
         
-        {/* KROK 1: VÝBĚR ŠABLONY */}
         {currentStep === 1 && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 gap-8 animate-fadeIn">
             <h1 className="style-h1 text-secondary text-center">Vyberte si šablonu archu</h1>
@@ -55,12 +52,10 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* KROK 2: EDITOR */}
         {currentStep === 2 && (
           <StampEditor onComplete={handleNextStep} isMobileLandscape={isMobileLandscape} />
         )}
 
-        {/* KROK 3: ÚSPĚCH A KOŠÍK */}
         {currentStep === 3 && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 gap-10 animate-fadeIn text-center">
             <div className="w-24 h-24 bg-success rounded-full flex items-center justify-center text-white text-5xl shadow-xl shadow-success/20">✓</div>
