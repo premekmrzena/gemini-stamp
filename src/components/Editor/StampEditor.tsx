@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import Button from '@/components/Button';
 import { TEMPLATES } from '@/lib/editorConfig';
 
@@ -261,6 +262,33 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   const textShadowCSS = useShadow ? `4px 4px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none';
 
+  // KOMPONENTA MINI-MAPY (Proporcionální mockup archu)
+  const MobileMiniMap = () => (
+    <div 
+      className="relative bg-black-custom/60 shadow-inner overflow-hidden shrink-0 border border-white/20" 
+      style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '36px' }}
+    >
+      {activeTemplate.slots.map(slot => {
+        const isText = slot.id === '1';
+        const isActive = activeSlotId === slot.id;
+        const isFilled = !!photos[slot.id];
+
+        return (
+          <div
+            key={slot.id}
+            className={`absolute border border-black/40 ${isText ? 'bg-transparent border-dashed border-white/30' : isActive || isFilled ? 'bg-success' : 'bg-white/20'}`}
+            style={{
+              left: `${(slot.x / activeTemplate.width) * 100}%`,
+              top: `${(slot.y / activeTemplate.height) * 100}%`,
+              width: `${(slot.width / activeTemplate.width) * 100}%`,
+              height: `${(slot.height / activeTemplate.height) * 100}%`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+
   return (
     <div 
       className="flex-1 min-h-0 w-full flex flex-col justify-between font-sans text-secondary select-none"
@@ -316,16 +344,26 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       <div className="flex lg:hidden flex-col flex-1 min-h-0 w-full relative overflow-hidden">
         
         {!isMobileLandscape && (
-          <div className="w-full bg-[#1E293B] py-2.5 px-4 text-center border-b border-white/5 shadow-inner shrink-0 z-40">
+          <div className="w-full bg-[#1E293B] py-2.5 px-4 flex justify-between items-center border-b border-white/5 shadow-inner shrink-0 z-40">
             <span className="text-xs uppercase tracking-widest font-semibold text-black300">
               {isPreviewStep ? 'Náhled finálního archu' : isMobileTextStep ? 'Úprava hlavního textu' : `Fotografie ${currentPhotoIndex} z ${totalPhotoSlots}`}
             </span>
+            {/* Zobrazení Mini-Mapy jen u fotek */}
+            {!isPreviewStep && !isMobileTextStep && <MobileMiniMap />}
           </div>
         )}
         
-        <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4 md:p-6 bg-[#0F172A] touch-none">
+        {/* Odstraněno touch-none z tohoto kontejneru pro případ, že potřebujeme pinch-to-zoom v náhledu */}
+        <div className={`flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4 md:p-6 bg-[#0F172A] ${!isPreviewStep ? 'touch-none' : ''}`}>
           {isPreviewStep ? (
-            isGeneratingPreview ? <div className="animate-pulse text-xs text-primary">Generuji náhled...</div> : <img src={previewUrl || ''} className="max-w-full max-h-full object-contain shadow-2xl border border-white/10" alt="Preview" />
+            isGeneratingPreview ? <div className="animate-pulse text-xs text-primary">Generuji náhled...</div> : (
+              // PINCH TO ZOOM PRO NÁHLED ARCHU
+              <TransformWrapper centerOnInit={true} initialScale={1} minScale={1} maxScale={5}>
+                <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }} contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={previewUrl || ''} className="max-w-full max-h-full object-contain shadow-2xl border border-white/10" alt="Preview" />
+                </TransformComponent>
+              </TransformWrapper>
+            )
           ) : (
             <div className="relative shadow-2xl bg-white/5 border border-primary shrink-0 max-w-full max-h-full flex items-center justify-center touch-none" onClick={() => handleSlotClick(currentMobileSlot!.id)}>
               <svg viewBox={`0 0 ${currentMobileSlot!.width} ${currentMobileSlot!.height}`} className="w-[2000px] max-w-full max-h-full opacity-0 pointer-events-none" />
