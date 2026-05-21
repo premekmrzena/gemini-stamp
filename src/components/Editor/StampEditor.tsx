@@ -34,7 +34,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const [viewRatio, setViewRatio] = useState(1);
 
   const [mainText, setMainText] = useState('Vlastní text');
-  const [textColor, setTextColor] = useState('#FF6B35');
+  const [textColor, setTextColor] = useState('#FF6B35'); // Výchozí primary barva (bude se propisovat do canvasu)
   const [fontSize, setFontSize] = useState(120);
   const [fontFamily, setFontFamily] = useState('sans-serif');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
@@ -60,8 +60,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const totalPhotoSlots = photoSlotsOnly.length;
   const currentPhotoIndex = activeTemplate.slots.slice(0, mobileStep + 1).filter(s => s.id !== '1').length;
   const allPhotosFilled = photoSlotsOnly.every(slot => photos[slot.id]);
-
-  const textShadowCSS = useShadow ? `4px 4px ${shadowBlur / (viewRatio || 1)}px ${shadowColor}` : 'none';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -107,9 +105,9 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const safeRatio = viewRatio || 1;
 
   const MobileMiniMap = () => (
-    <div className="relative bg-black-custom/60 shadow-inner overflow-hidden shrink-0 border border-white/20" style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '36px' }}>
+    <div className="relative bg-black-custom/60 shadow-inner overflow-hidden shrink-0 border border-black300/20 rounded-[4px]" style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '36px' }}>
       {activeTemplate.slots.map(slot => (
-        <div key={slot.id} className={`absolute border border-black/40 ${slot.id === '1' ? 'bg-transparent border-dashed border-white/30' : (activeSlotId === slot.id || photos[slot.id]) ? 'bg-success' : 'bg-white/20'}`} style={{ left: `${(slot.x / activeTemplate.width) * 100}%`, top: `${(slot.y / activeTemplate.height) * 100}%`, width: `${(slot.width / activeTemplate.width) * 100}%`, height: `${(slot.height / activeTemplate.height) * 100}%` }} />
+        <div key={slot.id} className={`absolute border border-black-custom/40 transition-colors ${slot.id === '1' ? 'bg-transparent border-dashed border-secondary/30' : (activeSlotId === slot.id || photos[slot.id]) ? 'bg-success' : 'bg-secondary/20'}`} style={{ left: `${(slot.x / activeTemplate.width) * 100}%`, top: `${(slot.y / activeTemplate.height) * 100}%`, width: `${(slot.width / activeTemplate.width) * 100}%`, height: `${(slot.height / activeTemplate.height) * 100}%` }} />
       ))}
     </div>
   );
@@ -160,7 +158,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   const handleMouseUp = () => { isDragging.current = false; initialTouchDistance.current = null; };
 
-  // OPTIMALIZOVANÝ EXPORT S PODPOROU ZMENŠENÍ (targetWidth)
   const generateCanvasDataUrl = async (includeBackground: boolean = true, targetWidth?: number): Promise<string> => {
     const tCanvas = document.createElement('canvas'); tCanvas.width = activeTemplate.width; tCanvas.height = activeTemplate.height;
     const ctx = tCanvas.getContext('2d'); if (!ctx) return '';
@@ -170,7 +167,8 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       await new Promise(r => bgImg.onload = r); 
       ctx.drawImage(bgImg, 0, 0, tCanvas.width, tCanvas.height);
     } else {
-      ctx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, tCanvas.width, tCanvas.height);
     }
 
     for (const slot of activeTemplate.slots) {
@@ -187,7 +185,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       mainText.split('\n').forEach((line, i) => ctx.fillText(line, tS.x + (textPos.x/100)*tS.width, tS.y + (textPos.y/100)*tS.height + i * (fontSize*1.05))); ctx.restore(); 
     }
 
-    // Pokud je zadána cílová šířka (např. 1080) a plátno je větší, zmenšíme ho
     if (targetWidth && targetWidth < tCanvas.width) {
       const scale = targetWidth / tCanvas.width;
       const resCanvas = document.createElement('canvas');
@@ -196,11 +193,11 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       const resCtx = resCanvas.getContext('2d');
       if (resCtx) {
         resCtx.drawImage(tCanvas, 0, 0, resCanvas.width, resCanvas.height);
-        return resCanvas.toDataURL(includeBackground ? 'image/jpeg' : 'image/png', 0.85); // 85% kvalita pro odlehčený náhled
+        return resCanvas.toDataURL('image/jpeg', 0.85); 
       }
     }
 
-    return tCanvas.toDataURL(includeBackground ? 'image/jpeg' : 'image/png', 0.95);
+    return tCanvas.toDataURL('image/jpeg', 0.95);
   };
 
   const uploadBase64ToBlob = async (base64Data: string, filename: string) => {
@@ -213,7 +210,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   const handleMobilePreview = async () => {
     setMobileStep(totalSlotsSteps); setIsGeneratingPreview(true);
-    // Pro zobrazení náhledu rovnou generujeme zmenšenou verzi na 1080px
     const dataUrl = await generateCanvasDataUrl(true, 1080);
     setPreviewUrl(dataUrl); setIsGeneratingPreview(false);
   };
@@ -221,37 +217,21 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const handleUploadAndComplete = async () => {
     setIsUploading(true);
     try {
-      // 1. Generování obrázků
       const previewDataUrl = await generateCanvasDataUrl(true, 1080);
       const printDataUrl = await generateCanvasDataUrl(false);
       const timestamp = Date.now();
       
-      // 2. Upload do Vercel Blob
       const previewUpload = await uploadBase64ToBlob(previewDataUrl, `preview-${timestamp}.jpg`);
-      const printUpload = await uploadBase64ToBlob(printDataUrl, `print-${timestamp}.png`);
+      const printUpload = await uploadBase64ToBlob(printDataUrl, `print-${timestamp}.jpg`);
       
-      // 3. Uložení do Supabase databáze
-      // Zde doplň reálné ID produktu "Klasický arch" z tvé tabulky products
       const TEMPLATE_PRODUCT_ID = "2923bbf0-2f34-4cd5-b586-7c1c7ba1977b"; 
       
       const { data, error } = await supabase
         .from('custom_stamps')
-        .insert([
-          { 
-            product_id: TEMPLATE_PRODUCT_ID,
-            preview_url: previewUpload.url,
-            print_url: printUpload.url
-          }
-        ])
-        .select('id')
-        .single();
+        .insert([{ product_id: TEMPLATE_PRODUCT_ID, preview_url: previewUpload.url, print_url: printUpload.url }])
+        .select('id').single();
 
       if (error) throw error;
-
-      console.log('Arch úspěšně vytvořen v DB s ID:', data.id);
-      
-      // 4. Přechod na Krok 3 s předáním ID
-      // Funkci onComplete upravíme tak, aby přijímala ID vytvořeného archu
       onComplete(data.id); 
       
     } catch (error) {
@@ -263,9 +243,11 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   };
 
   return (
-    <div className={`flex-1 min-h-0 w-full flex flex-col justify-between font-sans text-secondary select-none ${!isPreviewStep ? 'touch-none' : ''}`} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}>
+    <div className={`flex-1 min-h-0 w-full flex flex-col justify-between text-secondary select-none bg-black-custom ${!isPreviewStep ? 'touch-none' : ''}`} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}>
       {showLandscapeHint && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black-custom font-bold px-4 py-2 rounded-full shadow-2xl animate-pulse pointer-events-none whitespace-nowrap text-sm">Otočte zpět na výšku pro zobrazení menu</div>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black-custom style-body-bold px-4 py-2 rounded-full shadow-2xl animate-pulse pointer-events-none whitespace-nowrap">
+          Otočte zpět na výšku pro zobrazení menu
+        </div>
       )}
       <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="opacity-0 absolute w-0 h-0 pointer-events-none" accept="image/*" />
 
@@ -274,27 +256,51 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       {/* ======================================================== */}
       <div className="hidden lg:flex flex-col flex-1 min-h-0 w-full relative">
         <div className="flex-1 min-h-0 w-full flex items-center justify-center p-8 pb-[140px]" onClick={() => setActiveSlotId(null)}>
-          <div className="desktop-canvas-wrapper relative shadow-2xl bg-black-custom border border-white/10 shrink-0 touch-none" style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '100%', maxWidth: '100%' }} onClick={(e) => e.stopPropagation()}>
+          <div className="desktop-canvas-wrapper relative shadow-2xl bg-secondary border border-black300/10 shrink-0 touch-none rounded-[4px] overflow-hidden" style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '100%', maxWidth: '100%' }} onClick={(e) => e.stopPropagation()}>
             <img src={activeTemplate.backgroundImage} className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="Šablona" />
             {activeTemplate.slots.map((slot) => (
-              <div key={slot.id} data-slot-id={slot.id} className={`absolute border border-dashed cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/30 bg-white/5'}`} style={{ left: `${(slot.x/activeTemplate.width)*100}%`, top: `${(slot.y/activeTemplate.height)*100}%`, width: `${(slot.width/activeTemplate.width)*100}%`, height: `${(slot.height/activeTemplate.height)*100}%`, zIndex: slot.id === '1' ? 10 : 5 }} onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}>
+              <div key={slot.id} data-slot-id={slot.id} className={`absolute border border-dashed cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-primary bg-primary/10' : 'border-secondary/30 hover:border-primary/50 bg-black-custom/5'}`} style={{ left: `${(slot.x/activeTemplate.width)*100}%`, top: `${(slot.y/activeTemplate.height)*100}%`, width: `${(slot.width/activeTemplate.width)*100}%`, height: `${(slot.height/activeTemplate.height)*100}%`, zIndex: slot.id === '1' ? 10 : 5 }} onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}>
                 {photos[slot.id] ? (
                   <div className="absolute inset-0 w-full h-full overflow-hidden" onMouseDown={(e) => handleMouseDown('photo', slot.id, e)}>
                     <img src={photos[slot.id].url} className="w-full h-full object-cover origin-center pointer-events-none" style={{ transform: `translate(${photos[slot.id].x / safeRatio}px, ${photos[slot.id].y / safeRatio}px) scale(${photos[slot.id].scale})` }} />
-                    <button onClick={(e) => handleDeletePhoto(slot.id, e)} className="absolute top-1 right-1 w-6 h-6 bg-red-500/90 text-white font-bold rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-md">✕</button>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-primary flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-md" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                    <button onClick={(e) => handleDeletePhoto(slot.id, e)} className="absolute top-2 right-2 w-8 h-8 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-md hover:bg-tag-posledni-kusy">✕</button>
+                    <div className="absolute bottom-0 right-0 w-10 h-10 bg-primary hover:bg-primary-hover flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-[8px] transition-colors" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black-custom" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
                   </div>
-                ) : slot.id !== '1' && <div className="absolute inset-0 w-full h-full flex items-center justify-center p-2 text-center font-medium text-black300 text-sm">Vložit fotku</div>}
-                {slot.id === '1' && <div className="absolute cursor-move select-none p-2 whitespace-pre active:opacity-80 group w-max max-w-full touch-none" style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily: fontFamily, fontWeight: 'bold', textAlign: textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }} onMouseDown={(e) => handleMouseDown('text', '1', e)}><span className="relative z-10 border border-transparent group-hover:border-primary p-1 rounded inline-block">{mainText}</span></div>}
+                ) : slot.id !== '1' && <div className="absolute inset-0 w-full h-full flex items-center justify-center p-2 text-center style-body-bold text-black300 opacity-50 group-hover:opacity-100 transition-opacity">Vložit fotku</div>}
+                {slot.id === '1' && <div className="absolute cursor-move select-none p-2 whitespace-pre active:opacity-80 group w-max max-w-full touch-none" style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily: fontFamily, fontWeight: 'bold', textAlign: textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }} onMouseDown={(e) => handleMouseDown('text', '1', e)}><span className="relative z-10 border border-transparent group-hover:border-primary/50 p-1 rounded inline-block">{mainText}</span></div>}
               </div>
             ))}
           </div>
         </div>
         {activeSlotId === '1' && (
-          <div className="absolute bottom-0 left-0 w-full bg-[#131C2E] border-t border-white/5 px-[84px] py-6 grid grid-cols-3 gap-8 items-center shadow-2xl z-50 animate-[fadeIn_0.15s_ease-out]">
-            <div className="space-y-2"><label className="text-[11px] font-bold text-white opacity-60 block uppercase tracking-wider">Nápis na známku</label><textarea value={mainText} onChange={e => setMainText(e.target.value)} rows={2} className="w-full bg-black-custom/60 border border-white/10 text-secondary rounded-lg p-3 text-sm outline-none focus:border-primary transition resize-none whitespace-pre-wrap"/></div>
-            <div className="space-y-4"><div className="flex gap-4"><select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="flex-1 bg-black-custom/60 border border-white/10 rounded-lg p-3 text-sm text-secondary font-medium">{FONT_OPTIONS.map(f => <option key={f.value} value={f.value} className="bg-black-custom">{f.name}</option>)}</select><div className="relative w-11 h-11 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center shrink-0"><input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute w-16 h-16 cursor-pointer scale-150"/></div></div><div className="grid grid-cols-2 gap-4 items-center"><input type="range" min="40" max="400" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-full accent-primary"/><div className="flex bg-black-custom/60 p-1 rounded-lg border border-white/10 justify-between">{(['left', 'center', 'right'] as const).map(a => <button key={a} type="button" onClick={() => setTextAlign(a)} className={`px-4 py-1.5 text-xs font-bold rounded transition-all ${textAlign === a ? 'bg-primary text-black-custom' : 'text-white/40 hover:text-white'}`}>{{left:'L',center:'C',right:'R'}[a]}</button>)}</div></div></div>
-            <div className="flex flex-col gap-3 items-center"><div className="flex items-center gap-3"><input type="checkbox" id="shadow-check" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-5 h-5 accent-primary cursor-pointer"/><label htmlFor="shadow-check" className="text-xs font-bold text-white opacity-60 uppercase cursor-pointer">Stín písma</label></div>{useShadow && <input type="range" min="1" max="50" value={shadowBlur} onChange={e => setShadowBlur(Number(e.target.value))} className="w-full max-w-[200px] accent-primary"/>}</div>
+          <div className="absolute bottom-0 left-0 w-full bg-black400 border-t border-black300/30 px-[84px] py-6 grid grid-cols-3 gap-8 items-center shadow-2xl z-50 animate-[fadeIn_0.15s_ease-out]">
+            <div className="space-y-2">
+              <label className="style-product-tag text-black300">Nápis na známku</label>
+              <textarea value={mainText} onChange={e => setMainText(e.target.value)} rows={2} className="w-full bg-black-custom border border-black300/30 text-secondary rounded-[8px] p-3 style-body outline-none focus:border-primary transition-colors resize-none whitespace-pre-wrap placeholder:text-black300/50"/>
+            </div>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="flex-1 bg-black-custom border border-black300/30 rounded-[8px] p-3 style-body-bold text-secondary outline-none focus:border-primary">
+                  {FONT_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                </select>
+                <div className="relative w-12 h-12 rounded-[8px] overflow-hidden border border-black300/30 flex items-center justify-center shrink-0">
+                  <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute w-16 h-16 cursor-pointer scale-150"/>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 items-center">
+                <input type="range" min="40" max="400" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-full accent-primary"/>
+                <div className="flex bg-black-custom p-1 rounded-[8px] border border-black300/30 justify-between">
+                  {(['left', 'center', 'right'] as const).map(a => <button key={a} type="button" onClick={() => setTextAlign(a)} className={`px-4 py-1.5 style-product-tag rounded-[4px] transition-all ${textAlign === a ? 'bg-primary text-black-custom font-bold' : 'text-black300 hover:text-secondary'}`}>{{left:'L',center:'C',right:'R'}[a]}</button>)}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 items-center">
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="shadow-check" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-5 h-5 accent-primary cursor-pointer rounded-[4px]"/>
+                <label htmlFor="shadow-check" className="style-product-tag text-black300 cursor-pointer hover:text-secondary transition-colors">Stín písma</label>
+              </div>
+              {useShadow && <input type="range" min="1" max="50" value={shadowBlur} onChange={e => setShadowBlur(Number(e.target.value))} className="w-full max-w-[200px] accent-primary"/>}
+            </div>
           </div>
         )}
       </div>
@@ -302,51 +308,70 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       {/* ======================================================== */}
       {/* 📱 MOBILNÍ REŽIM WIZARDU */}
       {/* ======================================================== */}
-      <div className="flex lg:hidden flex-col flex-1 min-h-0 w-full relative overflow-hidden">
+      <div className="flex lg:hidden flex-col flex-1 min-h-0 w-full relative overflow-hidden bg-black-custom">
         {!isMobileLandscape && (
-          <div className="w-full bg-[#1E293B] py-3 px-6 flex justify-between items-center border-b border-white/5 shadow-inner shrink-0 z-40">
+          <div className="w-full bg-black400 py-3 px-4 flex justify-between items-center border-b border-black300/30 shrink-0 z-40">
             <div className="flex flex-col">
-              <span className="text-xs text-white/50 uppercase tracking-widest font-semibold mb-1">Návrh archu</span>
-              <span className="text-base font-bold text-white">{isPreviewStep ? 'Finální náhled' : isMobileTextStep ? 'Úprava nápisu' : `Fotografie ${currentPhotoIndex} z ${totalPhotoSlots}`}</span>
+              <span className="style-product-tag text-black300 mb-0.5">Návrh archu</span>
+              <span className="style-body-bold text-secondary">{isPreviewStep ? 'Finální náhled' : isMobileTextStep ? 'Úprava nápisu' : `Fotografie ${currentPhotoIndex} z ${totalPhotoSlots}`}</span>
             </div>
             {!isPreviewStep && !isMobileTextStep && <MobileMiniMap />}
           </div>
         )}
         
-        <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4 bg-[#0F172A] relative overflow-hidden">
+        <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
           {isPreviewStep ? (
-            isGeneratingPreview ? <div className="animate-pulse text-sm font-bold text-primary flex flex-col items-center gap-4"><div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>Generuji arch k tisku...</div> : (
+            isGeneratingPreview ? <div className="animate-pulse style-body-bold text-primary flex flex-col items-center gap-4"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>Generuji arch k tisku...</div> : (
               <TransformWrapper centerOnInit={true} initialScale={1} minScale={1} maxScale={5}>
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }} contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={previewUrl || ''} className="max-w-full max-h-full object-contain shadow-2xl border border-white/10" alt="Preview" />
+                  <img src={previewUrl || ''} className="max-w-full max-h-full object-contain shadow-2xl border border-black300/30 rounded-[4px]" alt="Preview" />
                 </TransformComponent>
               </TransformWrapper>
             )
           ) : (
             <div className="mobile-slot-wrapper w-full h-full flex items-center justify-center">
-              <div className="relative shadow-2xl bg-white/5 border border-primary shrink-0 flex items-center justify-center touch-none max-w-full max-h-full" onClick={() => handleSlotClick(currentMobileSlot!.id)}>
+              <div className="relative shadow-2xl bg-secondary/5 border border-primary shrink-0 flex items-center justify-center touch-none max-w-full max-h-full rounded-[4px] overflow-hidden" onClick={() => handleSlotClick(currentMobileSlot!.id)}>
                 <svg viewBox={`0 0 ${currentMobileSlot!.width} ${currentMobileSlot!.height}`} className="w-[2000px] max-w-full max-h-full opacity-0 pointer-events-none" />
                 <div data-slot-id={currentMobileSlot?.id} className={`mobile-slot-${currentMobileSlot?.id} absolute inset-0 w-full h-full overflow-hidden touch-none`}>
                   {photos[currentMobileSlot!.id] ? (
                     <div className="absolute inset-0 w-full h-full overflow-hidden touch-none" onTouchStart={(e) => handleTouchStart('photo', currentMobileSlot!.id, e)}>
                       <img src={photos[currentMobileSlot!.id].url} className="absolute inset-0 w-full h-full object-cover origin-center pointer-events-none" style={{ transform: `translate(${photos[currentMobileSlot!.id].x / safeRatio}px, ${photos[currentMobileSlot!.id].y / safeRatio}px) scale(${photos[currentMobileSlot!.id].scale})` }} />
-                      <button onClick={(e) => handleDeletePhoto(currentMobileSlot!.id, e)} className="absolute top-2 right-2 w-10 h-10 bg-red-500/90 text-white font-bold rounded-full text-sm flex items-center justify-center z-30 shadow-lg">✕</button>
-                      <div className="absolute bottom-0 right-0 w-14 h-14 bg-primary flex items-center justify-center z-20 shadow-md rounded-tl-xl" onTouchStart={(e) => handleTouchStart('resize', currentMobileSlot!.id, e)} onClick={(e) => e.stopPropagation()}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                      <button onClick={(e) => handleDeletePhoto(currentMobileSlot!.id, e)} className="absolute top-3 right-3 w-10 h-10 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full style-body flex items-center justify-center z-30 shadow-lg">✕</button>
+                      <div className="absolute bottom-0 right-0 w-12 h-12 bg-primary flex items-center justify-center z-20 shadow-md rounded-tl-[12px]" onTouchStart={(e) => handleTouchStart('resize', currentMobileSlot!.id, e)} onClick={(e) => e.stopPropagation()}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black-custom" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
                     </div>
-                  ) : !isMobileTextStep && <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 text-center gap-3"><div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-3xl shadow-inner">+</div><span className="text-sm font-bold text-primary uppercase tracking-widest">Nahrát fotografii</span></div>}
-                  {isMobileTextStep && <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none" style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily: fontFamily, fontWeight: 'bold', textAlign: textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }} onTouchStart={(e) => handleTouchStart('text', '1', e)}><span className="border-2 border-primary border-dashed bg-black-custom/40 p-2 rounded-lg inline-block">{mainText}</span></div>}
+                  ) : !isMobileTextStep && <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 text-center gap-4"><div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-light text-4xl shadow-inner">+</div><span className="style-product-tag text-primary">Nahrát fotografii</span></div>}
+                  {isMobileTextStep && <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none" style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily: fontFamily, fontWeight: 'bold', textAlign: textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }} onTouchStart={(e) => handleTouchStart('text', '1', e)}><span className="border border-primary border-dashed bg-black-custom/60 backdrop-blur-sm p-2 rounded-[8px] inline-block">{mainText}</span></div>}
                 </div>
               </div>
             </div>
           )}
-          {isMobileTextStep && !isPreviewStep && !isMobileLandscape && <p className="text-[11px] text-black300 mt-4 font-medium italic text-center shrink-0">💡 Nápis na známce můžete posouvat tažením prstu</p>}
-          {isPreviewStep && !isMobileLandscape && <p className="absolute bottom-4 left-0 w-full text-[11px] text-black300 font-medium italic text-center pointer-events-none drop-shadow-md">💡 Arch můžete přibližovat a posouvat dvěma prsty</p>}
+          {isMobileTextStep && !isPreviewStep && !isMobileLandscape && <p className="style-body text-black300 mt-4 text-center shrink-0">💡 Nápis na známce můžete posouvat tažením prstu</p>}
+          {isPreviewStep && !isMobileLandscape && <p className="absolute bottom-6 left-0 w-full style-body text-black300 text-center pointer-events-none drop-shadow-md bg-black-custom/40 py-1 backdrop-blur-sm">💡 Arch můžete přibližovat a posouvat dvěma prsty</p>}
         </div>
         {isMobileTextStep && !isPreviewStep && !isMobileLandscape && (
-          <div className="shrink-0 w-full bg-[#131C2E] border-t border-white/5 p-5 flex flex-col gap-4 shadow-2xl z-50">
-            <div className="space-y-1.5"><label className="text-[10px] font-bold text-white opacity-50 block uppercase tracking-wider">Nápis na známku</label><textarea value={mainText} onChange={e => setMainText(e.target.value)} rows={2} className="w-full bg-black-custom/60 border border-white/10 text-secondary rounded-lg p-3 text-sm outline-none focus:border-primary resize-none"/></div>
-            <div className="flex items-center gap-3"><select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="flex-1 bg-black-custom/60 border border-white/10 rounded-lg p-3 text-sm text-secondary font-medium">{FONT_OPTIONS.map(f => <option key={f.value} value={f.value} className="bg-black-custom">{f.name}</option>)}</select><div className="relative w-10 h-10 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center shrink-0"><input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute w-14 h-14 cursor-pointer scale-150"/></div><div className="flex bg-black-custom/60 p-1 rounded-lg justify-between shrink-0">{(['left', 'center', 'right'] as const).map(a => <button key={a} type="button" onClick={() => setTextAlign(a)} className={`px-3 py-1.5 text-[10px] font-bold rounded ${textAlign === a ? 'bg-primary text-black-custom' : 'text-white/40'}`}>{{left:'L',center:'C',right:'R'}[a]}</button>)}</div></div>
-            <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-1"><div className="flex items-center gap-2"><input type="checkbox" id="mob-shadow" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-5 h-5 accent-primary"/><label htmlFor="mob-shadow" className="text-xs font-bold text-white opacity-50 uppercase">Stín</label></div><input type="range" min="40" max="400" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-32 accent-primary"/></div>
+          <div className="shrink-0 w-full bg-black400 border-t border-black300/30 p-4 flex flex-col gap-4 z-50">
+            <div className="space-y-2">
+              <label className="style-product-tag text-black300">Nápis na známku</label>
+              <textarea value={mainText} onChange={e => setMainText(e.target.value)} rows={2} className="w-full bg-black-custom border border-black300/30 text-secondary rounded-[8px] p-3 style-body outline-none focus:border-primary resize-none placeholder:text-black300/50"/>
+            </div>
+            <div className="flex items-center gap-3">
+              <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="flex-1 bg-black-custom border border-black300/30 rounded-[8px] p-3 style-body-bold text-secondary outline-none focus:border-primary">
+                {FONT_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+              </select>
+              <div className="relative w-11 h-11 rounded-[8px] overflow-hidden border border-black300/30 flex items-center justify-center shrink-0">
+                <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute w-14 h-14 cursor-pointer scale-150"/>
+              </div>
+              <div className="flex bg-black-custom p-1 rounded-[8px] border border-black300/30 justify-between shrink-0">
+                {(['left', 'center', 'right'] as const).map(a => <button key={a} type="button" onClick={() => setTextAlign(a)} className={`px-3 py-1.5 style-product-tag rounded-[4px] ${textAlign === a ? 'bg-primary text-black-custom font-bold' : 'text-black300'}`}>{{left:'L',center:'C',right:'R'}[a]}</button>)}
+              </div>
+            </div>
+            <div className="flex items-center justify-between border-t border-black300/30 pt-3 mt-1">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="mob-shadow" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-5 h-5 accent-primary rounded-[4px]"/>
+                <label htmlFor="mob-shadow" className="style-product-tag text-black300">Stín</label>
+              </div>
+              <input type="range" min="40" max="400" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-[140px] accent-primary"/>
+            </div>
           </div>
         )}
       </div>
@@ -354,7 +379,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       {/* ======================================================== */}
       {/* 🏁 FIXNÍ PATIČKA */}
       {/* ======================================================== */}
-      <footer className="hidden lg:flex fixed bottom-0 left-0 w-full bg-[#252C3C] border-t border-[#2B3755] h-[116px] items-center justify-center z-50">
+      <footer className="hidden lg:flex fixed bottom-0 left-0 w-full bg-black500 border-t border-black300/30 h-[116px] items-center justify-center z-50">
         <div className="w-full max-w-[1440px] mx-auto px-[84px] flex justify-between items-center">
           <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
           <Button onClick={handleUploadAndComplete} disabled={!allPhotosFilled || isUploading} arrow="right">
@@ -364,7 +389,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       </footer>
 
       {!isMobileLandscape && (
-        <footer className="flex lg:hidden fixed bottom-0 left-0 w-full bg-[#252C3C] border-t border-[#2B3755] h-[80px] items-center justify-center z-50 pb-safe">
+        <footer className="flex lg:hidden fixed bottom-0 left-0 w-full bg-black500 border-t border-black300/30 h-[80px] items-center justify-center z-50 pb-safe">
           <div className="w-full px-4 flex justify-between items-center">
             <Button onClick={() => { if (mobileStep > 0) setMobileStep(prev => prev - 1); else window.history.back(); }} variant="outlined" arrow="left" disabled={isUploading}>Zpět</Button>
             <Button onClick={() => { if (isPreviewStep) handleUploadAndComplete(); else if (isLastSlotStep) handleMobilePreview(); else setMobileStep(prev => prev + 1); }} disabled={(!isPreviewStep && currentMobileSlot?.id !== '1' && !photos[currentMobileSlot?.id as string]) || isUploading} arrow="right">

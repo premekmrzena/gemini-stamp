@@ -26,6 +26,8 @@
   --color-primary-hover: #FF7F51;
   --color-secondary: #FDFBF7;
   --color-black-custom: #0F172A;
+  /* PŘIDÁNA NOVÁ BARVA PRO HLAVIČKU A PATIČKU */
+  --color-black500: #252C3C;
   --color-black400: #2B3755;
   --color-black300: #8B95AC;
   --color-black200: #D1D6DF;
@@ -33,6 +35,12 @@
   --color-tag-novinka: #F9B420;
   --color-tag-posledni-kusy: #F95755;
   --color-tag-top: #62BBE2;
+
+  /* Přenastavení zaoblení rohů na striktních 4px */
+  --radius: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
 }
 
 body {
