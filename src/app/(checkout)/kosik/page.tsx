@@ -43,7 +43,6 @@ const paymentOptions = [
   { id: 'prevod', name: 'Bankovní převod', price: 0, desc: 'Pokyny obdržíte v e-mailu' },
 ];
 
-// --- POMOCNÉ KOMPONENTY PRO FORMULÁŘ ---
 const InputField = ({ label, ...props }: any) => (
   <div className="w-full flex flex-col gap-2">
     <label className="style-body-bold text-secondary">{label}</label>
@@ -95,14 +94,17 @@ const SelectField = ({ label, options, ...props }: any) => (
 // --- HLAVNÍ KOMPONENTA STRÁNKY ---
 const CheckoutPage = () => {
   const { cartItems, cartTotal, removeFromCart, updateQuantity } = useCart();
+  
+  // FIX: Zabraňuje Hydration Erroru tím, že se stránka vyrenderuje až v prohlížeči
+  const [isMounted, setIsMounted] = useState(false);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedShipping, setSelectedShipping] = useState('osobni');
   const [selectedPayment, setSelectedPayment] = useState(paymentOptions[0].id);
   
-  const [showCompanyFields, setShowCompanyFields] = useState(false);
-  const [shippingDifferentThanOrdering, setShippingDifferentThanOrdering] = useState(false);
   const [customerNote, setCustomerNote] = useState('');
+  
+  const [previewArchImage, setPreviewArchImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     billing_first_name: '', billing_last_name: '', billing_email: '', billing_phone: '',
@@ -131,84 +133,84 @@ const CheckoutPage = () => {
   const paymentCost = paymentOptions.find(o => o.id === selectedPayment)?.price || 0;
   const totalOrderPrice = cartTotal + shippingCost + paymentCost;
 
-  // --- FUNKCE PRO ODESLÁNÍ OBJEDNÁVKY ---
-const submitOrder = async () => {
-  if (isSubmitting) return;
-  setIsSubmitting(true);
-  setOrderError(null);
-
-  const orderData = {
-    total_price: totalOrderPrice,
-    shipping_method: currentShippingOptions.find(o => o.id === selectedShipping)?.name || 'Neznámá',
-    shipping_cost: shippingCost,
-    payment_method: paymentOptions.find(o => o.id === selectedPayment)?.name || 'Neznámá',
-    payment_cost: paymentCost,
-    cart_items: cartItems,
-    customer_note: customerNote,
-    status: 'Nová',
-    ...formData,
-    shipping_is_different: shippingDifferentThanOrdering,
-    ...(isOsobni && { shipping_is_different: false })
-  };
-
-  try {
-    // 1. Uložení do Supabase (musí proběhnout jako první)
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderData])
-      .select('id')
-      .single();
-
-    if (error) throw error;
-    
-    const newOrderId = data.id;
-    setCreatedOrderId(newOrderId);
-
-    // 2. ODESLÁNÍ E-MAILU PŘES RESEND (BĚŽÍ NA POZADÍ)
-    // Odebrali jsme 'await', aby se okamžitě pokračovalo k platbě
-    // Odeslání e-mailu na pozadí
-fetch('/api/send-confirmation', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: formData.billing_email,
-    orderId: newOrderId.slice(-8).toUpperCase(),
-    customerName: formData.billing_first_name,
-    totalPrice: totalOrderPrice,
-    cartItems: cartItems, // TENTO ŘÁDEK JSME PŘIDALI
-  }),
-}).catch(err => console.error("Email background error:", err));
-
-    // 3. Rozcestník podle platby (SPOUŠTÍ SE IHNED)
-    if (selectedPayment === 'karta') {
-      // Modal se nyní otevře okamžitě, což vyřeší chybu IntegrationError
-      setIsPaymentModalOpen(true);
-      setIsSubmitting(false);
-    } else {
-      window.location.href = `/dekujeme?orderId=${newOrderId}`;
-    }
-
-  } catch (error: any) {
-    console.error('Chyba objednávky:', error);
-    setOrderError(error.message || 'Něco se pokazilo.');
-    setIsSubmitting(false);
-  }
-};
-
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
-  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  // FIX: Spustí se pouze v klientovi
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep]);
 
+  const submitOrder = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setOrderError(null);
+
+    const orderData = {
+      total_price: totalOrderPrice,
+      shipping_method: currentShippingOptions.find(o => o.id === selectedShipping)?.name || 'Neznámá',
+      shipping_cost: shippingCost,
+      payment_method: paymentOptions.find(o => o.id === selectedPayment)?.name || 'Neznámá',
+      payment_cost: paymentCost,
+      cart_items: cartItems,
+      customer_note: customerNote,
+      status: 'Nová',
+      ...formData,
+      shipping_is_different: false
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      
+      const newOrderId = data.id;
+      setCreatedOrderId(newOrderId);
+
+      fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.billing_email,
+          orderId: newOrderId.slice(-8).toUpperCase(),
+          customerName: formData.billing_first_name,
+          totalPrice: totalOrderPrice,
+          cartItems: cartItems,
+        }),
+      }).catch(err => console.error("Email background error:", err));
+
+      if (selectedPayment === 'karta') {
+        setIsPaymentModalOpen(true);
+        setIsSubmitting(false);
+      } else {
+        window.location.href = `/dekujeme?orderId=${newOrderId}`;
+      }
+
+    } catch (error: any) {
+      console.error('Chyba objednávky:', error);
+      setOrderError(error.message || 'Něco se pokazilo.');
+      setIsSubmitting(false);
+    }
+  };
+
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
+  // FIX: Pokud ještě nejsme plně načteni v klientovi, nevracíme nic (zabrání bliknutí a chybě)
+  if (!isMounted) return null;
+
   if (cartItems.length === 0) {
     return (
       <div className="w-full min-h-screen flex flex-col bg-black-custom">
-        <header className="w-full bg-[#252C3C] border-b border-black300/30 h-[80px] md:h-[98px] lg:h-[116px] flex items-center justify-center">
-          <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-[84px] flex items-center justify-center lg:justify-start">
+        <header className="w-full bg-[#252C3C] border-b border-black300/30 h-[116px] flex items-center justify-center">
+          <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-[84px]">
             <Link href="/" className="flex-shrink-0 flex items-center h-full">
-              <Image src="/images/creative-stamp_logo.svg" alt="Creative Stamp Logo" width={250} height={69} priority className="h-[56px] w-auto md:w-[250px] md:h-auto object-contain" />
+              <Image src="/images/creative-stamp_logo.svg" alt="Creative Stamp Logo" width={250} height={69} priority className="h-[56px] w-auto object-contain" />
             </Link>
           </div>
         </header>
@@ -226,7 +228,7 @@ fetch('/api/send-confirmation', {
         <h3 className="style-h3 text-center mb-4">Shrnutí objednávky</h3>
         {cartItems.map(item => (
           <div key={item.id} className="flex items-center gap-4 py-4 border-t border-black200">
-            <div className="relative w-12 h-12 shrink-0 border border-black200 rounded-[4px] overflow-hidden bg-white p-1">
+            <div className="relative w-12 h-12 shrink-0 border border-black200 rounded-[4px] overflow-hidden bg-white p-1 select-none pointer-events-none">
               <Image src={item.image_url} alt={item.name} fill className="object-contain" />
             </div>
             <div className="flex-grow flex flex-col gap-1">
@@ -275,29 +277,63 @@ fetch('/api/send-confirmation', {
             {currentStep === 1 && (
               <div className="flex flex-col gap-2">
                 <h3 className="style-h3 text-secondary mb-2">Košík</h3>
-                {cartItems.map(item => (
-                  <div key={item.id} className="py-5 border-b border-black400 flex items-stretch gap-5">
-                    <div className="relative w-[80px] h-[80px] shrink-0 bg-white rounded-[4px] p-1">
-                      <Image src={item.image_url} alt={item.name} fill className="object-contain" />
-                    </div>
-                    <div className="flex-grow flex flex-col justify-between py-1">
-                      <div className="flex justify-between items-start gap-4">
-                        <h4 className="style-h4 text-secondary line-clamp-2">{item.name}</h4>
-                        <button onClick={() => removeFromCart(item.id)} className="text-black300 hover:text-primary transition-colors">
-                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                {cartItems.map(item => {
+                  const isCustomStamp = item.name.toLowerCase().includes('vlastní');
+
+                  return (
+                    <div key={item.id} className="py-5 border-b border-b-white/10 flex items-stretch gap-5">
+                      
+                      {isCustomStamp ? (
+                        <button 
+                          onClick={() => setPreviewArchImage(item.image_url)}
+                          className="relative w-[80px] h-[80px] shrink-0 bg-white rounded-[4px] p-1 overflow-hidden group cursor-zoom-in"
+                        >
+                          <Image src={item.image_url} alt={item.name} fill className="object-contain pointer-events-none select-none" />
+                          <div className="absolute inset-0 bg-transparent" onContextMenu={(e) => e.preventDefault()} />
                         </button>
-                      </div>
-                      <div className="flex justify-between items-center mt-2">
-                        <div className="flex items-center bg-secondary rounded-full px-3 py-1 gap-3">
-                          <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-black-custom">−</button>
-                          <span className="style-body-bold text-black-custom">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-black-custom">+</button>
+                      ) : (
+                        <Link 
+                          href={`/produkt/${item.id}`}
+                          className="relative w-[80px] h-[80px] shrink-0 bg-white rounded-[4px] p-1 overflow-hidden group block"
+                        >
+                          <Image src={item.image_url} alt={item.name} fill className="object-contain pointer-events-none select-none" />
+                          <div className="absolute inset-0 bg-transparent" onContextMenu={(e) => e.preventDefault()} />
+                        </Link>
+                      )}
+
+                      <div className="flex-grow flex flex-col justify-between py-1">
+                        <div className="flex justify-between items-start gap-4">
+                          
+                          {isCustomStamp ? (
+                            <button 
+                              onClick={() => setPreviewArchImage(item.image_url)}
+                              className="style-h4 text-secondary text-left line-clamp-2 hover:text-primary transition-colors cursor-zoom-in"
+                            >
+                              {item.name}
+                            </button>
+                          ) : (
+                            <Link href={`/produkt/${item.id}`} className="style-h4 text-secondary line-clamp-2 hover:text-primary transition-colors">
+                              {item.name}
+                            </Link>
+                          )}
+
+                          <button onClick={() => removeFromCart(item.id)} className="text-black300 hover:text-primary transition-colors shrink-0">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
                         </div>
-                        <p className="style-product-price text-success">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
+                        
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="flex items-center bg-secondary rounded-full px-3 py-1 gap-3">
+                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-black-custom">−</button>
+                            <span className="style-body-bold text-black-custom">{item.quantity}</span>
+                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-black-custom">+</button>
+                          </div>
+                          <p className="style-product-price text-success">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -306,7 +342,7 @@ fetch('/api/send-confirmation', {
                 <div>
                   <h3 className="style-h3 text-secondary mb-4">Doprava</h3>
                   {currentShippingOptions.map(option => (
-                    <label key={option.id} className="py-5 flex items-start gap-4 cursor-pointer border-b border-black400 group">
+                    <label key={option.id} className="py-5 flex items-start gap-4 cursor-pointer border-b border-white/10 group">
                       <div className={`mt-[2px] w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center ${selectedShipping === option.id ? 'border-secondary' : 'border-black200'}`}>
                         {selectedShipping === option.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                       </div>
@@ -324,7 +360,7 @@ fetch('/api/send-confirmation', {
                 <div>
                   <h3 className="style-h3 text-secondary mb-4">Platba</h3>
                   {paymentOptions.map(option => (
-                    <label key={option.id} className="py-5 flex items-start gap-4 cursor-pointer border-b border-black400 group">
+                    <label key={option.id} className="py-5 flex items-start gap-4 cursor-pointer border-b border-white/10 group">
                       <div className={`mt-[2px] w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center ${selectedPayment === option.id ? 'border-secondary' : 'border-black200'}`}>
                         {selectedPayment === option.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                       </div>
@@ -393,6 +429,30 @@ fetch('/api/send-confirmation', {
           </div>
         </div>
       )}
+
+      {previewArchImage && (
+        <div 
+          className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 cursor-zoom-out animate-[fadeIn_0.15s_ease-out]"
+          onClick={() => setPreviewArchImage(null)}
+        >
+          <button 
+            onClick={() => setPreviewArchImage(null)} 
+            className="absolute top-6 right-6 text-white/60 hover:text-white text-4xl font-light transition-colors z-50 p-2"
+          >
+            ×
+          </button>
+          
+          <div className="relative max-w-5xl max-h-[85vh] aspect-[1440/1080] w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={previewArchImage} 
+              alt="Náhled vašeho archu známek" 
+              className="max-w-full max-h-full object-contain shadow-2xl rounded-lg pointer-events-none select-none border border-white/10"
+            />
+            <div className="absolute inset-0 bg-transparent" onContextMenu={(e) => e.preventDefault()} />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

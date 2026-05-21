@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Button from '@/components/Button';
+import Link from 'next/link';
 
 // Původní kroky - pro desktop/tablet
 const desktopSteps = [
@@ -120,12 +121,16 @@ export default function Hero() {
             height={80} 
             className="absolute -left-[95px] bottom-[14px] pointer-events-none"
           />
-          <Button>Vybrat šablonu</Button>
+          <Link href="/vytvorit-arch">
+            <Button>Vybrat šablonu</Button>
+          </Link>
         </div>
 
         {/* Tlačítko Mobil/Tablet (Bez šipky) */}
         <div className="flex lg:hidden">
-          <Button>Vybrat šablonu</Button>
+          <Link href="/vytvorit-arch">
+            <Button>Vybrat šablonu</Button>
+          </Link>
         </div>
 
       </div>

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import EditorHeader from '@/components/Editor/EditorHeader';
 import Button from '@/components/Button';
+import { useCart } from '@/context/CartContext';
+import { supabase } from '@/lib/supabase';
 
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), { 
   ssr: false,
@@ -13,10 +15,13 @@ const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
 export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
+  const [createdStampId, setCreatedStampId] = useState<string | null>(null);
+  
+  // Připojení tvého stávajícího košíku
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const handleResize = () => {
-      // FIX: Kontrola až do 1024px (zahrne všechny telefony naležato i tablety na výšku)
       setIsMobileLandscape(window.innerWidth < 1024 && window.innerWidth > window.innerHeight);
     };
     handleResize();
@@ -26,12 +31,56 @@ export default function EditorPage() {
 
   const handleNextStep = () => setCurrentStep(prev => prev + 1);
 
+  // LOGIKA INTEGRACE DO TVÉHO KOŠÍKU
+  const handleEditorComplete = async (stampId?: string) => {
+    if (stampId) {
+      setCreatedStampId(stampId);
+      
+      try {
+        // 1. Stáhneme data právě vytvořeného archu a připojíme k němu informace o ceně a váze z hlavní tabulky produktů
+        const { data, error } = await supabase
+          .from('custom_stamps')
+          .select(`
+            id,
+            preview_url,
+            products (
+              name,
+              price,
+              weight_grams
+            )
+          `)
+          .eq('id', stampId)
+          .single();
+
+        if (error) throw error;
+
+        // 2. Vytvoříme objekt ve formátu, který tvůj košík očekává, a vložíme ho tam
+        if (data && data.products) {
+          // Type casting pro jistotu, protože Supabase joins vrací typově pole nebo objekt
+          const productInfo = Array.isArray(data.products) ? data.products[0] : data.products;
+
+          addToCart({
+            id: data.id, // Použijeme unikátní ID z custom_stamps (každý design je originál)
+            name: `Vlastní návrh: ${productInfo.name}`,
+            price: productInfo.price,
+            image_url: data.preview_url, // Zákazník v košíku uvidí svůj design!
+            quantity: 1,
+            weight_grams: productInfo.weight_grams
+          });
+        }
+      } catch (err) {
+        console.error("Chyba při přidávání archu do košíku:", err);
+      }
+    }
+    
+    setCurrentStep(3);
+  };
+
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-black-custom overflow-hidden">
       
       {!isMobileLandscape && <EditorHeader currentStep={currentStep} />}
       
-      {/* KLÍČOVÝ FIX: Dynamické odstranění paddingu v landscape modu, aby tam nezůstával tmavý pruh */}
       <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${isMobileLandscape ? 'pb-0' : 'pb-[80px] lg:pb-[116px]'}`}>
         
         {currentStep === 1 && (
@@ -54,25 +103,25 @@ export default function EditorPage() {
         )}
 
         {currentStep === 2 && (
-          <StampEditor onComplete={handleNextStep} isMobileLandscape={isMobileLandscape} />
+          <StampEditor onComplete={handleEditorComplete} isMobileLandscape={isMobileLandscape} />
         )}
 
         {currentStep === 3 && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 gap-10 animate-fadeIn text-center">
             <div className="w-24 h-24 bg-success rounded-full flex items-center justify-center text-white text-5xl shadow-xl shadow-success/20">✓</div>
             <div className="space-y-4">
-              <h1 className="style-h1 text-secondary">Právě jste vytvořili svůj první arch!</h1>
+              <h1 className="style-h1 text-secondary">Váš arch byl vložen do košíku!</h1>
               <p className="style-body text-black300 max-w-lg mx-auto">
-                Skvělá práce. Váš grafický návrh je připraven k tisku. Co chcete udělat nyní?
+                Skvělá práce. Váš grafický návrh je připraven k tisku a bezpečně uložen v košíku. Počet kusů si můžete upravit před zaplacením.
               </p>
             </div>
             
             <div className="flex flex-col md:flex-row gap-4 mt-4">
-              <Button onClick={() => window.location.href = '/vytvorit-arch'} variant="outlined">
-                Vložit do košíku a vytvořit další arch
+              <Button onClick={() => window.location.reload()} variant="outlined">
+                Vytvořit další arch
               </Button>
-              <Button onClick={() => window.location.href = '/'}>
-                Vložit do košíku a zpět na homepage
+              <Button onClick={() => window.location.href = '/kosik'}>
+                Přejít do košíku
               </Button>
             </div>
           </div>

@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/**', // Konkrétní cesta do tvého veřejného Storage
       },
+      {
+        protocol: 'https',
+        hostname: '**.public.blob.vercel-storage.com', // Povolí stahování náhledů z Vercel Blob
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
