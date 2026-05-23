@@ -40,7 +40,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const [fontSize, setFontSize] = useState(80); 
   const [fontFamily, setFontFamily] = useState('Poppins');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
-  const [textPos, setTextPos] = useState({ x: 50, y: 25 });
+  const [textPos, setTextPos] = useState({ x: 50, y: 35 });
   const [useShadow, setUseShadow] = useState(false);
   const [shadowColor, setShadowColor] = useState('#000000');
   const [shadowBlur, setShadowBlur] = useState(15);
@@ -116,7 +116,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     const bHeight = maxY - minY;
 
     return (
-      <div className="relative bg-secondary rounded-[4px] shrink-0 mb-4" style={{ width: '167px', height: '103px', padding: '12px' }}>
+      <div className="relative bg-secondary rounded-[4px] shrink-0 mb-2" style={{ width: '167px', height: '103px', padding: '12px' }}>
         <div className="relative w-full h-full">
           {activeTemplate.slots.map(slot => {
             const isActive = activeSlotId === slot.id;
@@ -299,7 +299,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                     <div className="absolute bottom-0 right-0 w-10 h-10 bg-primary hover:bg-primary-hover flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-[8px] transition-colors" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black-custom" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
                   </div>
                 ) : !photos[slot.id] && (
-                  <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors">
+                  <div className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors ${slot.id === '1' ? 'pt-16' : ''}`}>
                     <Image src="/images/add-image-ico.svg" alt="+" width={32} height={32} className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity" />
                     <span className="style-body-bold text-black200 transition-opacity">Vložit fotku</span>
                   </div>
@@ -418,7 +418,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
             )}
 
             {/* Plátno si vezme flex-1 a perfektně se vycentruje v prostoru nad fixní patičkou */}
-            <div className="flex-1 w-full flex flex-col items-center justify-center p-6 relative">
+            <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center px-6 pb-6 pt-0 relative overflow-hidden">
               <div className="mobile-slot-wrapper w-full h-full flex items-center justify-center">
                 <div className="relative shadow-2xl bg-secondary border border-black300 shrink-0 flex items-center justify-center touch-none rounded-[4px] overflow-hidden" onClick={() => handleSlotClick(currentMobileSlot!.id)}>
                   
@@ -428,7 +428,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                   <div data-slot-id={currentMobileSlot?.id} className={`mobile-slot-${currentMobileSlot?.id} absolute inset-0 w-full h-full overflow-hidden touch-none`}>
                     
                     {!photos[currentMobileSlot!.id] && (
-                      <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer">
+                      <div className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer ${currentMobileSlot!.id === '1' ? 'pt-16' : ''}`}>
                         <Image src="/images/add-image-ico.svg" alt="Přidat" width={48} height={48} className="mb-2 opacity-80" />
                         <span className="style-body-bold text-black200">Vložit fotku</span>
                       </div>
