@@ -116,7 +116,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     const bHeight = maxY - minY;
 
     return (
-      <div className="relative bg-secondary rounded-[4px] shrink-0 mb-2" style={{ width: '167px', height: '103px', padding: '12px' }}>
+      <div className="relative bg-secondary rounded-[4px] shrink-0 mb-0" style={{ width: '167px', height: '103px', padding: '12px' }}>
         <div className="relative w-full h-full">
           {activeTemplate.slots.map(slot => {
             const isActive = activeSlotId === slot.id;
@@ -413,7 +413,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
               <div className="w-full flex flex-col items-center pt-[32px] px-6 shrink-0 z-40">
                 <h1 className="style-h1 text-secondary mb-[32px]">Vložte fotografii</h1>
                 <MobileMiniMap />
-                <span className="style-body text-secondary mt-[16px]">Fotografie {currentPhotoIndex} z {totalPhotoSlots}</span>
+                <span className="style-body text-secondary mt-[12px]">Fotografie {mobileStep + 1} z {totalSlotsSteps}</span>
               </div>
             )}
 
@@ -501,13 +501,15 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
             <footer className="w-full border-t border-black300/30 h-[80px] flex items-center justify-center pb-safe">
               <div className="w-full px-[24px] flex justify-between items-center gap-4">
                 
-                <button 
-                  onClick={() => { if (mobileStep > 0) setMobileStep(prev => prev - 1); else window.history.back(); }} 
-                  disabled={isUploading}
-                  className="w-[56px] h-[48px] flex items-center justify-center rounded-[4px] border border-primary text-primary shrink-0 hover:bg-primary/10 transition-colors"
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                </button>
+                <Button 
+                onClick={() => { if (mobileStep > 0) setMobileStep(prev => prev - 1); else window.location.href = '/vytvorit-arch'; }} // Zde doplňte reálnou routu Kroku 1 (např. '/' nebo '/vyber-sablony') 
+                disabled={isUploading}
+                variant="outlined"
+                arrow="left"
+                className="h-[48px] shrink-0"
+              >
+                Zpět
+              </Button>
                 
                 <Button 
                   onClick={() => { if (isPreviewStep) handleUploadAndComplete(); else if (isLastSlotStep) handleMobilePreview(); else setMobileStep(prev => prev + 1); }} 
@@ -518,7 +520,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                   arrow="right"
                   className="flex-1 h-[48px]"
                 >
-                  {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : isMobileTextStep ? 'Další krok' : 'Další fotografie'}
+                  {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : 'Další fotografie'}
                 </Button>
 
               </div>

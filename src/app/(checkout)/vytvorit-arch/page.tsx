@@ -9,23 +9,30 @@ import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 import { Check } from 'lucide-react';
 
-
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), { 
   ssr: false,
   loading: () => <div className="flex-1 flex items-center justify-center bg-black-custom text-secondary style-body-bold">Načítám studio...</div>
 });
 
+// Zástupná data pro vykreslení mřížky v Kroku 1 (3 šablony podle náhledu)
+const TEMPLATE_OPTIONS = [
+  { id: 'templateA-1', name: 'Šablona A', desc: '6 fotografií, 6 známek', img: '/images/template-preview-a.jpg', stamps: ['/images/stamp-1.jpg', '/images/stamp-2.jpg'] },
+  { id: 'templateA-2', name: 'Šablona A', desc: '6 fotografií, 6 známek', img: '/images/template-preview-a.jpg', stamps: ['/images/stamp-1.jpg', '/images/stamp-2.jpg'] },
+  { id: 'templateA-3', name: 'Šablona A', desc: '6 fotografií, 6 známek', img: '/images/template-preview-a.jpg', stamps: ['/images/stamp-1.jpg', '/images/stamp-2.jpg'] }
+];
+
 export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
   const [createdStampId, setCreatedStampId] = useState<string | null>(null);
-  // NOVÝ STAV PRO LIGHTBOX
+  
+  // LIGHTBOX
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   
-  // Zástupný stav pro vybranou šablonu (pro designové účely zatím provázaný s duplicitními položkami)
+  // Vybraná šablona
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>('templateA-1'); 
 
-  // Připojení tvého stávajícího košíku
+  // Připojení košíku
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -39,13 +46,12 @@ export default function EditorPage() {
 
   const handleNextStep = () => setCurrentStep(prev => prev + 1);
 
-  // LOGIKA INTEGRACE DO TVÉHO KOŠÍKU
+  // LOGIKA INTEGRACE DO KOŠÍKU
   const handleEditorComplete = async (stampId?: string) => {
     if (stampId) {
       setCreatedStampId(stampId);
       
       try {
-        // 1. Stáhneme data právě vytvořeného archu a připojíme k němu informace o ceně a váze z hlavní tabulky produktů
         const { data, error } = await supabase
           .from('custom_stamps')
           .select(`
@@ -62,16 +68,14 @@ export default function EditorPage() {
 
         if (error) throw error;
 
-        // 2. Vytvoříme objekt ve formátu, který tvůj košík očekává, a vložíme ho tam
         if (data && data.products) {
-          // Type casting pro jistotu, protože Supabase joins vrací typově pole nebo objekt
           const productInfo = Array.isArray(data.products) ? data.products[0] : data.products;
 
           addToCart({
-            id: data.id, // Použijeme unikátní ID z custom_stamps (každý design je originál)
+            id: data.id, 
             name: `Vlastní návrh: ${productInfo.name}`,
             price: productInfo.price,
-            image_url: data.preview_url, // Zákazník v košíku uvidí svůj design!
+            image_url: data.preview_url, 
             quantity: 1,
             weight_grams: productInfo.weight_grams
           });
@@ -87,7 +91,7 @@ export default function EditorPage() {
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-black-custom overflow-hidden text-secondary select-none font-sans antialiased">
       
-      {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM --- */}
+      {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
       {!isMobileLandscape && (
         <header className="shrink-0 w-full bg-black500 border-b border-black300/30 h-[80px] md:h-[98px] lg:h-[116px] flex items-center justify-center z-40 relative shadow-md">
           <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-[84px] flex items-center justify-between">
@@ -113,107 +117,83 @@ export default function EditorPage() {
       
       <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${isMobileLandscape ? 'pb-0' : 'pb-[80px] lg:pb-[116px]'}`}>
         
-
-        {/* === KROK 1: VÝBĚR ŠABLONY === */}
+        {/* === KROK 1: VÝBĚR ŠABLONY (Nový Grid Layout) === */}
         {currentStep === 1 && (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8 animate-[fadeIn_0.2s_ease-out]">
-            <h1 className="style-h1 text-secondary text-center">Vyberte si šablonu</h1>
+          <div className="flex-1 w-full max-w-[1440px] mx-auto px-6 md:px-[84px] py-8 md:py-[64px] flex flex-col items-center animate-[fadeIn_0.2s_ease-out]">
+            <h1 className="style-h1 text-secondary text-center mb-8 md:mb-[64px]">Vyberte si šablonu</h1>
             
-            <div className="flex flex-col gap-8 w-full max-w-5xl space-y-8">
-              {/* Položka šablony - ID: templateA-1 (zástupná položka) */}
-              <div className="template_item flex flex-col gap-6 cursor-pointer" onClick={() => setSelectedTemplate('templateA-1')}>
-                {/* Header položky: Checkbox + Titul, Oddělovač, Popisek */}
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="checkbox"
-                    checked={selectedTemplate === 'templateA-1'} 
-                    onChange={() => setSelectedTemplate('templateA-1')} 
-                    className="w-5 h-5 accent-primary cursor-pointer rounded-[4px] shrink-0"
-                  />
-                  <h4 className="style-h4 text-secondary">Šablona A</h4>
-                  <span className="text-secondary opacity-50 px-1">|</span>
-                  <span className="style-body text-black300">6 fotografií, 6 známek</span>
-                </div>
+            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+              {TEMPLATE_OPTIONS.map((tpl) => {
+                const isSelected = selectedTemplate === tpl.id;
                 
-                {/* Náhledový obrázek s LIGHTBOXEM a OCHRANOU */}
-                <div 
-                  className="relative flex justify-center w-full h-auto cursor-zoom-in group select-none" 
-                  onClick={(e) => { e.stopPropagation(); setLightboxImg('/images/template-preview-a.jpg'); }}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  <Image 
-                    src="/images/template-preview-a.jpg" // Obrázek nahraj do public/images/
-                    alt="Náhled šablony A" 
-                    width={800} height={600} 
-                    className="max-w-full h-auto object-contain shadow-2xl border border-black300/30 rounded-[4px] pointer-events-none group-hover:border-primary/50 transition-colors" 
-                    onDragStart={(e) => e.preventDefault()}
-                  />
-                  <div className="absolute inset-0 z-10 bg-transparent" />
-                </div>
-                
-                {/* Sekce s použitými známkami */}
-                <div className="flex flex-col gap-3">
-                  <span className="style-body text-secondary">Známky na Vašem archu</span>
-                  <div className="flex row items-center gap-4">
-                    {/* Zástupné obrázky známek s LIGHTBOXEM a OCHRANOU */}
+                return (
+                  <div 
+                    key={tpl.id}
+                    onClick={() => setSelectedTemplate(tpl.id)}
+                    className={`flex flex-col p-6 rounded-[8px] border cursor-pointer transition-all duration-200 ${
+                      isSelected 
+                        ? 'border-black300/50 bg-black400' 
+                        : 'border-black300/30 bg-transparent hover:border-black300/60'
+                    }`}
+                  >
+                    {/* Checkbox a Nadpis */}
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className={`w-5 h-5 rounded-[4px] flex items-center justify-center border shrink-0 transition-colors ${
+                        isSelected ? 'bg-primary border-primary' : 'border-secondary bg-transparent'
+                      }`}>
+                        {isSelected && (
+                          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                            <path d="M1 5L4.5 8.5L11 1.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <h4 className="style-h4 text-secondary">{tpl.name}</h4>
+                    </div>
+                    
+                    <p className="style-body text-black300 mb-6">{tpl.desc}</p>
+                    
+                    {/* Hlavní náhled šablony */}
                     <div 
-                      className="relative cursor-zoom-in group select-none" 
-                      onClick={(e) => { e.stopPropagation(); setLightboxImg('/images/stamp-1.jpg'); }}
+                      className="w-full aspect-[4/3] bg-black200 rounded-[4px] overflow-hidden mb-6 relative cursor-zoom-in group select-none"
+                      onClick={(e) => { e.stopPropagation(); setLightboxImg(tpl.img); }}
                       onContextMenu={(e) => e.preventDefault()}
                     >
-                      <Image src="/images/stamp-1.jpg" alt="Známka 1" width={100} height={100} className="w-[80px] h-[80px] object-cover rounded-[4px] border border-black300/30 pointer-events-none group-hover:border-primary/50 transition-colors" onDragStart={(e) => e.preventDefault()} />
+                      <Image 
+                        src={tpl.img} 
+                        alt={tpl.name} 
+                        fill 
+                        className="object-contain pointer-events-none group-hover:scale-105 transition-transform duration-300" 
+                        onDragStart={(e) => e.preventDefault()}
+                      />
                       <div className="absolute inset-0 z-10 bg-transparent" />
                     </div>
-                    <div 
-                      className="relative cursor-zoom-in group select-none" 
-                      onClick={(e) => { e.stopPropagation(); setLightboxImg('/images/stamp-2.jpg'); }}
-                      onContextMenu={(e) => e.preventDefault()}
-                    >
-                      <Image src="/images/stamp-2.jpg" alt="Známka 2" width={100} height={100} className="w-[80px] h-[80px] object-cover rounded-[4px] border border-black300/30 pointer-events-none group-hover:border-primary/50 transition-colors" onDragStart={(e) => e.preventDefault()} />
-                      <div className="absolute inset-0 z-10 bg-transparent" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Duplicitní položka - ID: templateA-2 (designová zástupná položka) */}
-              <div className="template_item flex flex-col gap-6 cursor-pointer" onClick={() => setSelectedTemplate('templateA-2')}>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="checkbox"
-                    checked={selectedTemplate === 'templateA-2'} 
-                    onChange={() => setSelectedTemplate('templateA-2')} 
-                    className="w-5 h-5 accent-primary cursor-pointer rounded-[4px] shrink-0"
-                  />
-                  <h4 className="style-h4 text-secondary">Šablona B</h4>
-                  <span className="text-secondary opacity-50 px-1">|</span>
-                  <span className="style-body text-black300">6 fotografií, 6 známek</span>
-                </div>
-                
-                <div 
-                  className="relative flex justify-center w-full h-auto cursor-zoom-in group select-none" 
-                  onClick={(e) => { e.stopPropagation(); setLightboxImg('/images/template-preview-a.jpg'); }}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  <Image src="/images/template-preview-a.jpg" alt="Náhled šablony B" width={800} height={600} className="max-w-full h-auto object-contain shadow-2xl border border-black300/30 rounded-[4px] pointer-events-none group-hover:border-primary/50 transition-colors" onDragStart={(e) => e.preventDefault()}/>
-                  <div className="absolute inset-0 z-10 bg-transparent" />
-                </div>
-                
-                <div className="flex flex-col gap-3">
-                  <span className="style-body text-secondary">Známky na Vašem archu</span>
-                  <div className="flex row items-center gap-4">
-                    <div className="relative cursor-zoom-in group select-none" onClick={(e) => { e.stopPropagation(); setLightboxImg('/images/stamp-1.jpg'); }} onContextMenu={(e) => e.preventDefault()}>
-                      <Image src="/images/stamp-1.jpg" alt="Známka 1" width={100} height={100} className="w-[80px] h-[80px] object-cover rounded-[4px] border border-black300/30 pointer-events-none group-hover:border-primary/50 transition-colors" onDragStart={(e) => e.preventDefault()} />
-                      <div className="absolute inset-0 z-10 bg-transparent" />
-                    </div>
-                    <div className="relative cursor-zoom-in group select-none" onClick={(e) => { e.stopPropagation(); setLightboxImg('/images/stamp-2.jpg'); }} onContextMenu={(e) => e.preventDefault()}>
-                      <Image src="/images/stamp-2.jpg" alt="Známka 2" width={100} height={100} className="w-[80px] h-[80px] object-cover rounded-[4px] border border-black300/30 pointer-events-none group-hover:border-primary/50 transition-colors" onDragStart={(e) => e.preventDefault()} />
-                      <div className="absolute inset-0 z-10 bg-transparent" />
+                    
+                    {/* Známky v archu */}
+                    <div className="mt-auto border-t border-black300/10 pt-4">
+                      <h3 className="style-body text-secondary mb-3">Známky v archu</h3>
+                      <div className="flex gap-3">
+                        {tpl.stamps.map((stampImg, idx) => (
+                          <div 
+                            key={idx}
+                            className="w-[60px] h-[48px] bg-black200 rounded-[2px] overflow-hidden relative border border-black300/20 cursor-zoom-in group select-none"
+                            onClick={(e) => { e.stopPropagation(); setLightboxImg(stampImg); }}
+                            onContextMenu={(e) => e.preventDefault()}
+                          >
+                            <Image 
+                              src={stampImg} 
+                              alt={`Známka ${idx + 1}`} 
+                              fill 
+                              className="object-cover pointer-events-none group-hover:scale-110 transition-transform" 
+                              onDragStart={(e) => e.preventDefault()}
+                            />
+                            <div className="absolute inset-0 z-10 bg-transparent" />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
+                );
+              })}
             </div>
           </div>
         )}
@@ -244,6 +224,7 @@ export default function EditorPage() {
             </div>
           </div>
         )}
+
         {/* OCHRANA V LIGHTBOXU - STEJNÁ JAKO V DETAILU PRODUKTU */}
         {lightboxImg && (
           <div 
@@ -269,25 +250,27 @@ export default function EditorPage() {
                 className="object-contain pointer-events-none" 
                 onDragStart={(e) => e.preventDefault()}
               />
-              {/* ŠTÍT V LIGHTBOXU */}
               <div className="absolute inset-0 z-[105] bg-transparent" />
             </div>
           </div>
         )}
-        </main>
+      </main>
 
-      {/* --- FIXNÍ PATIČKA PRO KROK 1 (Sjednocený design s editorem) --- */}
+      {/* --- FIXNÍ PATIČKA PRO KROK 1 (Sjednocený design s editorem) (NEDOTČENO) --- */}
       {currentStep === 1 && (
-        <footer className={`bg-black500 fixed bottom-0 left-0 w-full border-t border-black300/30 h-[80px] lg:h-[116px] flex items-center justify-center z-50 transition-transform ${isMobileLandscape ? 'pb-0' : 'pb-safe'}`} >
-          <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-[84px] flex justify-between items-center">
-            <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
-            <Button onClick={() => handleNextStep()} arrow="right" disabled={!selectedTemplate}>
-              {"Další krok"}
+        <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center z-[100] pb-safe">
+          <div className="w-full md:max-w-[1440px] mx-auto px-[24px] md:px-[84px] flex justify-end items-center">
+            <Button 
+              onClick={() => handleNextStep()} 
+              disabled={!selectedTemplate} 
+              arrow="right"
+              className="w-full md:w-auto h-[48px]"
+            >
+              Další krok
             </Button>
           </div>
         </footer>
       )}
-
     </div>
   );
 }
