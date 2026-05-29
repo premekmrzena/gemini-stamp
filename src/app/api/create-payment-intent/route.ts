@@ -1,49 +1,43 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { supabase } from '@/lib/supabase';
 
-// Inicializace Stripe s tvým tajným klíčem z .env.local
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover' as any, // Přetypováno pro kompatibilitu s SDK
+  apiVersion: '2026-02-25.clover' as any,
 });
 
 export async function POST(request: Request) {
   try {
-    // 1. Získáme data z frontendu (košíku)
     const body = await request.json();
-    const { amount } = body; 
+    const { orderId } = body;
 
-    // OCHRANA: Kontrola, zda máme částku a zda je to číslo
-    if (!amount || typeof amount !== 'number') {
-      return NextResponse.json(
-        { error: 'Neplatná částka objednávky' },
-        { status: 400 }
-      );
+    if (!orderId || typeof orderId !== 'string') {
+      return NextResponse.json({ error: 'Chybí ID objednávky' }, { status: 400 });
     }
 
-    // 2. Vytvoříme PaymentIntent u Stripe
-    // Math.round zajistí, že pošleme Stripe vždy celé číslo v haléřích
+    // Fetch the real amount from the order — never trust client-provided amount
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('id, total_price')
+      .eq('id', orderId)
+      .single();
+
+    if (error || !order) {
+      return NextResponse.json({ error: 'Objednávka nenalezena' }, { status: 404 });
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), 
+      amount: Math.round(order.total_price * 100),
       currency: 'czk',
-      automatic_payment_methods: {
-        enabled: true, // Automaticky nabídne Karty, Google Pay, Apple Pay
-      },
-      // Volitelně můžeme přidat metadata pro lepší přehled v Stripe Dashboardu
-      metadata: {
-        integration_check: 'accept_a_payment',
-      },
+      automatic_payment_methods: { enabled: true },
+      metadata: { orderId: order.id },
     });
 
-    // 3. Vrátíme bezpečný klíč (client_secret) zpět do našeho frontendu
-    return NextResponse.json({ 
-      clientSecret: paymentIntent.client_secret 
-    });
-    
-  } catch (error: any) {
+    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Interní chyba serveru';
     console.error('Chyba při komunikaci se Stripe:', error);
-    return NextResponse.json(
-      { error: error.message || 'Interní chyba serveru při vytváření platby' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

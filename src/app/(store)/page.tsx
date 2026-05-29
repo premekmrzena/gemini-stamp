@@ -1,8 +1,7 @@
 import Hero from '@/components/Hero';
 import ProductList from '@/components/ProductList';
 import { supabase } from '@/lib/supabase'; // Import našeho připojení k databázi
-// TÍMTO ŘÁDKEM VYPNEME CACHOVÁNÍ - web bude vždy 100% aktuální
-export const revalidate = 0;
+export const revalidate = 60;
 
 // Přidali jsme klíčové slovo 'async', abychom mohli čekat (await) na data z databáze
 export default async function Home() {

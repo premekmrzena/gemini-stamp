@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
-import { Check } from 'lucide-react';
+import CheckoutHeader from '@/components/checkout/CheckoutHeader';
+import Stepper from '@/components/checkout/Stepper';
 
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), { 
   ssr: false,
-  loading: () => <div className="flex-1 flex items-center justify-center bg-black-custom text-secondary style-body-bold">Načítám studio...</div>
+  loading: () => <div className="flex-1 flex items-center justify-center bg-black text-secondary style-body-bold">Načítám studio...</div>
 });
 
 // Zástupná data pro vykreslení mřížky v Kroku 1 (3 šablony podle náhledu)
@@ -72,12 +72,13 @@ export default function EditorPage() {
           const productInfo = Array.isArray(data.products) ? data.products[0] : data.products;
 
           addToCart({
-            id: data.id, 
+            id: data.id,
             name: `Vlastní návrh: ${productInfo.name}`,
             price: productInfo.price,
-            image_url: data.preview_url, 
+            image_url: data.preview_url,
             quantity: 1,
-            weight_grams: productInfo.weight_grams
+            weight_grams: productInfo.weight_grams,
+            item_type: 'custom',
           });
         }
       } catch (err) {
@@ -89,37 +90,18 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-black-custom overflow-hidden text-secondary select-none font-sans antialiased">
+    <div className="w-full h-[100dvh] flex flex-col bg-black overflow-hidden text-secondary select-none font-sans antialiased">
       
       {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
       {!isMobileLandscape && (
-        <header className="shrink-0 w-full bg-black500 border-b border-black300/30 h-[80px] md:h-[98px] lg:h-[116px] flex items-center justify-center z-40 relative shadow-md">
-          <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-[84px] flex items-center justify-between">
-            <Link href="/" className="flex-shrink-0 flex items-center h-full">
-              <Image src="/images/creative-stamp_logo.svg" alt="Logo" width={250} height={69} priority className="hidden md:block w-[250px] h-auto object-contain" />
-              <Image src="/images/logo-black200_basked-mobile.svg" alt="Logo Mobile" width={40} height={40} priority className="block md:hidden h-[40px] w-auto object-contain" />
-            </Link>
-            <div className="flex items-center">
-              {[1, 2, 3].map((step, index) => (
-                <div key={step} className="flex items-center">
-                  <div className={`flex items-center justify-center rounded-full style-body-bold transition-colors w-[32px] h-[32px] md:w-[36px] md:h-[36px] ${currentStep >= step ? 'bg-primary text-black-custom' : 'bg-transparent text-black300 border border-black300'}`}>
-                    {step}
-                  </div>
-                  {index < 2 && (
-                    <div className={`h-[1px] w-[10px] md:w-[16px] mx-1 md:mx-2 transition-colors ${currentStep > index + 1 ? 'bg-primary' : 'bg-black300'}`} />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </header>
+        <div className="sticky top-0 z-40 w-full"><CheckoutHeader right={<Stepper currentStep={currentStep} />} /></div>
       )}
       
       <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${isMobileLandscape ? 'pb-0' : 'pb-[80px] lg:pb-[116px]'}`}>
         
         {/* === KROK 1: VÝBĚR ŠABLONY (Nový Grid Layout) === */}
         {currentStep === 1 && (
-          <div className="flex-1 w-full max-w-[1440px] mx-auto px-6 md:px-[84px] py-8 md:py-[64px] flex flex-col items-center animate-[fadeIn_0.2s_ease-out]">
+          <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
             <h1 className="style-h1 text-secondary text-center mb-8 md:mb-[64px]">Vyberte si šablonu</h1>
             
             <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -228,7 +210,7 @@ export default function EditorPage() {
         {/* OCHRANA V LIGHTBOXU - STEJNÁ JAKO V DETAILU PRODUKTU */}
         {lightboxImg && (
           <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black-custom/90 backdrop-blur-sm p-4 cursor-zoom-out select-none"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out select-none"
             onClick={() => setLightboxImg(null)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -259,7 +241,7 @@ export default function EditorPage() {
       {/* --- FIXNÍ PATIČKA PRO KROK 1 (Sjednocený design s editorem) (NEDOTČENO) --- */}
       {currentStep === 1 && (
         <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center z-[100] pb-safe">
-          <div className="w-full md:max-w-[1440px] mx-auto px-[24px] md:px-[84px] flex justify-end items-center">
+          <div className="layout-container flex justify-end items-center">
             <Button 
               onClick={() => handleNextStep()} 
               disabled={!selectedTemplate} 

@@ -148,14 +148,14 @@ export default function AdminDashboard() {
     }
   }
 
-  if (authLoading) return <div className="p-10 text-secondary bg-black-custom min-h-screen font-sans flex items-center justify-center style-body">Ověřuji přístup...</div>;
+  if (authLoading) return <div className="p-10 text-secondary bg-black min-h-screen font-sans flex items-center justify-center style-body">Ověřuji přístup...</div>;
 
   // ========================================================
   // 🔐 PŘIHLAŠOVACÍ FORMULÁŘ
   // ========================================================
   if (!user) {
     return (
-      <div className="min-h-screen bg-black-custom text-secondary flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black text-secondary flex items-center justify-center p-4">
         <div className="bg-black400 w-full max-w-md p-8 rounded-[16px] border border-black300/30 shadow-2xl space-y-6 animate-[fadeIn_0.2s_ease-out]">
           <div className="text-center">
             <h1 className="style-h2 text-secondary">Creative Stamp</h1>
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@creativestamp.cz"
-                  className="w-full bg-black-custom border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  className="w-full bg-black border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                 />
               </div>
             </div>
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-black-custom border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  className="w-full bg-black border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                 />
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
             <button 
               type="submit" 
               disabled={isLoggingIn}
-              className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-black-custom font-semibold h-[48px] rounded-[8px] transition-all style-body mt-2 flex items-center justify-center cursor-pointer"
+              className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold h-[48px] rounded-[8px] transition-all style-body mt-2 flex items-center justify-center cursor-pointer"
             >
               {isLoggingIn ? 'Ověřuji...' : 'Přihlásit se'}
             </button>
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
   const totalRevenue = filteredOrders.reduce((sum, order) => sum + (Number(order.total_price) || 0), 0);
 
   return (
-    <div className="min-h-screen bg-black-custom text-secondary p-4 md:p-8">
+    <div className="min-h-screen bg-black text-secondary p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-black-custom/50 text-black300 style-product-tag">
+                <thead className="bg-black/50 text-black300 style-product-tag">
                   <tr>
                     <th className="p-4 font-normal">Zákazník / ID</th>
                     <th className="p-4 font-normal">Stav</th>
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
                     <tr 
                       key={order.id} 
                       onClick={() => setSelectedOrder(order)}
-                      className="hover:bg-black-custom/40 cursor-pointer transition-colors group"
+                      className="hover:bg-black/40 cursor-pointer transition-colors group"
                     >
                       <td className="p-4">
                         <div className="style-body-bold text-secondary group-hover:text-primary transition-colors">
@@ -326,7 +326,7 @@ export default function AdminDashboard() {
 
       {/* DETAIL OBJEDNÁVKY MODAL */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black-custom/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all" onClick={() => setSelectedOrder(null)}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all" onClick={() => setSelectedOrder(null)}>
           <div className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
               <div>
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
 
             <div className="p-6 space-y-8">
               {/* AKCE STAVU */}
-              <div className="bg-black-custom p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+              <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
                 <span className="style-product-tag text-black300">Změnit stav:</span>
                 <div className="flex gap-2">
                   <button 
@@ -388,7 +388,7 @@ export default function AdminDashboard() {
                 <h3 className="style-product-tag text-black300 flex items-center gap-2">
                   <ShoppingBag size={14} className="text-primary" /> Položky objednávky
                 </h3>
-                <div className="bg-black-custom rounded-[12px] border border-black300/20 overflow-hidden">
+                <div className="bg-black rounded-[12px] border border-black300/20 overflow-hidden">
                   {selectedOrder.cart_items?.map((item: any, i: number) => {
                     const isCustomStamp = item.name.toLowerCase().includes('vlastní');
                     const printUrl = customStampsData[item.id];
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
                                   href={printUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black-custom font-semibold px-4 py-2 rounded-[6px] style-body transition-all cursor-pointer"
+                                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[6px] style-body transition-all cursor-pointer"
                                 >
                                   <Download size={14} /> Stáhnout tiskové PNG
                                 </a>

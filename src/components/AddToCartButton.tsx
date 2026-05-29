@@ -32,7 +32,8 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
       price: product.price,
       quantity: 1,
       image_url: product.image_url || '/images/product-image_0001.jpg',
-      weight_grams: product.weight_grams // <--- TOTO JSME PŘIDALI (nezapomeň na čárku na řádku nad tím!)
+      weight_grams: product.weight_grams,
+      item_type: 'product',
     });
 
     // 2. Spustíme mikro-interakci

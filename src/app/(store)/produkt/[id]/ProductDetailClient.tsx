@@ -41,8 +41,8 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
   ].filter(param => param.value);
 
   return (
-    <section className="bg-[#0F172A] text-[#FDFBF7] w-full px-[24px] md:px-[44px] lg:px-[84px] pt-[32px] md:pt-[54px] lg:pt-[64px] pb-[64px] min-h-screen">
-      <div className="max-w-[1440px] mx-auto">
+    <section className="bg-black text-secondary w-full pt-[32px] md:pt-[54px] lg:pt-[64px] pb-[64px] min-h-screen">
+      <div className="layout-container">
         
         <h1 className="style-h2 mb-6 text-center lg:hidden w-full select-none">
           {product.name}
@@ -74,7 +74,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
               {allImages.map((img, idx) => (
                 <div 
                   key={idx} 
-                  className={`relative w-[80px] h-[80px] md:w-[100px] md:h-[100px] shrink-0 border rounded-[8px] overflow-hidden cursor-pointer transition-colors ${mainImage === img ? 'border-[#FF6B35]' : 'border-[#8B95AC] hover:border-[#D1D6DF]'}`}
+                  className={`relative w-[80px] h-[80px] md:w-[100px] md:h-[100px] shrink-0 border rounded-[8px] overflow-hidden cursor-pointer transition-colors ${mainImage === img ? 'border-primary' : 'border-black300 hover:border-black200'}`}
                   onClick={() => setMainImage(img)}
                   onContextMenu={(e) => e.preventDefault()}
                 >
@@ -101,14 +101,14 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
 
             <div className="w-full flex flex-col items-center lg:items-start mb-6 pt-2">
               <div className="mb-2 select-none">
-                <span className="style-product-price text-[#059669]">
+                <span className="style-product-price text-success">
                   Cena {product.price} Kč
                 </span>
               </div>
               
               <div className="flex items-center justify-center lg:justify-start gap-2 pointer-events-none mb-6 w-full select-none">
-                <span className="style-body text-[#FDFBF7]">Skladem</span>
-                <span className="style-product-tag bg-[#2B3755] text-white px-2 py-1 rounded-full">
+                <span className="style-body text-secondary">Skladem</span>
+                <span className="style-product-tag bg-black400 text-white px-2 py-1 rounded-full">
                   {product.stock_quantity > 10 ? 'více než 10 ks' : 'méně než 10 ks'}
                 </span>
               </div>
@@ -122,7 +122,8 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                     price: product.price,
                     quantity: 1,
                     image_url: mainImage,
-                    weight_grams: product.weight_grams
+                    weight_grams: product.weight_grams,
+                    item_type: 'product',
                   });
                 }}
               >
@@ -132,12 +133,12 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
 
             {/* PARAMETRY */}
             {productParameters.length > 0 && (
-              <div className="w-full border-t border-[#8B95AC]/30 pt-6 mt-2 text-left">
+              <div className="w-full border-t border-black300/30 pt-6 mt-2 text-left">
                 <button 
                   className="w-full flex items-center justify-between cursor-pointer text-left group"
                   onClick={() => setIsParamsOpen(!isParamsOpen)}
                 >
-                  <h2 className="style-h4 group-hover:text-[#FF7F51] transition-colors">Parametry</h2>
+                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">Parametry</h2>
                   <svg 
                     className={`w-6 h-6 transition-transform duration-300 ${isParamsOpen ? 'rotate-180' : ''}`} 
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -149,9 +150,9 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                 <div className={`${isParamsOpen ? 'block' : 'hidden'} mt-4 select-none`}>
                   <div className="flex flex-col gap-2">
                     {productParameters.map((param, idx) => (
-                      <div key={idx} className="flex justify-between border-b border-[#8B95AC]/10 pb-2">
+                      <div key={idx} className="flex justify-between border-b border-black300/10 pb-2">
                         <span className="style-body text-[#8B95AC]">{param.label}</span>
-                        <span className="style-body text-[#FDFBF7] text-right font-medium">{param.value}</span>
+                        <span className="style-body text-secondary text-right font-medium">{param.value}</span>
                       </div>
                     ))}
                   </div>
@@ -161,12 +162,12 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
 
             {/* POPIS */}
             {product.detailed_description && (
-              <div className="w-full border-t border-[#8B95AC]/30 pt-6 mt-6 text-left">
+              <div className="w-full border-t border-black300/30 pt-6 mt-6 text-left">
                 <button 
                   className="w-full flex items-center justify-between cursor-pointer text-left group"
                   onClick={() => setIsDescOpen(!isDescOpen)}
                 >
-                  <h2 className="style-h4 group-hover:text-[#FF7F51] transition-colors">Detailní popis známky</h2>
+                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">Detailní popis známky</h2>
                   <svg 
                     className={`w-6 h-6 transition-transform duration-300 ${isDescOpen ? 'rotate-180' : ''}`} 
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -188,11 +189,11 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
 
         {/* SOUVISEJÍCÍ PRODUKTY S OCHRANOU */}
         {relatedProducts && relatedProducts.length > 0 && (
-          <div className="border-t border-[#8B95AC]/30 pt-16">
+          <div className="border-t border-black300/30 pt-16">
             <h2 className="style-h2 text-center mb-12 select-none">Mohlo by vás také zajímat</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
               {relatedProducts.map((relProd: any) => (
-                <div key={relProd.id} className="group relative bg-[#0F172A] border border-[#8B95AC] rounded-[16px] p-[24px] flex flex-col hover:bg-[#2B3755] transition-all duration-300">
+                <div key={relProd.id} className="group relative bg-black border border-black300 rounded-[16px] p-[24px] flex flex-col hover:bg-black400 transition-all duration-300">
                   <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded-[16px]" aria-label={`Detail produktu ${relProd.name}`}></Link>
                   <div 
                     className="relative w-full h-[120px] bg-transparent mb-6 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none"
@@ -210,7 +211,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                   </div>
                   <div className="flex flex-col items-center text-center relative z-10 pointer-events-none select-none">
                     <h3 className="style-h4 mb-4 line-clamp-2 h-[48px] flex items-center">{relProd.name}</h3>
-                    <span className="style-product-price text-[#059669]">Cena {relProd.price} Kč</span>
+                    <span className="style-product-price text-success">Cena {relProd.price} Kč</span>
                   </div>
                 </div>
               ))}
@@ -223,7 +224,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
       {/* OCHRANA V LIGHTBOXU */}
       {lightboxImg && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/90 backdrop-blur-sm p-4 cursor-zoom-out select-none"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out select-none"
           onClick={() => setLightboxImg(null)}
           onContextMenu={(e) => e.preventDefault()}
         >

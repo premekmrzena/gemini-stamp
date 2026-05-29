@@ -1,5 +1,5 @@
-/* 1. IMPORT FONTŮ - Vybráno 7 různorodých stylů pro editor */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Open+Sans:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Dancing+Script:wght@700&family=Montserrat:wght@800&family=Caveat:wght@400;700&family=EB+Garamond:ital,wght@0,400;1,400&family=Pacifico&display=swap');
+/* Editor fonts - Poppins je načítán přes next/font v layout.tsx */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Dancing+Script:wght@700&family=Pacifico&family=Caveat:wght@700&display=swap');
 
 /* 2. Import Tailwind */
 @import "tailwindcss";
@@ -25,13 +25,23 @@
   --color-primary: #FF6B35;
   --color-primary-hover: #FF7F51;
   --color-secondary: #FDFBF7;
-  --color-black-custom: #0F172A;
-  /* PŘIDÁNA NOVÁ BARVA PRO HLAVIČKU A PATIČKU */
+
+  /* Černá škála */
+  --color-black: #0F172A;
+  --color-hamburger-bcgr: #1E2330;
   --color-black500: #252C3C;
   --color-black400: #2B3755;
   --color-black300: #8B95AC;
   --color-black200: #D1D6DF;
+  --color-black100: #F4F4F4;
+
+  /* Stavové barvy */
   --color-success: #059669;
+  --color-success-hover: #0AB480;
+  --color-error: #D51C1A;
+  --color-error-hover: #EC221F;
+
+  /* Tagy */
   --color-tag-novinka: #F9B420;
   --color-tag-posledni-kusy: #F95755;
   --color-tag-top: #62BBE2;
@@ -50,6 +60,48 @@ body {
 }
 
 /* 3. NAŠE STYLY Z FIGMY */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/*
+ * layout-container: max-width 1440px, fluid padding mobile→tablet→desktop
+ * Psáno v plain CSS — @apply s arbitrary hodnotami není spolehlivé v Tailwind v4
+ */
+.layout-container {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+@media (min-width: 768px) {
+  .layout-container { padding-left: 44px; padding-right: 44px; }
+}
+@media (min-width: 1024px) {
+  .layout-container { padding-left: 84px; padding-right: 84px; }
+}
+
+/*
+ * Tailwind v4 má built-in bg-black = #000000.
+ * Unlayered CSS má vyšší prioritu než @layer utilities, takže toto vždy vyhraje.
+ */
+.bg-black  { background-color: #0F172A; }
+.text-black { color: #0F172A; }
+
 @layer components {
   .style-h1 {
     @apply font-semibold text-[24px] leading-[1.4] tracking-[-0.01em] md:text-[32px] md:tracking-[-0.02em] lg:text-[42px];

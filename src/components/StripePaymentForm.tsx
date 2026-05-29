@@ -64,20 +64,17 @@ export default function StripePaymentForm({ amount, orderId }: { amount: number,
   const [clientSecret, setClientSecret] = useState('');
 
   useEffect(() => {
-    // Voláme naše API pro vytvoření platby s reálnou částkou
     fetch('/api/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({ orderId }),
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-        }
+        if (data.clientSecret) setClientSecret(data.clientSecret);
       })
-      .catch(err => console.error("Chyba při načítání platby:", err));
-  }, [amount]);
+      .catch((err) => console.error('Chyba při načítání platby:', err));
+  }, [orderId]);
 
   if (!clientSecret) {
     return (

@@ -4,18 +4,15 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import Button from '@/components/Button';
-import { TEMPLATES } from '@/lib/editorConfig';
+import { TEMPLATES, PhotoState, TextState } from '@/lib/editorConfig';
+import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
 import { supabase } from '@/lib/supabase';
+import TextControls from './TextControls';
 
-const FONT_OPTIONS = [
-  { name: 'Moderní (Poppins)', value: 'Poppins' },
-  { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' },
-  { name: 'Psací (Dancing Script)', value: 'Dancing Script' },
-  { name: 'Retro (Pacifico)', value: 'Pacifico' },
-];
-
-interface PhotoState { url: string; scale: number; x: number; y: number; }
-interface StampEditorProps { onComplete: (stampId?: string) => void; isMobileLandscape?: boolean; }
+interface StampEditorProps {
+  onComplete: (stampId?: string) => void;
+  isMobileLandscape?: boolean;
+}
 
 export default function StampEditor({ onComplete, isMobileLandscape = false }: StampEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,20 +27,18 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showLandscapeHint, setShowLandscapeHint] = useState(false);
-
   const [showThankYou, setShowThankYou] = useState(false);
-
   const [viewRatio, setViewRatio] = useState(1);
 
   const [mainText, setMainText] = useState('Napište vlastní text');
-  const [textColor, setTextColor] = useState('#059669'); 
-  const [fontSize, setFontSize] = useState(80); 
+  const [textColor, setTextColor] = useState('#059669');
+  const [fontSize, setFontSize] = useState(80);
   const [fontFamily, setFontFamily] = useState('Poppins');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
   const [textPos, setTextPos] = useState({ x: 50, y: 35 });
   const [useShadow, setUseShadow] = useState(false);
-  const [shadowColor, setShadowColor] = useState('#000000');
-  const [shadowBlur, setShadowBlur] = useState(15);
+  const [shadowColor] = useState('#000000');
+  const [shadowBlur] = useState(15);
 
   const isDragging = useRef<false | 'photo' | 'text' | 'resize'>(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -52,32 +47,20 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const textPercentStart = useRef({ x: 50, y: 50 });
   const initialTouchDistance = useRef<number | null>(null);
 
+  const photoSlotsOnly = activeTemplate.slots.filter((s) => s.type !== 'text');
+  const textSlot = activeTemplate.slots.find((s) => s.type === 'text');
   const totalSlotsSteps = activeTemplate.slots.length;
   const isPreviewStep = mobileStep === totalSlotsSteps;
   const isLastSlotStep = mobileStep === totalSlotsSteps - 1;
   const currentMobileSlot = isPreviewStep ? null : activeTemplate.slots[mobileStep];
-  const isMobileTextStep = currentMobileSlot?.id === '1';
-  
-  const photoSlotsOnly = activeTemplate.slots.filter(s => s.id !== '1');
-  const totalPhotoSlots = photoSlotsOnly.length;
-  const currentPhotoIndex = activeTemplate.slots.slice(0, mobileStep + 1).filter(s => s.id !== '1').length;
-  
-  const allPhotosFilled = photoSlotsOnly.every(slot => photos[slot.id]);
+  const isMobileTextStep = currentMobileSlot?.type === 'text';
+  const allPhotosFilled = photoSlotsOnly.every((slot) => photos[slot.id]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const linkId = 'google-fonts-stamp-editor';
-    if (!document.getElementById(linkId)) {
-      const link = document.createElement('link');
-      link.id = linkId; link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Pacifico&family=Poppins:wght@600;700&family=Playfair+Display:wght@700&display=swap';
-      document.head.appendChild(link);
-    }
-  }, []);
+  const textState: TextState = { mainText, textColor, fontSize, fontFamily, textAlign, textPos, useShadow, shadowColor, shadowBlur };
 
   useEffect(() => {
     const updateRatio = () => {
-      const isMobile = window.innerWidth < 768; // Změněno na Tailwind md breakpoint (768px)
+      const isMobile = window.innerWidth < 768;
       if (isMobile && currentMobileSlot) {
         const el = document.querySelector(`.mobile-slot-${currentMobileSlot.id}`);
         if (el) setViewRatio(currentMobileSlot.width / el.getBoundingClientRect().width);
@@ -108,39 +91,25 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const safeRatio = viewRatio || 1;
 
   const MobileMiniMap = () => {
-    const minX = Math.min(...activeTemplate.slots.map(s => s.x));
-    const minY = Math.min(...activeTemplate.slots.map(s => s.y));
-    const maxX = Math.max(...activeTemplate.slots.map(s => s.x + s.width));
-    const maxY = Math.max(...activeTemplate.slots.map(s => s.y + s.height));
+    const minX = Math.min(...activeTemplate.slots.map((s) => s.x));
+    const minY = Math.min(...activeTemplate.slots.map((s) => s.y));
+    const maxX = Math.max(...activeTemplate.slots.map((s) => s.x + s.width));
+    const maxY = Math.max(...activeTemplate.slots.map((s) => s.y + s.height));
     const bWidth = maxX - minX;
     const bHeight = maxY - minY;
-
     return (
       <div className="relative bg-secondary rounded-[4px] shrink-0 mb-0" style={{ width: '167px', height: '103px', padding: '12px' }}>
         <div className="relative w-full h-full">
-          {activeTemplate.slots.map(slot => {
+          {activeTemplate.slots.map((slot) => {
             const isActive = activeSlotId === slot.id;
-            const isFilled = slot.id === '1' ? mainText.length > 0 : photos[slot.id];
-            
+            const isFilled = slot.type === 'text' ? mainText.length > 0 : !!photos[slot.id];
             const leftPercent = ((slot.x - minX) / bWidth) * 100;
             const topPercent = ((slot.y - minY) / bHeight) * 100;
             const widthPercent = (slot.width / bWidth) * 100;
             const heightPercent = (slot.height / bHeight) * 100;
-            
             return (
-              <div 
-                key={slot.id} 
-                className={`absolute transition-all duration-300 rounded-[1px] ${
-                  isActive 
-                  ? 'border-2 border-primary z-10' 
-                  : isFilled ? 'bg-success' : 'border border-black300'
-                }`} 
-                style={{ 
-                  left: `calc(${leftPercent}% + 2px)`, 
-                  top: `calc(${topPercent}% + 2px)`, 
-                  width: `calc(${widthPercent}% - 4px)`, 
-                  height: `calc(${heightPercent}% - 4px)` 
-                }} 
+              <div key={slot.id} className={`absolute transition-all duration-300 rounded-[1px] ${isActive ? 'border-2 border-primary z-10' : isFilled ? 'bg-success' : 'border border-black300'}`}
+                style={{ left: `calc(${leftPercent}% + 2px)`, top: `calc(${topPercent}% + 2px)`, width: `calc(${widthPercent}% - 4px)`, height: `calc(${heightPercent}% - 4px)` }}
               />
             );
           })}
@@ -149,11 +118,28 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
     );
   };
 
-  const handleSlotClick = (slotId: string) => { targetSlotIdRef.current = slotId; setActiveSlotId(slotId); if (!photos[slotId]) fileInputRef.current?.click(); };
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (!file || !targetSlotIdRef.current) return; setPhotos(prev => ({ ...prev, [targetSlotIdRef.current!]: { url: URL.createObjectURL(file), scale: 1, x: 0, y: 0 } })); e.target.value = ''; };
-  const handleDeletePhoto = (slotId: string, e: React.MouseEvent) => { e.stopPropagation(); setPhotos(prev => { const copy = { ...prev }; delete copy[slotId]; return copy; }); if (targetSlotIdRef.current === slotId) targetSlotIdRef.current = null; };
+  const handleSlotClick = (slotId: string) => {
+    targetSlotIdRef.current = slotId;
+    setActiveSlotId(slotId);
+    const slot = activeTemplate.slots.find((s) => s.id === slotId);
+    if (slot?.type !== 'text' && !photos[slotId]) fileInputRef.current?.click();
+  };
 
-  const getTouchDistance = (touches: React.TouchList) => { return Math.sqrt(Math.pow(touches[0].clientX - touches[1].clientX, 2) + Math.pow(touches[0].clientY - touches[1].clientY, 2)); };
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !targetSlotIdRef.current) return;
+    setPhotos((prev) => ({ ...prev, [targetSlotIdRef.current!]: { url: URL.createObjectURL(file), scale: 1, x: 0, y: 0 } }));
+    e.target.value = '';
+  };
+
+  const handleDeletePhoto = (slotId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPhotos((prev) => { const copy = { ...prev }; delete copy[slotId]; return copy; });
+    if (targetSlotIdRef.current === slotId) targetSlotIdRef.current = null;
+  };
+
+  const getTouchDistance = (touches: React.TouchList) =>
+    Math.sqrt(Math.pow(touches[0].clientX - touches[1].clientX, 2) + Math.pow(touches[0].clientY - touches[1].clientY, 2));
 
   const handleMouseDown = (type: 'photo' | 'text' | 'resize', slotId: string, e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
@@ -166,198 +152,159 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current || !activeSlotId) return;
-    const dx = e.clientX - dragStart.current.x; const dy = e.clientY - dragStart.current.y;
-    if (isDragging.current === 'photo' && photos[activeSlotId]) setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + (dx * safeRatio), y: photoStart.current.y + (dy * safeRatio) } }));
-    else if (isDragging.current === 'resize' && photos[activeSlotId]) setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
-    else if (isDragging.current === 'text' && activeSlotId === '1') {
-      const textSlot = activeTemplate.slots.find(s => s.id === '1');
-      if (textSlot) setTextPos({ x: Math.min(Math.max(0, textPercentStart.current.x + (dx / (textSlot.width / safeRatio)) * 100), 100), y: Math.min(Math.max(0, textPercentStart.current.y + (dy / (textSlot.height / safeRatio)) * 100), 100) });
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    if (isDragging.current === 'photo' && photos[activeSlotId]) {
+      setPhotos((prev) => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + dx * safeRatio, y: photoStart.current.y + dy * safeRatio } }));
+    } else if (isDragging.current === 'resize' && photos[activeSlotId]) {
+      setPhotos((prev) => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
+    } else if (isDragging.current === 'text' && textSlot) {
+      setTextPos({ x: Math.min(Math.max(0, textPercentStart.current.x + (dx / (textSlot.width / safeRatio)) * 100), 100), y: Math.min(Math.max(0, textPercentStart.current.y + (dy / (textSlot.height / safeRatio)) * 100), 100) });
     }
   };
 
   const handleTouchStart = (type: 'photo' | 'text' | 'resize', slotId: string, e: React.TouchEvent) => {
     e.stopPropagation();
     if (slotId) { setActiveSlotId(slotId); targetSlotIdRef.current = slotId; }
-    if (e.touches.length === 2 && type === 'photo' && photos[slotId]) { isDragging.current = 'photo'; initialTouchDistance.current = getTouchDistance(e.touches); scaleStart.current = photos[slotId].scale; }
-    else if (e.touches.length === 1) { isDragging.current = type; dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; if (type === 'photo' && photos[slotId]) photoStart.current = { x: photos[slotId].x, y: photos[slotId].y }; else if (type === 'resize' && photos[slotId]) scaleStart.current = photos[slotId].scale; else if (type === 'text') textPercentStart.current = { x: textPos.x, y: textPos.y }; }
+    if (e.touches.length === 2 && type === 'photo' && photos[slotId]) {
+      isDragging.current = 'photo'; initialTouchDistance.current = getTouchDistance(e.touches); scaleStart.current = photos[slotId].scale;
+    } else if (e.touches.length === 1) {
+      isDragging.current = type; dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (type === 'photo' && photos[slotId]) photoStart.current = { x: photos[slotId].x, y: photos[slotId].y };
+      else if (type === 'resize' && photos[slotId]) scaleStart.current = photos[slotId].scale;
+      else if (type === 'text') textPercentStart.current = { x: textPos.x, y: textPos.y };
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging.current || !activeSlotId) return;
-    if (e.touches.length === 2 && isDragging.current === 'photo' && initialTouchDistance.current && photos[activeSlotId]) { const factor = getTouchDistance(e.touches) / initialTouchDistance.current; setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current * factor), 5) } })); }
-    else if (e.touches.length === 1 && dragStart.current) {
-      const dx = e.touches[0].clientX - dragStart.current.x; const dy = e.touches[0].clientY - dragStart.current.y;
-      if (isDragging.current === 'photo' && photos[activeSlotId]) setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + (dx * safeRatio), y: photoStart.current.y + (dy * safeRatio) } }));
-      else if (isDragging.current === 'resize' && photos[activeSlotId]) setPhotos(prev => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
-      else if (isDragging.current === 'text') { const textSlot = activeTemplate.slots.find(s => s.id === '1'); if (textSlot) setTextPos({ x: Math.min(Math.max(0, textPercentStart.current.x + (dx / (textSlot.width / safeRatio)) * 100), 100), y: Math.min(Math.max(0, textPercentStart.current.y + (dy / (textSlot.height / safeRatio)) * 100), 100) }); }
-    }
-  };
-  const handleMouseUp = () => { isDragging.current = false; initialTouchDistance.current = null; };
-
-  const generateCanvasDataUrl = async (includeBackground: boolean = true, targetWidth?: number): Promise<string> => {
-    const tCanvas = document.createElement('canvas'); tCanvas.width = activeTemplate.width; tCanvas.height = activeTemplate.height;
-    const ctx = tCanvas.getContext('2d'); if (!ctx) return '';
-    
-    if (includeBackground) {
-      const bgImg = new window.Image(); bgImg.src = activeTemplate.backgroundImage;
-      await new Promise(r => bgImg.onload = r); 
-      ctx.drawImage(bgImg, 0, 0, tCanvas.width, tCanvas.height);
-    } else {
-      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, tCanvas.width, tCanvas.height);
-    }
-
-    for (const slot of activeTemplate.slots) {
-      const photo = photos[slot.id]; if (!photo) continue;
-      const userImg = new window.Image(); userImg.src = photo.url; await new Promise(r => userImg.onload = r);
-      ctx.save(); ctx.beginPath(); ctx.rect(slot.x, slot.y, slot.width, slot.height); ctx.clip();
-      const s = Math.max(slot.width / userImg.width, slot.height / userImg.height) * photo.scale;
-      ctx.drawImage(userImg, slot.x + (slot.width - userImg.width * s) / 2 + photo.x, slot.y + (slot.height - userImg.height * s) / 2 + photo.y, userImg.width * s, userImg.height * s); ctx.restore();
-    }
-    const tS = activeTemplate.slots.find(s => s.id === '1');
-    if (tS) { 
-      ctx.save(); if (useShadow) { ctx.shadowColor = shadowColor; ctx.shadowBlur = shadowBlur; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4; } 
-      ctx.fillStyle = textColor; ctx.font = `600 ${fontSize}px ${fontFamily}, sans-serif`; ctx.textAlign = textAlign; ctx.textBaseline = 'middle'; 
-      mainText.split('\n').forEach((line, i) => ctx.fillText(line, tS.x + (textPos.x/100)*tS.width, tS.y + (textPos.y/100)*tS.height + i * (fontSize*1.05))); ctx.restore(); 
-    }
-
-    if (targetWidth && targetWidth < tCanvas.width) {
-      const scale = targetWidth / tCanvas.width;
-      const resCanvas = document.createElement('canvas');
-      resCanvas.width = targetWidth; resCanvas.height = tCanvas.height * scale;
-      const resCtx = resCanvas.getContext('2d');
-      if (resCtx) {
-        resCtx.drawImage(tCanvas, 0, 0, resCanvas.width, resCanvas.height);
-        return resCanvas.toDataURL('image/jpeg', 0.85); 
+    if (e.touches.length === 2 && isDragging.current === 'photo' && initialTouchDistance.current && photos[activeSlotId]) {
+      const factor = getTouchDistance(e.touches) / initialTouchDistance.current;
+      setPhotos((prev) => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current * factor), 5) } }));
+    } else if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - dragStart.current.x;
+      const dy = e.touches[0].clientY - dragStart.current.y;
+      if (isDragging.current === 'photo' && photos[activeSlotId]) {
+        setPhotos((prev) => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], x: photoStart.current.x + dx * safeRatio, y: photoStart.current.y + dy * safeRatio } }));
+      } else if (isDragging.current === 'resize' && photos[activeSlotId]) {
+        setPhotos((prev) => ({ ...prev, [activeSlotId]: { ...prev[activeSlotId], scale: Math.min(Math.max(1, scaleStart.current + (dx + dy) * 0.005), 5) } }));
+      } else if (isDragging.current === 'text' && textSlot) {
+        setTextPos({ x: Math.min(Math.max(0, textPercentStart.current.x + (dx / (textSlot.width / safeRatio)) * 100), 100), y: Math.min(Math.max(0, textPercentStart.current.y + (dy / (textSlot.height / safeRatio)) * 100), 100) });
       }
     }
-    return tCanvas.toDataURL('image/jpeg', 0.95);
   };
 
-  const uploadBase64ToBlob = async (base64Data: string, filename: string) => {
-    const res = await fetch(base64Data);
-    const blob = await res.blob();
-    const response = await fetch(`/api/upload-stamp?filename=${filename}`, { method: 'POST', body: blob });
-    if (!response.ok) throw new Error('Upload failed');
-    return await response.json();
-  };
+  const handleMouseUp = () => { isDragging.current = false; initialTouchDistance.current = null; };
 
   const handleMobilePreview = async () => {
-    setMobileStep(totalSlotsSteps); setIsGeneratingPreview(true);
-    const dataUrl = await generateCanvasDataUrl(true, 1080);
-    setPreviewUrl(dataUrl); setIsGeneratingPreview(false);
+    setMobileStep(totalSlotsSteps);
+    setIsGeneratingPreview(true);
+    const dataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, true, 1080);
+    setPreviewUrl(dataUrl);
+    setIsGeneratingPreview(false);
   };
 
   const handleUploadAndComplete = async () => {
     setIsUploading(true);
     try {
-      const previewDataUrl = await generateCanvasDataUrl(true, 1080);
+      const previewDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, true, 1080);
       const timestamp = Date.now();
       const previewUpload = await uploadBase64ToBlob(previewDataUrl, `arch-${timestamp}.jpg`);
-      
-      const TEMPLATE_PRODUCT_ID = "2923bbf0-2f34-4cd5-b586-7c1c7ba1977b"; 
+
       const { data, error } = await supabase
         .from('custom_stamps')
-        .insert([{ product_id: TEMPLATE_PRODUCT_ID, preview_url: previewUpload.url, print_url: previewUpload.url }])
-        .select('id').single();
+        .insert([{ product_id: activeTemplate.productId, preview_url: previewUpload.url, print_url: previewUpload.url }])
+        .select('id')
+        .single();
 
       if (error) throw error;
-      
       setShowThankYou(true);
       onComplete(data.id);
-      
-    } catch (error) { alert('Chyba při ukládání archu.'); } finally { setIsUploading(false); }
+    } catch {
+      alert('Chyba při ukládání archu.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <div className={`w-full flex flex-col text-secondary select-none bg-black-custom font-poppins relative ${!isPreviewStep && !showThankYou ? 'touch-none' : ''}`} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}>
-      
-      {/* --- CSS PRO NOVÝ CUSTOM SLIDER DLE FIGMY --- */}
+    <div
+      className={`w-full flex flex-col text-secondary select-none bg-black font-poppins relative ${!isPreviewStep && !showThankYou ? 'touch-none' : ''}`}
+      onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}
+    >
       <style>{`
         input[type="range"].custom-fontSize-slider { -webkit-appearance: none; appearance: none; height: 6px; width: 160px; border-radius: 4px; outline: none; }
         input[type="range"].custom-fontSize-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #059669; cursor: pointer; }
         input[type="range"].custom-fontSize-slider::-moz-range-thumb { height: 24px; width: 24px; border-radius: 50%; background: #059669; cursor: pointer; border: none; }
       `}</style>
-      
-      {showLandscapeHint && ( <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black-custom style-body-bold px-4 py-2 rounded-full shadow-2xl animate-pulse pointer-events-none whitespace-nowrap"> Otočte zpět na výšku pro zobrazení menu </div> )}
+
+      {showLandscapeHint && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black style-body-bold px-4 py-2 rounded-full shadow-2xl animate-pulse pointer-events-none whitespace-nowrap">
+          Otočte zpět na výšku pro zobrazení menu
+        </div>
+      )}
       <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="opacity-0 absolute w-0 h-0 pointer-events-none" accept="image/*" />
 
-      {/* ======================================================== */}
-      {/* 🖥️ DESKTOPOVÝ REŽIM */}
-      {/* ======================================================== */}
-      {/* Kontejner má min-h-[calc...] a bottom padding, aby obsah nespadl pod fixní patičku a perfektně se vycentroval */}
+      {/* DESKTOP */}
       <div className="hidden md:flex flex-col w-full min-h-[calc(100vh-80px)]" style={{ paddingBottom: showThankYou ? '0px' : '116px' }}>
-        
         <div className="flex-1 w-full flex items-center justify-center p-8" onClick={() => setActiveSlotId(null)}>
-          <div className="desktop-canvas-wrapper relative shadow-2xl bg-secondary border border-black300/10 shrink-0 touch-none rounded-[4px] overflow-hidden" style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '100%', maxWidth: '100%' }} onClick={(e) => e.stopPropagation()}>
+          <div className="desktop-canvas-wrapper relative shadow-2xl bg-secondary border border-black300/10 shrink-0 touch-none rounded-[4px] overflow-hidden"
+            style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '100%', maxWidth: '100%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <img src={activeTemplate.backgroundImage} className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="Šablona" />
             {activeTemplate.slots.map((slot) => (
-              <div key={slot.id} data-slot-id={slot.id} className={`absolute border border-dashed cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-primary bg-primary/10' : 'border-secondary/30 hover:border-primary/50 bg-black-custom/5'}`} style={{ left: `${(slot.x/activeTemplate.width)*100}%`, top: `${(slot.y/activeTemplate.height)*100}%`, width: `${(slot.width/activeTemplate.width)*100}%`, height: `${(slot.height/activeTemplate.height)*100}%`, zIndex: slot.id === '1' ? 10 : 5 }} onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}>
+              <div key={slot.id} data-slot-id={slot.id}
+                className={`absolute border border-dashed cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-primary bg-primary/10' : 'border-secondary/30 hover:border-primary/50 bg-black/5'}`}
+                style={{ left: `${(slot.x / activeTemplate.width) * 100}%`, top: `${(slot.y / activeTemplate.height) * 100}%`, width: `${(slot.width / activeTemplate.width) * 100}%`, height: `${(slot.height / activeTemplate.height) * 100}%`, zIndex: slot.type === 'text' ? 10 : 5 }}
+                onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}
+              >
                 {photos[slot.id] ? (
                   <div className="absolute inset-0 w-full h-full overflow-hidden" onMouseDown={(e) => handleMouseDown('photo', slot.id, e)}>
-                    <img src={photos[slot.id].url} className="w-full h-full object-cover origin-center pointer-events-none" style={{ transform: `translate(${photos[slot.id].x / safeRatio}px, ${photos[slot.id].y / safeRatio}px) scale(${photos[slot.id].scale})` }} />
+                    <img src={photos[slot.id].url} className="w-full h-full object-cover origin-center pointer-events-none"
+                      style={{ transform: `translate(${photos[slot.id].x / safeRatio}px, ${photos[slot.id].y / safeRatio}px) scale(${photos[slot.id].scale})` }}
+                    />
                     <button onClick={(e) => handleDeletePhoto(slot.id, e)} className="absolute top-2 right-2 w-8 h-8 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-md hover:bg-tag-posledni-kusy">✕</button>
-                    <div className="absolute bottom-0 right-0 w-10 h-10 bg-primary hover:bg-primary-hover flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-[8px] transition-colors" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black-custom" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                    <div className="absolute bottom-0 right-0 w-10 h-10 bg-primary hover:bg-primary-hover flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-[8px] transition-colors" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black" strokeWidth="3"><polyline points="9 3 3 3 3 9" /><polyline points="15 21 21 21 21 15" /><line x1="3" y1="3" x2="21" y2="21" /></svg>
+                    </div>
                   </div>
-                ) : !photos[slot.id] && (
-                  <div className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors ${slot.id === '1' ? 'pt-16' : ''}`}>
+                ) : slot.type !== 'text' && (
+                  <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors">
                     <Image src="/images/add-image-ico.svg" alt="+" width={32} height={32} className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity" />
                     <span className="style-body-bold text-black200 transition-opacity">Vložit fotku</span>
                   </div>
                 )}
-                {slot.id === '1' && <div className="absolute cursor-move select-none p-2 whitespace-pre active:opacity-80 group w-max max-w-full touch-none" style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily: fontFamily, fontWeight: '600', textAlign: textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }} onMouseDown={(e) => handleMouseDown('text', '1', e)}><span className="relative z-10 border border-transparent group-hover:border-primary/50 p-1 rounded inline-block">{mainText}</span></div>}
+                {slot.type === 'text' && (
+                  <div className="absolute cursor-move select-none p-2 whitespace-pre active:opacity-80 group w-max max-w-full touch-none"
+                    style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
+                    onMouseDown={(e) => handleMouseDown('text', slot.id, e)}
+                  >
+                    <span className="relative z-10 border border-transparent group-hover:border-primary/50 p-1 rounded inline-block">{mainText}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* --- FIXED BOTTOM DESKTOP (Text panel + Patička) --- */}
         {!showThankYou && (
           <div className="fixed bottom-0 left-0 w-full z-50 flex flex-col bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
-            
-            {activeSlotId === '1' && (
+            {activeSlotId === textSlot?.id && (
               <div className="w-full flex justify-center py-[24px] border-t border-black300/10">
                 <div className="flex gap-[48px] items-start">
-                  
-                  {/* Left: Textarea & Alignment */}
-                  <div className="flex gap-[16px]">
-                    <textarea 
-                      value={mainText} onChange={e => setMainText(e.target.value)} 
-                      placeholder="Napište vlastní text" 
-                      className="bg-secondary text-black-custom rounded-[4px] p-4 style-body outline-none focus:ring-2 focus:ring-success resize-none w-[320px] h-[96px] placeholder:text-black300 placeholder:opacity-50"
-                    />
-                    <div className="flex flex-col justify-between py-1 h-[96px]">
-                      <button onClick={() => setTextAlign('left')}><Image src={textAlign === 'left' ? '/images/align-left-active.svg' : '/images/align-left.svg'} alt="Left" width={24} height={24} /></button>
-                      <button onClick={() => setTextAlign('center')}><Image src={textAlign === 'center' ? '/images/align-center-active.svg' : '/images/align-center.svg'} alt="Center" width={24} height={24} /></button>
-                      <button onClick={() => setTextAlign('right')}><Image src={textAlign === 'right' ? '/images/align-right-active.svg' : '/images/align-right.svg'} alt="Right" width={24} height={24} /></button>
-                    </div>
-                  </div>
-                  
-                  {/* Right: Select, Color, Slider, Shadow */}
-                  <div className="flex flex-col gap-[24px] w-[360px]">
-                    <div className="flex gap-[16px] h-[48px]">
-                      <div className="flex-1 relative">
-                        <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="w-full h-full bg-secondary text-black-custom rounded-[4px] pl-4 pr-10 style-body appearance-none outline-none focus:ring-2 focus:ring-success">
-                          {FONT_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#0F172A" strokeWidth="1.5"><path d="M1 1.5L6 6.5L11 1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
-                      </div>
-                      <div className="w-[48px] h-[48px] rounded-[4px] overflow-hidden shrink-0 relative" style={{ backgroundColor: textColor }}>
-                        <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute inset-[-10px] w-[68px] h-[68px] cursor-pointer opacity-0" />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between h-[24px]">
-                      <input type="range" min="40" max="300" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="custom-fontSize-slider w-[200px]" style={{ background: `linear-gradient(to right, #059669 ${((fontSize - 40) / 260) * 100}%, #FDFBF7 ${((fontSize - 40) / 260) * 100}%)` }} />
-                      <div className="flex items-center gap-3">
-                        <input type="checkbox" id="shadow-check-desk" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-5 h-5 accent-success rounded-[4px]" />
-                        <label htmlFor="shadow-check-desk" className="style-body text-secondary cursor-pointer hover:text-primary transition-colors">Zapnout stín</label>
-                      </div>
-                    </div>
-                  </div>
-
+                  <TextControls
+                    mainText={mainText} setMainText={setMainText}
+                    textColor={textColor} setTextColor={setTextColor}
+                    fontSize={fontSize} setFontSize={setFontSize}
+                    fontFamily={fontFamily} setFontFamily={setFontFamily}
+                    textAlign={textAlign} setTextAlign={setTextAlign}
+                    useShadow={useShadow} setUseShadow={setUseShadow}
+                    checkboxId="shadow-check-desk"
+                  />
                 </div>
               </div>
             )}
-
             <footer className="w-full border-t border-black300/30 h-[116px] flex items-center justify-center">
               <div className="w-full max-w-[1440px] mx-auto px-[84px] flex justify-between items-center">
                 <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
@@ -370,43 +317,36 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
         )}
       </div>
 
-      {/* ======================================================== */}
-      {/* 📱 MOBILNÍ REŽIM WIZARDU */}
-      {/* ======================================================== */}
-      {/* Kontejner má min-h-[calc...] a bottom padding, aby obsah nespadl pod fixní patičku a perfektně se vycentroval */}
+      {/* MOBILE */}
       <div className="flex md:hidden flex-col w-full min-h-[calc(100vh-80px)]" style={{ paddingBottom: showThankYou ? '0px' : (isMobileTextStep && !isPreviewStep ? '368px' : '80px') }}>
-        
         {showThankYou ? (
           <div className="flex-1 flex flex-col items-center justify-center w-full py-[48px] px-6">
             <div className="w-[80px] h-[80px] rounded-full border-[3px] border-success flex items-center justify-center mb-[32px]">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
-            <h1 className="style-h1 text-secondary text-center mb-[32px]">Právě jste vytvořili svůj<br/>kreativní arch!</h1>
-            <p className="style-body text-secondary text-center mb-[64px] max-w-[300px] opacity-80">Skvělá práce, Váš grafický návrh jsme vložili do košíku a je připraven k tisku. Co chcete udělat nyní?</p>
-            
+            <h1 className="style-h1 text-secondary text-center mb-[32px]">Právě jste vytvořili svůj<br />kreativní arch!</h1>
+            <p className="style-body text-secondary text-center mb-[64px] max-w-[300px] opacity-80">Skvělá práce, Váš grafický návrh jsme vložili do košíku a je připraven k tisku.</p>
             <div className="w-full flex flex-col gap-[16px] max-w-[300px]">
               <Button variant="outlined" onClick={() => window.location.href = '/'}>Na úvodní stránku</Button>
               <Button onClick={() => window.location.reload()}>Vytvořit další arch</Button>
               <Button onClick={() => window.location.href = '/kosik'}>Jít do košíku</Button>
             </div>
           </div>
-          
         ) : isPreviewStep ? (
           <div className="flex-1 flex flex-col items-center justify-center w-full px-6 py-8">
             <h1 className="style-h1 text-secondary mb-[32px]">Náhled finálního archu</h1>
             <div className="w-full bg-secondary p-1 rounded-[4px] shadow-2xl mb-[32px]">
               {isGeneratingPreview ? (
                 <div className="w-full aspect-[4/3] flex flex-col items-center justify-center bg-black200 animate-pulse">
-                   <div className="w-10 h-10 border-4 border-success border-t-transparent rounded-full animate-spin mb-4"></div>
-                   <span className="style-body-bold text-success">Generuji...</span>
+                  <div className="w-10 h-10 border-4 border-success border-t-transparent rounded-full animate-spin mb-4" />
+                  <span className="style-body-bold text-success">Generuji...</span>
                 </div>
               ) : (
                 <img src={previewUrl || ''} className="w-full h-auto object-contain rounded-[2px]" alt="Preview" />
               )}
             </div>
-            <p className="style-body text-secondary text-center opacity-80">Náhled můžete zvětšovat nebo otočit vaše<br/>zařízení na šířku.</p>
+            <p className="style-body text-secondary text-center opacity-80">Náhled můžete zvětšovat nebo otočit vaše<br />zařízení na šířku.</p>
           </div>
-          
         ) : (
           <>
             {!isMobileLandscape && !isMobileTextStep && (
@@ -416,42 +356,39 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                 <span className="style-body text-secondary mt-[12px]">Fotografie {mobileStep + 1} z {totalSlotsSteps}</span>
               </div>
             )}
-
-            {/* Plátno si vezme flex-1 a perfektně se vycentruje v prostoru nad fixní patičkou */}
             <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center px-6 pb-6 pt-0 relative overflow-hidden">
               <div className="mobile-slot-wrapper w-full h-full flex items-center justify-center">
                 <div className="relative shadow-2xl bg-secondary border border-black300 shrink-0 flex items-center justify-center touch-none rounded-[4px] overflow-hidden" onClick={() => handleSlotClick(currentMobileSlot!.id)}>
-                  
-                  {/* OPRAVA POMĚRU STRAN PRO MOBIL: */}
                   <svg viewBox={`0 0 ${currentMobileSlot!.width} ${currentMobileSlot!.height}`} className="w-full h-auto max-h-[60vh] opacity-0 pointer-events-none" style={{ display: 'block' }} />
-                  
                   <div data-slot-id={currentMobileSlot?.id} className={`mobile-slot-${currentMobileSlot?.id} absolute inset-0 w-full h-full overflow-hidden touch-none`}>
-                    
-                    {!photos[currentMobileSlot!.id] && (
-                      <div className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer ${currentMobileSlot!.id === '1' ? 'pt-16' : ''}`}>
+                    {!photos[currentMobileSlot!.id] && currentMobileSlot?.type !== 'text' && (
+                      <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer">
                         <Image src="/images/add-image-ico.svg" alt="Přidat" width={48} height={48} className="mb-2 opacity-80" />
                         <span className="style-body-bold text-black200">Vložit fotku</span>
                       </div>
                     )}
-
                     {photos[currentMobileSlot!.id] && (
                       <div className="absolute inset-0 w-full h-full overflow-hidden touch-none" onTouchStart={(e) => handleTouchStart('photo', currentMobileSlot!.id, e)}>
-                        <img src={photos[currentMobileSlot!.id].url} className="absolute inset-0 w-full h-full object-cover origin-center pointer-events-none" style={{ transform: `translate(${photos[currentMobileSlot!.id].x / safeRatio}px, ${photos[currentMobileSlot!.id].y / safeRatio}px) scale(${photos[currentMobileSlot!.id].scale})` }} />
+                        <img src={photos[currentMobileSlot!.id].url} className="absolute inset-0 w-full h-full object-cover origin-center pointer-events-none"
+                          style={{ transform: `translate(${photos[currentMobileSlot!.id].x / safeRatio}px, ${photos[currentMobileSlot!.id].y / safeRatio}px) scale(${photos[currentMobileSlot!.id].scale})` }}
+                        />
                         <button onClick={(e) => handleDeletePhoto(currentMobileSlot!.id, e)} className="absolute top-3 right-3 w-10 h-10 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full style-body flex items-center justify-center z-30 shadow-lg">✕</button>
-                        <div className="absolute bottom-0 right-0 w-12 h-12 bg-success flex items-center justify-center z-20 shadow-md rounded-tl-[12px]" onTouchStart={(e) => handleTouchStart('resize', currentMobileSlot!.id, e)} onClick={(e) => e.stopPropagation()}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FDFBF7" strokeWidth="3"><polyline points="9 3 3 3 3 9"/><polyline points="15 21 21 21 21 15"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                        <div className="absolute bottom-0 right-0 w-12 h-12 bg-success flex items-center justify-center z-20 shadow-md rounded-tl-[12px]" onTouchStart={(e) => handleTouchStart('resize', currentMobileSlot!.id, e)} onClick={(e) => e.stopPropagation()}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FDFBF7" strokeWidth="3"><polyline points="9 3 3 3 3 9" /><polyline points="15 21 21 21 21 15" /><line x1="3" y1="3" x2="21" y2="21" /></svg>
+                        </div>
                       </div>
                     )}
-
                     {isMobileTextStep && (
-                      <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none" style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily: fontFamily, fontWeight: '600', textAlign: textAlign, lineHeight: 1.2, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }} onTouchStart={(e) => handleTouchStart('text', '1', e)}>
+                      <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none"
+                        style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.2, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
+                        onTouchStart={(e) => handleTouchStart('text', currentMobileSlot!.id, e)}
+                      >
                         <span className="border-2 border-transparent">{mainText}</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Nápověda má přesný margin 16px k boxu */}
               {isMobileTextStep && !isPreviewStep && !isMobileLandscape && (
                 <p className="style-body text-secondary text-center opacity-80 mt-[16px]">Nápis můžete posunout tažením prstu</p>
               )}
@@ -459,14 +396,14 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
           </>
         )}
 
-        {/* --- FIXED BOTTOM MOBILE (Text panel + Patička) --- */}
         {!isMobileLandscape && !showThankYou && (
           <div className="fixed bottom-0 left-0 w-full z-[100] flex flex-col bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
-            
             {isMobileTextStep && !isPreviewStep && (
               <div className="w-full px-[24px] py-[32px] flex flex-col border-t border-black300/10">
                 <div className="flex gap-[16px] mb-[24px]">
-                  <textarea value={mainText} onChange={e => setMainText(e.target.value)} placeholder="Napište vlastní text" className="flex-1 bg-secondary text-black-custom rounded-[4px] p-4 style-body outline-none focus:ring-2 focus:ring-success resize-none h-[96px] placeholder:text-black300" />
+                  <textarea value={mainText} onChange={(e) => setMainText(e.target.value)} placeholder="Napište vlastní text"
+                    className="flex-1 bg-secondary text-black rounded-[4px] p-4 style-body outline-none focus:ring-2 focus:ring-success resize-none h-[96px] placeholder:text-black300"
+                  />
                   <div className="flex flex-col justify-between py-1">
                     <button onClick={() => setTextAlign('left')}><Image src={textAlign === 'left' ? '/images/align-left-active.svg' : '/images/align-left.svg'} alt="Left" width={24} height={24} /></button>
                     <button onClick={() => setTextAlign('center')}><Image src={textAlign === 'center' ? '/images/align-center-active.svg' : '/images/align-center.svg'} alt="Center" width={24} height={24} /></button>
@@ -475,54 +412,40 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                 </div>
                 <div className="flex gap-[24px] mb-[24px] h-[48px]">
                   <div className="flex-1 relative">
-                    <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="w-full h-full bg-secondary text-black-custom rounded-[4px] pl-4 pr-10 style-body appearance-none outline-none focus:ring-2 focus:ring-success">
-                      {FONT_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                    <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full h-full bg-secondary text-black rounded-[4px] pl-4 pr-10 style-body appearance-none outline-none focus:ring-2 focus:ring-success">
+                      {[{ name: 'Moderní (Poppins)', value: 'Poppins' }, { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' }, { name: 'Psací (Dancing Script)', value: 'Dancing Script' }, { name: 'Retro (Pacifico)', value: 'Pacifico' }].map((f) => (
+                        <option key={f.value} value={f.value}>{f.name}</option>
+                      ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#0F172A" strokeWidth="1.5"><path d="M1 1.5L6 6.5L11 1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#0F172A" strokeWidth="1.5"><path d="M1 1.5L6 6.5L11 1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
                   </div>
                   <div className="w-[48px] h-[48px] rounded-[4px] overflow-hidden shrink-0 relative" style={{ backgroundColor: textColor }}>
-                    <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute inset-[-10px] w-[68px] h-[68px] cursor-pointer opacity-0" />
+                    <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="absolute inset-[-10px] w-[68px] h-[68px] cursor-pointer opacity-0" />
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <input 
-                    type="range" min="40" max="300" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} 
-                    className="custom-fontSize-slider" 
+                  <input type="range" min="40" max="300" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))}
+                    className="custom-fontSize-slider"
                     style={{ background: `linear-gradient(to right, #059669 ${((fontSize - 40) / 260) * 100}%, #FDFBF7 ${((fontSize - 40) / 260) * 100}%)` }}
                   />
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" id="mob-shadow" checked={useShadow} onChange={e => setUseShadow(e.target.checked)} className="w-5 h-5 accent-success rounded-[4px]" />
+                    <input type="checkbox" id="mob-shadow" checked={useShadow} onChange={(e) => setUseShadow(e.target.checked)} className="w-5 h-5 accent-success rounded-[4px]" />
                     <label htmlFor="mob-shadow" className="style-body text-secondary cursor-pointer hover:text-primary transition-colors">Zapnout stín</label>
                   </div>
                 </div>
               </div>
             )}
-
             <footer className="w-full border-t border-black300/30 h-[80px] flex items-center justify-center pb-safe">
               <div className="w-full px-[24px] flex justify-between items-center gap-4">
-                
-                <Button 
-                onClick={() => { if (mobileStep > 0) setMobileStep(prev => prev - 1); else window.location.href = '/vytvorit-arch'; }} // Zde doplňte reálnou routu Kroku 1 (např. '/' nebo '/vyber-sablony') 
-                disabled={isUploading}
-                variant="outlined"
-                arrow="left"
-                className="h-[48px] shrink-0"
-              >
-                Zpět
-              </Button>
-                
-                <Button 
-                  onClick={() => { if (isPreviewStep) handleUploadAndComplete(); else if (isLastSlotStep) handleMobilePreview(); else setMobileStep(prev => prev + 1); }} 
-                  disabled={
-                    isUploading || 
-                    (!isPreviewStep && currentMobileSlot?.id !== '1' && !photos[currentMobileSlot?.id || ''])
-                  } 
-                  arrow="right"
-                  className="flex-1 h-[48px]"
+                <Button onClick={() => { if (mobileStep > 0) setMobileStep((prev) => prev - 1); else window.location.href = '/vytvorit-arch'; }}
+                  disabled={isUploading} variant="outlined" arrow="left" className="h-[48px] shrink-0">Zpět</Button>
+                <Button
+                  onClick={() => { if (isPreviewStep) handleUploadAndComplete(); else if (isLastSlotStep) handleMobilePreview(); else setMobileStep((prev) => prev + 1); }}
+                  disabled={isUploading || (!isPreviewStep && currentMobileSlot?.type !== 'text' && !photos[currentMobileSlot?.id || ''])}
+                  arrow="right" className="flex-1 h-[48px]"
                 >
                   {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : 'Další fotografie'}
                 </Button>
-
               </div>
             </footer>
           </div>
