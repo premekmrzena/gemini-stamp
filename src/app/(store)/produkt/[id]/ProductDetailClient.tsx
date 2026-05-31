@@ -97,19 +97,36 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
               {product.name}
             </h1>
             
-            <p className="style-perex text-white/80 mb-6 select-none">{product.short_description}</p>
+            <p className="style-perex text-white/80 mb-4 select-none">{product.short_description}</p>
+
+            {/* TAGY */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-1 mb-6 select-none pointer-events-none">
+              {!!product.tag_top && (
+                <span className="style-product-tag bg-tag-top text-black px-3 py-1 rounded-full shadow-sm">
+                  TOP {product.tag_top}
+                </span>
+              )}
+              {product.tag_new && (
+                <span className="style-product-tag bg-tag-novinka text-black px-3 py-1 rounded-full shadow-sm">
+                  novinka
+                </span>
+              )}
+              {product.tag_last_pieces && (
+                <span className="style-product-tag bg-tag-posledni-kusy text-black px-3 py-1 rounded-full shadow-sm">
+                  poslední kusy
+                </span>
+              )}
+              {!product.tag_top && !product.tag_new && !product.tag_last_pieces && (
+                <span className="style-product-tag bg-black200 text-black px-3 py-1 rounded-full shadow-sm">
+                  jen u nás
+                </span>
+              )}
+            </div>
 
             <div className="w-full flex flex-col items-center lg:items-start mb-6 pt-2">
-              <div className="mb-2 select-none">
+              <div className="mb-6 select-none">
                 <span className="style-product-price text-success">
                   Cena {product.price} Kč
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-center lg:justify-start gap-2 pointer-events-none mb-6 w-full select-none">
-                <span className="style-body text-secondary">Skladem</span>
-                <span className="style-product-tag bg-black400 text-white px-2 py-1 rounded-full">
-                  {product.stock_quantity > 10 ? 'více než 10 ks' : 'méně než 10 ks'}
                 </span>
               </div>
 
@@ -193,8 +210,8 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
             <h2 className="style-h2 text-center mb-12 select-none">Mohlo by vás také zajímat</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
               {relatedProducts.map((relProd: any) => (
-                <div key={relProd.id} className="group relative bg-black border border-black300 rounded-[16px] p-[24px] flex flex-col hover:bg-black400 transition-all duration-300">
-                  <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded-[16px]" aria-label={`Detail produktu ${relProd.name}`}></Link>
+                <div key={relProd.id} className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col hover:bg-black500 hover:scale-[1.02] hover:z-10 transition-all duration-300">
+                  <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={`Detail produktu ${relProd.name}`}></Link>
                   <div 
                     className="relative w-full h-[120px] bg-transparent mb-6 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none"
                     onContextMenu={(e) => e.preventDefault()}

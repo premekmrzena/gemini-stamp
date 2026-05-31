@@ -22,11 +22,6 @@ export default function ProductCard({ product }: { product: ProductType }) {
   const isNovinka = product.tag_new;
   const isJenUNas = !isTop && !isNovinka;
 
-  const stockBadge = product.tag_last_pieces
-    ? { label: 'poslední kusy', className: 'bg-tag-posledni-kusy text-black' }
-    : product.stock_quantity > 10
-    ? { label: 'více než 10 ks', className: 'bg-success/20 text-success' }
-    : { label: 'méně než 10 ks', className: 'bg-tag-novinka text-black' };
 
   return (
     <div
@@ -39,7 +34,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
         aria-label={`Detail produktu ${product.name}`}
       />
 
-      <div className="absolute top-[28px] right-[24px] z-30 flex flex-col items-end gap-2 pointer-events-none">
+      <div className="absolute top-[28px] right-[24px] z-30 flex flex-col items-end gap-1 pointer-events-none">
         {isTop && (
           <span className="style-product-tag bg-tag-top text-black px-3 py-1 rounded-full shadow-sm">
             TOP {product.tag_top}
@@ -50,7 +45,12 @@ export default function ProductCard({ product }: { product: ProductType }) {
             novinka
           </span>
         )}
-        {isJenUNas && (
+        {product.tag_last_pieces && (
+          <span className="style-product-tag bg-tag-posledni-kusy text-black px-3 py-1 rounded-full shadow-sm">
+            poslední kusy
+          </span>
+        )}
+        {isJenUNas && !product.tag_last_pieces && (
           <span className="style-product-tag bg-black200 text-black px-3 py-1 rounded-full shadow-sm">
             jen u nás
           </span>
@@ -77,13 +77,6 @@ export default function ProductCard({ product }: { product: ProductType }) {
         <div className="flex flex-col items-center mb-4 pointer-events-none select-none">
           <span className="style-product-price text-success">
             Cena {product.price} Kč
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 mb-4 pointer-events-none select-none">
-          <span className="style-body text-secondary">Skladem</span>
-          <span className={`style-product-tag px-2 py-1 rounded-full ${stockBadge.className}`}>
-            {stockBadge.label}
           </span>
         </div>
 
