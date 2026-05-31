@@ -1,108 +1,128 @@
+'use client';
+
 import Image from 'next/image';
 import Button from '@/components/Button';
 import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
 
-const desktopSteps = [
-  { id: 1, title: 'Vyberte si šablonu', text: 'Vyberte si kompozici a arch se známkami, které vás oslovují.' },
-  { id: 2, title: 'Nahrajte svoje fotky', text: 'Přidejte svoje fotky, které jste třeba dnes vyfotili na mobil.' },
-  { id: 3, title: 'Napište vlastní text', text: 'Do vybraných šablon můžete dopsat vlastní text.' },
+const sliderImages = [
+  '/images/hero-image.png',
+  '/images/hero-image02.png',
+  '/images/hero-image03.png',
 ];
 
-const mobileSteps = [
-  { id: 1, title: 'Vyber si šablonu' },
-  { id: 2, title: 'Nahraj svoje fotky' },
-  { id: 3, title: 'Napiš vlastní text' },
+const steps = [
+  { id: 1, title: 'Vyber si šablonu', text: 'Vytvořte si kreativní arch se známkami, které vám učarují.' },
+  { id: 2, title: 'Napiš vlastní text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
+  { id: 3, title: 'Nahraj svoje fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
 ];
 
 export default function Hero() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const kenburnsRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 5500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Restart Ken Burns on newly active slide without remounting Image
+  useEffect(() => {
+    const el = kenburnsRefs.current[currentSlide];
+    if (!el) return;
+    el.style.animation = 'none';
+    void el.offsetHeight; // force reflow
+    el.style.animation = '';
+  }, [currentSlide]);
+
+  const renderSlider = (className?: string) => (
+    <div className={`relative w-full ${className ?? ''}`} style={{ aspectRatio: '7 / 5' }}>
+      {sliderImages.map((src, index) => (
+        <div
+          key={index}
+          className={`absolute inset-0 transition-opacity ease-in-out duration-[1500ms] ${
+            index === currentSlide ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <div
+            ref={(el) => { kenburnsRefs.current[index] = el; }}
+            className="absolute inset-0 animate-kenburns"
+          >
+            <Image
+              src={src}
+              alt="Vytvoř si vlastní arch se známkami a fotkami"
+              fill
+              priority={index === 0}
+              className="object-contain drop-shadow-2xl"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <section className="bg-black text-secondary w-full overflow-hidden">
       <div className="layout-container">
 
-        <h1 className="style-h1 text-center mb-10 lg:mb-[52px]">
+        <h1 className="style-h1 text-center mb-3 lg:mb-4">
           Vytvoř si vlastní arch se známkami a fotkami
         </h1>
 
-        {/* Desktop / Tablet */}
-        <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-10 md:gap-10 lg:gap-6 mx-auto w-full mb-10 lg:mb-0">
+        <p className="style-perex text-center text-secondary/70 mb-6 lg:mb-8 max-w-[620px] mx-auto">
+          Spojte svoje zážitky s významnými evropskými umělci nebo historickými památkami na poštovních známkách!
+        </p>
 
-          <div className="order-2 lg:order-1 flex flex-row md:flex-row lg:flex-col gap-8 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0 overflow-visible">
-            {desktopSteps.map((step) => (
-              <div key={step.id} className="flex flex-col items-center text-center w-full">
-                <div className="w-10 h-10 rounded-full bg-tag-novinka text-black flex items-center justify-center font-bold text-[20px] mb-4 shrink-0">
+        {/* Desktop / Tablet */}
+        <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-5 lg:gap-6 mx-auto w-full mb-10 lg:mb-0">
+
+          <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-6 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0">
+            {steps.map((step) => (
+              <div key={step.id} className="flex flex-col items-center text-center flex-1 lg:flex-none">
+                <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[26px] lg:text-[32px] mb-3 shrink-0">
                   {step.id}
                 </div>
                 <h3 className="style-h3 mb-2">{step.title}</h3>
-                <p className="style-body text-secondary/90 max-w-[280px]">{step.text}</p>
+                <p className="style-body text-secondary/80 max-w-[240px]">{step.text}</p>
               </div>
             ))}
           </div>
 
-          <div className="order-1 lg:order-2 w-full max-w-[700px] flex justify-center shrink">
-            <Image
-              src="/images/hero-image.png"
-              alt="Vytvoř si vlastní arch se známkami a fotkami"
-              width={700}
-              height={500}
-              priority
-              className="w-full h-auto object-contain drop-shadow-2xl"
-            />
+          <div className="order-1 lg:order-2 w-full max-w-[700px] shrink">
+            {renderSlider()}
           </div>
         </div>
 
         {/* Mobile */}
-        <div className="md:hidden w-full max-w-[700px] flex justify-center mb-[32px]">
-          <Image
-            src="/images/hero-image.png"
-            alt="Vytvoř si vlastní arch se známkami a fotkami"
-            width={700}
-            height={500}
-            priority
-            className="w-full h-auto object-contain drop-shadow-2xl"
-          />
+        <div className="md:hidden w-full flex justify-center mb-4">
+          {renderSlider('max-w-[500px]')}
         </div>
 
-        <div className="md:hidden flex flex-row items-start justify-center gap-0 w-full mb-[32px] overflow-visible px-2">
-          {mobileSteps.map((step, index) => (
-            <div key={`mobile-step-${step.id}`} className="flex items-start">
-              <div className="flex flex-col items-center text-center w-[90px] xs:w-[110px] gap-2">
-                <div className="w-8 h-8 rounded-full bg-tag-novinka text-black flex items-center justify-center font-bold text-[16px] shrink-0 mb-1">
-                  {step.id}
-                </div>
-                <h3 className="text-[14px] font-medium tracking-normal leading-[1.6] text-secondary">
-                  {step.title}
-                </h3>
+        <div className="md:hidden flex flex-row items-start justify-center w-full mb-8 gap-2">
+          {steps.map((step) => (
+            <div key={`mobile-${step.id}`} className="flex flex-col items-center text-center flex-1 min-w-0 gap-2 px-1">
+              <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] shrink-0">
+                {step.id}
               </div>
-              {index < mobileSteps.length - 1 && (
-                <div className="flex items-center justify-center w-[50px] h-8 shrink-0 overflow-visible mt-0 px-1 opacity-80">
-                  <Image
-                    src="/images/hand-arrow-stepper.svg"
-                    alt="->"
-                    width={50}
-                    height={15}
-                    className="w-full h-auto object-contain"
-                  />
-                </div>
-              )}
+              <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary">
+                {step.title}
+              </p>
             </div>
           ))}
         </div>
 
-        {/* Tlačítka */}
-        <div className="mt-4 md:mt-10 lg:mt-10 flex justify-center w-full">
-          <div className="hidden lg:inline-flex relative">
+        {/* Button */}
+        <div className="mt-4 md:mt-10 flex justify-center w-full">
+          <div className="inline-flex relative">
             <Image
               src="/images/handarrow.svg"
               alt="Ukazatel"
-              width={80}
-              height={80}
-              className="absolute -left-[95px] bottom-[14px] pointer-events-none"
+              width={60}
+              height={60}
+              className="absolute -left-[70px] bottom-3 pointer-events-none md:w-[70px] md:-left-[84px] md:bottom-[14px] lg:w-[80px] lg:-left-[95px] lg:bottom-[14px]"
             />
-            <Link href="/vytvorit-arch">
-              <Button>Vybrat šablonu</Button>
-            </Link>
-          </div>
-          <div className="flex lg:hidden">
             <Link href="/vytvorit-arch">
               <Button>Vybrat šablonu</Button>
             </Link>
