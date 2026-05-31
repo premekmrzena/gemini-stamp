@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { 
-  ShoppingBag, TrendingUp, X, Package, User, 
+import {
+  ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Check, Trash2,
-  LogOut, Lock, Mail, Download
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -18,11 +18,16 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // --- STAVY PRO DASHBOARD ---
+  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty'>('objednavky');
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [dateFilter, setDateFilter] = useState('');
+
+  // --- STAVY PRO PRODUKTY ---
+  const [products, setProducts] = useState<any[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
 
   // --- STAVY PRO TISKOVÁ DATA ARCHŮ ---
   const [customStampsData, setCustomStampsData] = useState<Record<string, string>>({});
@@ -34,6 +39,7 @@ export default function AdminDashboard() {
       setAuthLoading(false);
       if (user) {
         fetchOrders();
+        fetchProducts();
       }
     }
     checkUser();
@@ -42,6 +48,7 @@ export default function AdminDashboard() {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchOrders();
+        fetchProducts();
       } else {
         setOrders([]);
         setFilteredOrders([]);
@@ -50,6 +57,46 @@ export default function AdminDashboard() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  async function fetchProducts() {
+    setProductsLoading(true);
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, name, category, price, is_active, show_on_homepage, tag_last_pieces, tag_top')
+      .order('created_at', { ascending: false });
+    if (!error) setProducts(data || []);
+    setProductsLoading(false);
+  }
+
+  async function toggleHomepage(productId: string, current: boolean) {
+    const { error } = await supabase
+      .from('products')
+      .update({ show_on_homepage: !current })
+      .eq('id', productId);
+    if (!error) {
+      setProducts(products.map(p => p.id === productId ? { ...p, show_on_homepage: !current } : p));
+    }
+  }
+
+  async function setTopRank(productId: string, value: number | null) {
+    const { error } = await supabase
+      .from('products')
+      .update({ tag_top: value })
+      .eq('id', productId);
+    if (!error) {
+      setProducts(products.map(p => p.id === productId ? { ...p, tag_top: value } : p));
+    }
+  }
+
+  async function toggleLastPieces(productId: string, current: boolean) {
+    const { error } = await supabase
+      .from('products')
+      .update({ tag_last_pieces: !current })
+      .eq('id', productId);
+    if (!error) {
+      setProducts(products.map(p => p.id === productId ? { ...p, tag_last_pieces: !current } : p));
+    }
+  }
 
   async function fetchOrders() {
     setLoading(true);
@@ -221,7 +268,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-black text-secondary p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="style-h1 text-secondary">E-shop Dashboard</h1>
             <p className="style-body text-black300">Správa objednávek Creative Stamp</p>
@@ -252,7 +299,99 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* STATISTIKY */}
+        {/* ZÁLOŽKY */}
+        <div className="flex gap-2 mb-8 border-b border-black300/20 pb-0">
+          <button
+            onClick={() => setActiveTab('objednavky')}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'objednavky' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+          >
+            <ShoppingBag size={16} /> Objednávky
+          </button>
+          <button
+            onClick={() => setActiveTab('produkty')}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'produkty' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+          >
+            <Home size={16} /> Homepage produkty
+          </button>
+        </div>
+
+        {/* PRODUKTY - HOMEPAGE */}
+        {activeTab === 'produkty' && (
+          <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+            {productsLoading ? (
+              <div className="p-10 text-center text-black300 style-body">Načítám produkty...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-black/50 text-black300 style-product-tag">
+                    <tr>
+                      <th className="p-4 font-normal">Produkt</th>
+                      <th className="p-4 font-normal">Kategorie</th>
+                      <th className="p-4 font-normal text-center">TOP rank</th>
+                      <th className="p-4 font-normal text-center">Poslední kusy</th>
+                      <th className="p-4 font-normal text-right">Homepage</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black300/20">
+                    {products.map((product) => (
+                      <tr key={product.id} className="hover:bg-black/30 transition-colors">
+                        <td className="p-4">
+                          <p className="style-body-bold text-secondary">{product.name}</p>
+                          <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
+                        </td>
+                        <td className="p-4 style-body text-black300 capitalize">{product.category || '—'}</td>
+                        <td className="p-4 text-center">
+                          <select
+                            value={product.tag_top ?? ''}
+                            onChange={(e) => setTopRank(product.id, e.target.value ? Number(e.target.value) : null)}
+                            className={`px-2 py-1.5 rounded-[6px] style-body-bold border cursor-pointer outline-none transition-all ${
+                              product.tag_top
+                                ? 'bg-tag-top/10 text-tag-top border-tag-top/30'
+                                : 'bg-black300/10 text-black300 border-black300/20'
+                            }`}
+                          >
+                            <option value="">–</option>
+                            {[1,2,3,4,5,6].map(n => (
+                              <option key={n} value={n}>TOP {n}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => toggleLastPieces(product.id, product.tag_last_pieces)}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[6px] style-body-bold transition-all cursor-pointer border ${
+                              product.tag_last_pieces
+                                ? 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20 hover:bg-tag-posledni-kusy/20'
+                                : 'bg-black300/10 text-black300 border-black300/20 hover:bg-black300/20'
+                            }`}
+                          >
+                            {product.tag_last_pieces ? 'Ano' : 'Ne'}
+                          </button>
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => toggleHomepage(product.id, product.show_on_homepage)}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[6px] style-body-bold transition-all cursor-pointer border ${
+                              product.show_on_homepage
+                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
+                                : 'bg-black300/10 text-black300 border-black300/20 hover:bg-black300/20'
+                            }`}
+                          >
+                            {product.show_on_homepage ? <><Eye size={14} /> Zobrazeno</> : <><EyeOff size={14} /> Skryto</>}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* OBJEDNÁVKY */}
+        {activeTab === 'objednavky' && (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
             <div className="p-3 bg-tag-top/10 rounded-[8px]"><TrendingUp className="text-tag-top" /></div>
@@ -322,6 +461,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* DETAIL OBJEDNÁVKY MODAL */}

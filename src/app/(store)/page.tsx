@@ -10,7 +10,9 @@ export default async function Home() {
   const { data: products, error } = await supabase
     .from('products')
     .select('*')
-    .eq('is_active', true) // Chceme jen ty, co nemají skrytou viditelnost
+    .eq('is_active', true)
+    .eq('show_on_homepage', true)
+    .order('tag_top', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false }); // Seřadíme od nejnovějších
 
   if (error) {

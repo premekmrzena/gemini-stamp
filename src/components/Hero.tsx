@@ -76,7 +76,7 @@ export default function Hero() {
         </p>
 
         {/* Desktop / Tablet */}
-        <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-5 lg:gap-6 mx-auto w-full mb-10 lg:mb-0">
+        <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-5 lg:gap-12 mx-auto w-full mb-10 lg:mb-0">
 
           <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-6 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0">
             {steps.map((step) => (

@@ -1,0 +1,96 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import AddToCartButton from '@/components/AddToCartButton';
+
+export type ProductType = {
+  id: string;
+  name: string;
+  short_description: string;
+  price: number;
+  image_url: string;
+  stock_quantity: number;
+  tag_new: boolean;
+  tag_top: number | null;
+  tag_last_pieces: boolean;
+  weight_grams: number;
+};
+
+export default function ProductCard({ product }: { product: ProductType }) {
+  const isTop = !!product.tag_top;
+  const isNovinka = product.tag_new;
+  const isJenUNas = !isTop && !isNovinka;
+
+  const stockBadge = product.tag_last_pieces
+    ? { label: 'poslední kusy', className: 'bg-tag-posledni-kusy text-black' }
+    : product.stock_quantity > 10
+    ? { label: 'více než 10 ks', className: 'bg-success/20 text-success' }
+    : { label: 'méně než 10 ks', className: 'bg-tag-novinka text-black' };
+
+  return (
+    <div
+      className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col hover:bg-black500 hover:scale-[1.02] hover:z-10 transition-all duration-300"
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <Link
+        href={`/produkt/${product.id}`}
+        className="absolute inset-0 z-20 rounded cursor-pointer"
+        aria-label={`Detail produktu ${product.name}`}
+      />
+
+      <div className="absolute top-[28px] right-[24px] z-30 flex flex-col items-end gap-2 pointer-events-none">
+        {isTop && (
+          <span className="style-product-tag bg-tag-top text-black px-3 py-1 rounded-full shadow-sm">
+            TOP {product.tag_top}
+          </span>
+        )}
+        {isNovinka && (
+          <span className="style-product-tag bg-tag-novinka text-black px-3 py-1 rounded-full shadow-sm">
+            novinka
+          </span>
+        )}
+        {isJenUNas && (
+          <span className="style-product-tag bg-black200 text-black px-3 py-1 rounded-full shadow-sm">
+            jen u nás
+          </span>
+        )}
+      </div>
+
+      <div className="relative w-full h-[120px] lg:h-[170px] bg-transparent mb-4 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none pointer-events-none">
+        <Image
+          src={product.image_url || '/images/product-image_0001.jpg'}
+          alt={product.name}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className="object-contain"
+          onDragStart={(e) => e.preventDefault()}
+        />
+      </div>
+
+      <div className="flex flex-col flex-grow items-center text-center relative z-10 pointer-events-none select-none">
+        <h3 className="style-h4 mb-2">{product.name}</h3>
+        <p className="style-body text-secondary/70 mb-4 line-clamp-3">{product.short_description}</p>
+      </div>
+
+      <div className="mt-auto flex flex-col items-center relative z-30">
+        <div className="flex flex-col items-center mb-4 pointer-events-none select-none">
+          <span className="style-product-price text-success">
+            Cena {product.price} Kč
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4 pointer-events-none select-none">
+          <span className="style-body text-secondary">Skladem</span>
+          <span className={`style-product-tag px-2 py-1 rounded-full ${stockBadge.className}`}>
+            {stockBadge.label}
+          </span>
+        </div>
+
+        <div className="w-full flex justify-center pointer-events-auto">
+          <AddToCartButton product={product} />
+        </div>
+      </div>
+    </div>
+  );
+}

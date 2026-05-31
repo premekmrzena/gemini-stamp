@@ -50,6 +50,7 @@ export default function CategoryPage() {
         .select('*')
         .eq('category', slug)
         .eq('is_active', true)
+        .order('tag_top', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
       if (!error) setProducts(data || []);
       setLoading(false);
