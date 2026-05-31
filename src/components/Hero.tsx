@@ -12,9 +12,9 @@ const sliderImages = [
 ];
 
 const steps = [
-  { id: 1, title: 'Vyber si šablonu', text: 'Vytvořte si kreativní arch se známkami, které vám učarují.' },
-  { id: 2, title: 'Napiš vlastní text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
-  { id: 3, title: 'Nahraj svoje fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
+  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber si\nšablonu', text: 'Vytvořte si kreativní arch se známkami, které vám učarují.' },
+  { id: 2, title: 'Napiš vlastní text', mobileTitle: 'Napiš\nvlastní text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
+  { id: 3, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj\nsvoje fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
 ];
 
 export default function Hero() {
@@ -60,6 +60,15 @@ export default function Hero() {
           </div>
         </div>
       ))}
+      <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between sm:items-end">
+        <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10">
+          <span className="text-[var(--color-tag-novinka)] mr-1">★★★★☆</span>
+          Již 1&nbsp;247+ spokojených zákazníků
+        </div>
+        <div className="bg-[var(--color-tag-novinka)] text-black text-[11px] sm:text-xs px-3 py-1.5 rounded-full font-semibold">
+          Nejprodávanější: Alfons Mucha, 4 roční období
+        </div>
+      </div>
     </div>
   );
 
@@ -68,11 +77,11 @@ export default function Hero() {
       <div className="layout-container">
 
         <h1 className="style-h1 text-center mb-3 lg:mb-4">
-          Vytvoř si vlastní arch se známkami a fotkami
+          Proměň svoje zážitky v krásný sběratelský poklad
         </h1>
 
         <p className="style-perex text-center text-secondary/70 mb-6 lg:mb-8 max-w-[620px] mx-auto">
-          Spojte svoje zážitky s významnými evropskými umělci nebo historickými památkami na poštovních známkách!
+          Kreativní arch s významnými evropskými umělci nebo historickými památkami na poštovních známkách!
         </p>
 
         {/* Desktop / Tablet */}
@@ -106,8 +115,8 @@ export default function Hero() {
               <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] shrink-0">
                 {step.id}
               </div>
-              <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary">
-                {step.title}
+              <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary whitespace-pre-line">
+                {step.mobileTitle}
               </p>
             </div>
           ))}
@@ -124,7 +133,7 @@ export default function Hero() {
               className="absolute -left-[70px] bottom-3 pointer-events-none md:w-[70px] md:-left-[84px] md:bottom-[14px] lg:w-[80px] lg:-left-[95px] lg:bottom-[14px]"
             />
             <Link href="/vytvorit-arch">
-              <Button>Vybrat šablonu</Button>
+              <Button>Vybrat šablonu a začít tvořit</Button>
             </Link>
           </div>
         </div>
