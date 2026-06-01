@@ -60,13 +60,10 @@ export default function Hero() {
           </div>
         </div>
       ))}
-      <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between sm:items-end">
+      <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-start">
         <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10">
           <span className="text-[var(--color-tag-novinka)] mr-1">★★★★☆</span>
           Již 1&nbsp;247+ spokojených zákazníků
-        </div>
-        <div className="bg-[var(--color-tag-novinka)] text-black text-[11px] sm:text-xs px-3 py-1.5 rounded-full font-semibold">
-          Nejprodávanější: Alfons Mucha, 4 roční období
         </div>
       </div>
     </div>
@@ -77,11 +74,11 @@ export default function Hero() {
       <div className="layout-container">
 
         <h1 className="style-h1 text-center mb-3 lg:mb-4">
-          Proměň svoje zážitky v krásný sběratelský poklad
+          Proměň svoje zážitky v krásný sběratelský poklad!
         </h1>
 
-        <p className="style-perex text-center text-secondary/70 mb-6 lg:mb-8 max-w-[620px] mx-auto">
-          Kreativní arch s významnými evropskými umělci nebo historickými památkami na poštovních známkách!
+        <p className="hidden md:block style-perex text-center text-secondary/70 mb-6 lg:mb-8 max-w-[620px] mx-auto">
+          Kreativní arch s významnými umělci nebo památkami na poštovních známkách!
         </p>
 
         {/* Desktop / Tablet */}
