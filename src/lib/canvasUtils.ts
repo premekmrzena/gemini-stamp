@@ -24,7 +24,6 @@ export async function generateCanvasDataUrl(
   }
 
   for (const slot of template.slots) {
-    if (slot.type === 'text') continue;
     const photo = photos[slot.id];
     if (!photo) continue;
     const userImg = new window.Image();
@@ -34,7 +33,7 @@ export async function generateCanvasDataUrl(
     ctx.beginPath();
     ctx.rect(slot.x, slot.y, slot.width, slot.height);
     ctx.clip();
-    const s = Math.max(slot.width / userImg.width, slot.height / userImg.height) * photo.scale;
+    const s = Math.min(slot.width / userImg.width, slot.height / userImg.height) * photo.scale;
     ctx.drawImage(
       userImg,
       slot.x + (slot.width - userImg.width * s) / 2 + photo.x,

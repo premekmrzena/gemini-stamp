@@ -23,7 +23,7 @@ export default function EditorPage() {
   // LIGHTBOX
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   
-  const [selectedTemplate, setSelectedTemplate] = useState<string>(TEMPLATES[0].id);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   // Připojení košíku
   const { addToCart } = useCart();
@@ -234,7 +234,7 @@ export default function EditorPage() {
         <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center z-[100] pb-safe">
           <div className="layout-container flex justify-between items-center">
             <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
-            <Button onClick={() => handleNextStep()} arrow="right">Pokračovat</Button>
+            <Button onClick={() => handleNextStep()} arrow="right" disabled={!selectedTemplate}>Pokračovat</Button>
           </div>
         </footer>
       )}
