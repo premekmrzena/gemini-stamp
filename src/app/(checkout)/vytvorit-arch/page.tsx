@@ -96,28 +96,26 @@ export default function EditorPage() {
         {currentStep === 1 && (
           <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
             <h1 className="style-h1 text-secondary text-center mb-2">Vyberte si šablonu</h1>
-            <p className="style-body text-black300 text-center mb-8 md:mb-[48px]">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
+            <p className="style-body text-secondary text-center mb-8 md:mb-[48px]">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px]">
               {TEMPLATES.map((tpl) => {
                 const isSelected = selectedTemplate === tpl.id;
                 const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
-                const previewsToShow = tpl.stampPreviews.slice(0, 2);
-                const overflow = tpl.stampCount - previewsToShow.length;
 
                 return (
                   <div
                     key={tpl.id}
                     onClick={() => setSelectedTemplate(tpl.id)}
-                    className={`group flex flex-col rounded-[12px] border overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:z-10 select-none
+                    className={`group relative border rounded-[4px] p-[24px] flex flex-col cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:z-10 select-none
                       ${isSelected
                         ? 'border-primary bg-black500 shadow-lg shadow-primary/20'
-                        : 'border-black300/30 bg-black500 hover:border-black300/60 hover:shadow-xl'
+                        : 'border-black300/30 bg-[#0F172A] hover:bg-black500 hover:border-black300/60 hover:shadow-xl'
                       }`}
                   >
                     {/* Náhled šablony */}
                     <div
-                      className="relative w-full aspect-[16/10] bg-black400 overflow-hidden cursor-zoom-in"
+                      className="relative w-full aspect-[4130/2550] bg-black400 rounded-[4px] overflow-hidden cursor-zoom-in mb-[20px] flex-shrink-0"
                       onClick={(e) => { e.stopPropagation(); setLightboxImg(tpl.backgroundImage); }}
                       onContextMenu={(e) => e.preventDefault()}
                     >
@@ -139,14 +137,14 @@ export default function EditorPage() {
                     </div>
 
                     {/* Obsah */}
-                    <div className="flex flex-col gap-3 p-5">
+                    <div className="flex flex-col flex-grow items-center text-center gap-[16px]">
                       <div>
-                        <h3 className="style-h4 text-secondary mb-1">{tpl.name}</h3>
-                        <p className="style-body text-black300 leading-snug">{tpl.description}</p>
+                        <h3 className="style-h4 text-secondary mb-[8px]">{tpl.name}</h3>
+                        <p className="style-body text-secondary/70 leading-snug">{tpl.description}</p>
                       </div>
 
                       {/* Pill */}
-                      <div className="inline-flex items-center gap-2 self-start bg-black400 rounded-full px-3 py-[6px]">
+                      <div className="inline-flex items-center gap-2 bg-black400 rounded-full px-3 py-[6px]">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black200 shrink-0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
@@ -157,69 +155,14 @@ export default function EditorPage() {
                         </span>
                       </div>
 
-                      {/* Známky v archu */}
-                      <div className="border-t border-black300/20 pt-3">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="style-body text-secondary/70 text-[13px]">Známky v archu</span>
-                          {tpl.shopUrl && (
-                            <a
-                              href={tpl.shopUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="style-body text-primary hover:text-primary-hover transition-colors flex items-center gap-1 text-[13px]"
-                            >
-                              Zobrazit v e-shopu
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                <polyline points="15 3 21 3 21 9" />
-                                <line x1="10" y1="14" x2="21" y2="3" />
-                              </svg>
-                            </a>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {previewsToShow.map((src, idx) => (
-                            <div
-                              key={idx}
-                              className="w-10 h-10 rounded-[4px] overflow-hidden bg-black400 border border-black300/20 shrink-0 relative cursor-zoom-in"
-                              onClick={(e) => { e.stopPropagation(); setLightboxImg(src); }}
-                              onContextMenu={(e) => e.preventDefault()}
-                            >
-                              <Image src={src} alt="" fill className="object-cover pointer-events-none" onDragStart={(e) => e.preventDefault()} />
-                              <div className="absolute inset-0 z-10 bg-transparent" />
-                            </div>
-                          ))}
-                          {previewsToShow.length === 0 && (
-                            <>
-                              <div className="w-10 h-10 rounded-[4px] bg-black400 border border-black300/20 shrink-0" />
-                              <div className="w-10 h-10 rounded-[4px] bg-black400 border border-black300/20 shrink-0" />
-                            </>
-                          )}
-                          {overflow > 0 && (
-                            <div className="w-10 h-10 rounded-[4px] bg-black300/20 border border-black300/20 flex items-center justify-center shrink-0">
-                              <span className="text-black200 font-semibold text-[13px]">+{overflow}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
                       {/* Tlačítko */}
-                      <button
+                      <Button
                         onClick={(e) => { e.stopPropagation(); setSelectedTemplate(tpl.id); }}
-                        className={`w-full mt-1 inline-flex items-center justify-center gap-2 font-medium tracking-[-0.02em] rounded-[12px] transition-all duration-300 hover:scale-[1.03] active:scale-95 text-[16px] p-[14px]
-                          ${isSelected
-                            ? 'bg-primary text-black hover:bg-primary-hover'
-                            : 'bg-transparent border border-primary text-primary hover:bg-white/5 hover:border-primary-hover hover:text-primary-hover'
-                          }`}
+                        variant={isSelected ? 'contained' : 'outlined'}
+                        className="w-full mt-auto"
                       >
-                        {isSelected && (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
                         {isSelected ? 'Vybráno' : 'Vybrat'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );

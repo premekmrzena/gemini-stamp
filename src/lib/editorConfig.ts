@@ -45,8 +45,8 @@ export type TextState = {
 export const TEMPLATES: Template[] = [
   {
     id: 'template-01',
-    name: 'Šablona A — klasická',
-    description: 'Mřížka 3×2 na výšku, ideální pro portréty a rodinné fotky.',
+    name: 'Alfons Mucha: čtyři roční období',
+    description: 'Kreativní arch s díly českého umělce, který výrazně ovlivnil japonskou mangu, zejména žánr shōjo a fantasy/sci-fi tituly od 70. let 20. století.',
     productId: '2923bbf0-2f34-4cd5-b586-7c1c7ba1977b',
     shopUrl: '/produkt/2923bbf0-2f34-4cd5-b586-7c1c7ba1977b',
     backgroundImage: '/templates/template01.png',
@@ -65,8 +65,8 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'template-02',
-    name: 'Šablona B — velké fotky',
-    description: 'Mřížka 2×2 na šířku, vynikne u krajin a skupinových snímků.',
+    name: 'Historické skvosty Česka',
+    description: 'Umělecké ilustrace slavných historických památek.',
     productId: '2923bbf0-2f34-4cd5-b586-7c1c7ba1977b',
     shopUrl: '/produkt/2923bbf0-2f34-4cd5-b586-7c1c7ba1977b',
     backgroundImage: '/templates/template01.png',
