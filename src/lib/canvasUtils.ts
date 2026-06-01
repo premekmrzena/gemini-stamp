@@ -46,6 +46,7 @@ export async function generateCanvasDataUrl(
 
   const textSlot = template.slots.find((s) => s.type === 'text');
   if (textSlot && text.mainText) {
+    await document.fonts.load(`600 ${text.fontSize}px ${text.fontFamily}`);
     ctx.save();
     if (text.useShadow) {
       ctx.shadowColor = text.shadowColor;
@@ -57,12 +58,13 @@ export async function generateCanvasDataUrl(
     ctx.font = `600 ${text.fontSize}px ${text.fontFamily}, sans-serif`;
     ctx.textAlign = text.textAlign;
     ctx.textBaseline = 'middle';
-    text.mainText.split('\n').forEach((line, i) => {
-      ctx.fillText(
-        line,
-        textSlot.x + (text.textPos.x / 100) * textSlot.width,
-        textSlot.y + (text.textPos.y / 100) * textSlot.height + i * (text.fontSize * 1.05)
-      );
+    const lines = text.mainText.split('\n');
+    const lineHeight = text.fontSize * 1.2;
+    const anchorX = textSlot.x + (text.textPos.x / 100) * textSlot.width;
+    const anchorY = textSlot.y + (text.textPos.y / 100) * textSlot.height;
+    const blockOffset = ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, anchorX, anchorY - blockOffset + i * lineHeight);
     });
     ctx.restore();
   }

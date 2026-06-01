@@ -146,4 +146,8 @@ body {
   .style-product-tag {
     @apply font-light text-[11px] leading-none tracking-[0.05em] uppercase;
   }
+
+  .style-label {
+    @apply font-normal text-[11px] leading-none tracking-normal sm:text-[12px];
+  }
 }

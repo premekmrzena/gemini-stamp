@@ -46,10 +46,9 @@ function MobileMiniMap({ template, activeSlotId, mainText, photos }: MiniMapProp
 
 interface StampEditorProps {
   onComplete: (stampId?: string) => void;
-  isMobileLandscape?: boolean;
 }
 
-export default function StampEditor({ onComplete, isMobileLandscape = false }: StampEditorProps) {
+export default function StampEditor({ onComplete }: StampEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeTemplate = TEMPLATES[0];
 
@@ -62,7 +61,6 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [showLandscapeHint, setShowLandscapeHint] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [viewRatio, setViewRatio] = useState(1);
 
@@ -112,19 +110,12 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
   }, [mobileStep, currentMobileSlot, activeTemplate]);
 
   useEffect(() => {
+    if (window.innerWidth >= 768) return;
     if (isPreviewStep || showThankYou) { setActiveSlotId(null); return; }
     if (currentMobileSlot) { setActiveSlotId(currentMobileSlot.id); targetSlotIdRef.current = currentMobileSlot.id; }
   }, [mobileStep, currentMobileSlot, isPreviewStep, showThankYou]);
 
   useEffect(() => { setShowTextPanel(false); }, [mobileStep]);
-
-  useEffect(() => {
-    if (isMobileLandscape) {
-      setShowLandscapeHint(true);
-      const timer = setTimeout(() => setShowLandscapeHint(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isMobileLandscape]);
 
   const safeRatio = viewRatio || 1;
 
@@ -253,15 +244,10 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
         input[type="range"].custom-fontSize-slider::-moz-range-thumb { height: 24px; width: 24px; border-radius: 50%; background: #059669; cursor: pointer; border: none; }
       `}</style>
 
-      {showLandscapeHint && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black style-body-bold px-4 py-2 rounded-full animate-pulse pointer-events-none whitespace-nowrap">
-          Otočte zpět na výšku pro zobrazení menu
-        </div>
-      )}
       <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="opacity-0 absolute w-0 h-0 pointer-events-none" accept="image/*" />
 
       {/* DESKTOP */}
-      <div className="hidden md:flex flex-col w-full min-h-[calc(100vh-80px)]" style={{ paddingBottom: showThankYou ? '0px' : '116px' }}>
+      <div className="hidden md:flex flex-col w-full min-h-[calc(100vh-80px)]" style={{ paddingBottom: showThankYou ? '0px' : '64px' }}>
         <div className="flex-1 w-full flex items-center justify-center p-8" onClick={() => setActiveSlotId(null)}>
           <div
             className="desktop-canvas-wrapper relative shadow-2xl bg-secondary border border-black300/10 shrink-0 touch-none rounded-[4px] overflow-hidden"
@@ -271,7 +257,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
             <img src={activeTemplate.backgroundImage} className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="Šablona" />
             {activeTemplate.slots.map((slot) => (
               <div key={slot.id} data-slot-id={slot.id}
-                className={`absolute border border-dashed cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-primary bg-primary/10' : 'border-secondary/30 hover:border-primary/50 bg-black/5'}`}
+                className={`absolute border-2 cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-success bg-success/10' : 'border-secondary/30 hover:border-success bg-secondary'}`}
                 style={{ left: `${(slot.x / activeTemplate.width) * 100}%`, top: `${(slot.y / activeTemplate.height) * 100}%`, width: `${(slot.width / activeTemplate.width) * 100}%`, height: `${(slot.height / activeTemplate.height) * 100}%`, zIndex: slot.type === 'text' ? 10 : 5 }}
                 onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}
               >
@@ -282,7 +268,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                       style={{ transform: `translate(${photos[slot.id].x / safeRatio}px, ${photos[slot.id].y / safeRatio}px) scale(${photos[slot.id].scale})` }}
                     />
                     <button onClick={(e) => handleDeletePhoto(slot.id, e)} className="absolute top-2 right-2 w-8 h-8 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-md hover:bg-tag-posledni-kusy">✕</button>
-                    <div className="absolute bottom-0 right-0 w-10 h-10 bg-primary hover:bg-primary-hover flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-[8px] transition-colors" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}>
+                    <div className="absolute bottom-0 right-0 w-10 h-10 bg-success hover:bg-success/80 flex items-center justify-center cursor-se-resize z-20 shadow-md rounded-tl-[8px] transition-colors" onMouseDown={(e) => handleMouseDown('resize', slot.id, e)} onClick={(e) => e.stopPropagation()}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black" strokeWidth="3"><polyline points="9 3 3 3 3 9" /><polyline points="15 21 21 21 21 15" /><line x1="3" y1="3" x2="21" y2="21" /></svg>
                     </div>
                   </div>
@@ -347,7 +333,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
               </div>
             )}
 
-            <footer className="w-full border-t border-black300/30 h-[116px] flex items-center justify-center">
+            <footer className="w-full border-t border-black300/30 h-[64px] flex items-center justify-center">
               <div className="w-full max-w-[1440px] mx-auto px-[84px] flex justify-between items-center">
                 <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
                 <Button onClick={handleUploadAndComplete} disabled={!allPhotosFilled || isUploading} arrow="right">
@@ -387,23 +373,21 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                 <img src={previewUrl || ''} className="w-full h-auto object-contain rounded-[2px]" alt="Preview" />
               )}
             </div>
-            <p className="style-body text-secondary text-center opacity-80">Náhled můžete zvětšovat nebo otočit vaše<br />zařízení na šířku.</p>
+            <p className="style-body text-secondary text-center opacity-80">Náhled můžete přiblížit sevřením dvou prstů.</p>
           </div>
         ) : (
           <>
-            {!isMobileLandscape && (
-              <div className="w-full flex flex-col items-center pt-[32px] px-6 shrink-0 z-40">
-                <h1 className="style-h1 text-secondary mb-[32px]">
+            <div className="w-full flex items-center gap-[16px] pt-[16px] pb-[12px] px-6 shrink-0 z-40">
+              <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} mainText={mainText} photos={photos} />
+              <div className="flex flex-col gap-[4px]">
+                <h2 className="style-h3 text-secondary">
                   {isMobileTextStep ? 'Vložit text a foto' : 'Vložte fotografii'}
-                </h1>
-                <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} mainText={mainText} photos={photos} />
-                <span className="style-body text-secondary mt-[12px]">
-                  {isMobileTextStep
-                    ? 'Text a fotografie'
-                    : `Fotografie ${mobileStep} z ${photoSlotsOnly.length}`}
+                </h2>
+                <span className="style-body text-secondary/70">
+                  Fotografie {mobileStep + 1} z {totalSlotsSteps}
                 </span>
               </div>
-            )}
+            </div>
             <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center px-6 pb-6 pt-0 relative overflow-hidden">
               <div className="mobile-slot-wrapper w-full h-full flex items-center justify-center">
                 <div
@@ -416,7 +400,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                     {/* Photo upload placeholder — non-text slots only */}
                     {!photos[currentMobileSlot!.id] && currentMobileSlot?.type !== 'text' && (
                       <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer">
-                        <Image src="/images/add-image-ico.svg" alt="Přidat" width={48} height={48} className="mb-2 opacity-80" />
+                        <Image src="/images/add-image-ico.svg" alt="Přidat" width={64} height={64} className="mb-3 opacity-80" />
                         <span className="style-body-bold text-black200">Vložit fotku</span>
                       </div>
                     )}
@@ -446,10 +430,11 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                         </div>
                         {!photos[currentMobileSlot!.id] && (
                           <div
-                            className="absolute bottom-0 left-0 right-0 h-[45%] flex flex-col items-center justify-center bg-secondary cursor-pointer z-[5]"
+                            className="absolute left-0 right-0 flex flex-col items-center justify-center bg-secondary cursor-pointer z-[5]"
+                            style={{ top: '38%', height: '48%' }}
                             onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
                           >
-                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={48} height={48} className="mb-2 opacity-80" />
+                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={64} height={64} className="mb-3 opacity-80" />
                             <span className="style-body-bold text-black200">Vložit fotku</span>
                           </div>
                         )}
@@ -458,16 +443,29 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
                   </div>
                 </div>
               </div>
-              {isMobileTextStep && !isPreviewStep && !isMobileLandscape && (
-                <p className="style-body text-secondary text-center opacity-80 mt-[16px]">Text posunete tažením prstu</p>
+
+              {isMobileTextStep && !isPreviewStep && (
+                <div className="flex flex-col items-center gap-[8px] mt-[12px]">
+                  <button
+                    onClick={() => setShowTextPanel(true)}
+                    className="inline-flex items-center gap-[8px] style-body-bold text-primary"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Upravit text
+                  </button>
+                  <p className="style-body text-secondary/60 text-center">Text posunete tažením prstu</p>
+                </div>
               )}
             </div>
           </>
         )}
 
-        {!isMobileLandscape && !showThankYou && (
+        {!showThankYou && (
           <div className="fixed bottom-0 left-0 w-full z-[100] bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
-            <footer className="w-full border-t border-black300/30 h-[80px] flex items-center justify-center pb-safe">
+            <footer className="w-full border-t border-black300/30 h-[64px] flex items-center justify-center pb-safe">
               <div className="w-full px-[24px] flex justify-between items-center gap-3">
                 <Button
                   onClick={() => { if (mobileStep > 0) setMobileStep((prev) => prev - 1); else window.location.href = '/vytvorit-arch'; }}
@@ -487,7 +485,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
 
         {/* Slide-up text panel */}
         {isMobileTextStep && !isPreviewStep && !showThankYou && (
-          <div className={`fixed inset-x-0 bottom-0 z-[200] bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out ${showTextPanel ? 'translate-y-0' : 'translate-y-full'}`}>
+          <div className={`fixed inset-x-0 bottom-0 z-[200] bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out max-h-[70vh] overflow-y-auto ${showTextPanel ? 'translate-y-0' : 'translate-y-full'}`}>
             <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-black300/20">
               <span className="style-body-bold text-secondary">Upravit text</span>
               <button onClick={() => setShowTextPanel(false)} className="w-8 h-8 flex items-center justify-center text-black200 hover:text-secondary transition-colors">

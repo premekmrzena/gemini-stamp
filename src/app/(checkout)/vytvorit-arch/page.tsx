@@ -17,25 +17,12 @@ const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
 
 export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isMobileLandscape, setIsMobileLandscape] = useState(false);
   const [createdStampId, setCreatedStampId] = useState<string | null>(null);
-  
-  // LIGHTBOX
+
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
-  
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
-  // Připojení košíku
   const { addToCart } = useCart();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobileLandscape(window.innerWidth < 1024 && window.innerWidth > window.innerHeight);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleNextStep = () => setCurrentStep(prev => prev + 1);
 
@@ -86,11 +73,9 @@ export default function EditorPage() {
     <div className="w-full h-[100dvh] flex flex-col bg-black overflow-hidden text-secondary select-none font-sans antialiased">
       
       {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
-      {!isMobileLandscape && (
-        <div className="sticky top-0 z-40 w-full"><CheckoutHeader right={<Stepper currentStep={currentStep} />} /></div>
-      )}
+      <div className="sticky top-0 z-40 w-full"><CheckoutHeader right={<Stepper currentStep={currentStep} />} /></div>
       
-      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${isMobileLandscape ? 'pb-0' : 'pb-[80px] lg:pb-[116px]'}`}>
+      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto pb-[64px]`}>
         
         {/* === KROK 1: VÝBĚR ŠABLONY === */}
         {currentStep === 1 && (
@@ -98,7 +83,7 @@ export default function EditorPage() {
             <h1 className="style-h1 text-secondary text-center mb-2">Vyberte si šablonu</h1>
             <p className="style-body text-secondary text-center mb-8 md:mb-[48px]">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px]">
+            <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
               {TEMPLATES.map((tpl) => {
                 const isSelected = selectedTemplate === tpl.id;
                 const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
@@ -137,32 +122,36 @@ export default function EditorPage() {
                     </div>
 
                     {/* Obsah */}
-                    <div className="flex flex-col flex-grow items-center text-center gap-[16px]">
-                      <div>
-                        <h3 className="style-h4 text-secondary mb-[8px]">{tpl.name}</h3>
-                        <p className="style-body text-secondary/70 leading-snug">{tpl.description}</p>
-                      </div>
+                    <div className="flex flex-col flex-grow items-center text-center">
+                      <h3 className="style-h4 text-secondary mb-[8px]">{tpl.name}</h3>
 
                       {/* Pill */}
-                      <div className="inline-flex items-center gap-2 bg-black400 rounded-full px-3 py-[6px]">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black200 shrink-0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <div className="inline-flex items-center gap-[6px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5 mb-[12px]">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black200 shrink-0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
                           <polyline points="21 15 16 10 5 21" />
                         </svg>
-                        <span className="style-body text-black200 whitespace-nowrap text-[13px]">
+                        <span className="style-label text-black200 whitespace-nowrap">
                           {photoCount} {photoCount < 5 ? 'fotografie' : 'fotografií'} • {tpl.stampCount} {tpl.stampCount === 1 ? 'známka' : tpl.stampCount < 5 ? 'známky' : 'známek'}
                         </span>
                       </div>
 
-                      {/* Tlačítko */}
-                      <Button
+                      <p className="style-body text-secondary/70 mb-[32px]">{tpl.description}</p>
+
+                      {/* CTA */}
+                      <button
                         onClick={(e) => { e.stopPropagation(); setSelectedTemplate(tpl.id); }}
-                        variant={isSelected ? 'contained' : 'outlined'}
-                        className="w-full mt-auto"
+                        className={`style-body font-bold flex items-center justify-center gap-2 mt-auto transition-colors duration-200 ${
+                          isSelected ? 'text-success cursor-default' : 'text-primary hover:text-primary/80 cursor-pointer'
+                        }`}
                       >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="9 12 11 14 15 10" />
+                        </svg>
                         {isSelected ? 'Vybráno' : 'Vybrat'}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 );
@@ -173,7 +162,7 @@ export default function EditorPage() {
 
         {/* === KROK 2: EDITOR NÁVRHU === */}
         {currentStep === 2 && (
-          <StampEditor onComplete={handleEditorComplete} isMobileLandscape={isMobileLandscape} />
+          <StampEditor onComplete={handleEditorComplete} />
         )}
 
         {/* === KROK 3: ÚSPĚCH A PŘESUN DO KOŠÍKU === */}
@@ -231,7 +220,7 @@ export default function EditorPage() {
 
       {/* FIXNÍ PATIČKA — KROK 1 */}
       {currentStep === 1 && (
-        <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center z-[100] pb-safe">
+        <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[64px] flex items-center justify-center z-[100] pb-safe">
           <div className="layout-container flex justify-between items-center">
             <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
             <Button onClick={() => handleNextStep()} arrow="right" disabled={!selectedTemplate}>Pokračovat</Button>
