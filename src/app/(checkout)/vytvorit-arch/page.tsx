@@ -8,18 +8,12 @@ import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
+import { TEMPLATES } from '@/lib/editorConfig';
 
-const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), { 
+const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
   ssr: false,
   loading: () => <div className="flex-1 flex items-center justify-center bg-black text-secondary style-body-bold">Načítám studio...</div>
 });
-
-// Zástupná data pro vykreslení mřížky v Kroku 1 (3 šablony podle náhledu)
-const TEMPLATE_OPTIONS = [
-  { id: 'templateA-1', name: 'Šablona A', desc: '6 fotografií, 6 známek', img: '/images/template-preview-a.jpg', stamps: ['/images/stamp-1.jpg', '/images/stamp-2.jpg'] },
-  { id: 'templateA-2', name: 'Šablona A', desc: '6 fotografií, 6 známek', img: '/images/template-preview-a.jpg', stamps: ['/images/stamp-1.jpg', '/images/stamp-2.jpg'] },
-  { id: 'templateA-3', name: 'Šablona A', desc: '6 fotografií, 6 známek', img: '/images/template-preview-a.jpg', stamps: ['/images/stamp-1.jpg', '/images/stamp-2.jpg'] }
-];
 
 export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -29,8 +23,7 @@ export default function EditorPage() {
   // LIGHTBOX
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   
-  // Vybraná šablona
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>('templateA-1'); 
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(TEMPLATES[0].id);
 
   // Připojení košíku
   const { addToCart } = useCart();
@@ -99,79 +92,134 @@ export default function EditorPage() {
       
       <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${isMobileLandscape ? 'pb-0' : 'pb-[80px] lg:pb-[116px]'}`}>
         
-        {/* === KROK 1: VÝBĚR ŠABLONY (Nový Grid Layout) === */}
+        {/* === KROK 1: VÝBĚR ŠABLONY === */}
         {currentStep === 1 && (
           <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
-            <h1 className="style-h1 text-secondary text-center mb-8 md:mb-[64px]">Vyberte si šablonu</h1>
-            
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6">
-              {TEMPLATE_OPTIONS.map((tpl) => {
+            <h1 className="style-h1 text-secondary text-center mb-2">Vyberte si šablonu</h1>
+            <p className="style-body text-black300 text-center mb-8 md:mb-[48px]">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
+
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px]">
+              {TEMPLATES.map((tpl) => {
                 const isSelected = selectedTemplate === tpl.id;
-                
+                const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
+                const previewsToShow = tpl.stampPreviews.slice(0, 2);
+                const overflow = tpl.stampCount - previewsToShow.length;
+
                 return (
-                  <div 
+                  <div
                     key={tpl.id}
                     onClick={() => setSelectedTemplate(tpl.id)}
-                    className={`flex flex-col p-6 rounded-[8px] border cursor-pointer transition-all duration-200 ${
-                      isSelected 
-                        ? 'border-black300/50 bg-black400' 
-                        : 'border-black300/30 bg-transparent hover:border-black300/60'
-                    }`}
+                    className={`group flex flex-col rounded-[12px] border overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:z-10 select-none
+                      ${isSelected
+                        ? 'border-primary bg-black500 shadow-lg shadow-primary/20'
+                        : 'border-black300/30 bg-black500 hover:border-black300/60 hover:shadow-xl'
+                      }`}
                   >
-                    {/* Checkbox a Nadpis */}
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className={`w-5 h-5 rounded-[4px] flex items-center justify-center border shrink-0 transition-colors ${
-                        isSelected ? 'bg-primary border-primary' : 'border-secondary bg-transparent'
-                      }`}>
-                        {isSelected && (
-                          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                            <path d="M1 5L4.5 8.5L11 1.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </div>
-                      <h4 className="style-h4 text-secondary">{tpl.name}</h4>
-                    </div>
-                    
-                    <p className="style-body text-black300 mb-6">{tpl.desc}</p>
-                    
-                    {/* Hlavní náhled šablony */}
-                    <div 
-                      className="w-full aspect-[4/3] bg-black200 rounded-[4px] overflow-hidden mb-6 relative cursor-zoom-in group select-none"
-                      onClick={(e) => { e.stopPropagation(); setLightboxImg(tpl.img); }}
+                    {/* Náhled šablony */}
+                    <div
+                      className="relative w-full aspect-[16/10] bg-black400 overflow-hidden cursor-zoom-in"
+                      onClick={(e) => { e.stopPropagation(); setLightboxImg(tpl.backgroundImage); }}
                       onContextMenu={(e) => e.preventDefault()}
                     >
-                      <Image 
-                        src={tpl.img} 
-                        alt={tpl.name} 
-                        fill 
-                        className="object-contain pointer-events-none group-hover:scale-105 transition-transform duration-300" 
+                      <Image
+                        src={tpl.backgroundImage}
+                        alt={tpl.name}
+                        fill
+                        className="object-contain pointer-events-none group-hover:scale-[1.03] transition-transform duration-500"
                         onDragStart={(e) => e.preventDefault()}
                       />
                       <div className="absolute inset-0 z-10 bg-transparent" />
+                      {isSelected && (
+                        <div className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                    
-                    {/* Známky v archu */}
-                    <div className="mt-auto border-t border-black300/10 pt-4">
-                      <h3 className="style-body text-secondary mb-3">Známky v archu</h3>
-                      <div className="flex gap-3">
-                        {tpl.stamps.map((stampImg, idx) => (
-                          <div 
-                            key={idx}
-                            className="w-[60px] h-[48px] bg-black200 rounded-[2px] overflow-hidden relative border border-black300/20 cursor-zoom-in group select-none"
-                            onClick={(e) => { e.stopPropagation(); setLightboxImg(stampImg); }}
-                            onContextMenu={(e) => e.preventDefault()}
-                          >
-                            <Image 
-                              src={stampImg} 
-                              alt={`Známka ${idx + 1}`} 
-                              fill 
-                              className="object-cover pointer-events-none group-hover:scale-110 transition-transform" 
-                              onDragStart={(e) => e.preventDefault()}
-                            />
-                            <div className="absolute inset-0 z-10 bg-transparent" />
-                          </div>
-                        ))}
+
+                    {/* Obsah */}
+                    <div className="flex flex-col gap-3 p-5">
+                      <div>
+                        <h3 className="style-h4 text-secondary mb-1">{tpl.name}</h3>
+                        <p className="style-body text-black300 leading-snug">{tpl.description}</p>
                       </div>
+
+                      {/* Pill */}
+                      <div className="inline-flex items-center gap-2 self-start bg-black400 rounded-full px-3 py-[6px]">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-black200 shrink-0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        <span className="style-body text-black200 whitespace-nowrap text-[13px]">
+                          {photoCount} {photoCount < 5 ? 'fotografie' : 'fotografií'} • {tpl.stampCount} {tpl.stampCount === 1 ? 'známka' : tpl.stampCount < 5 ? 'známky' : 'známek'}
+                        </span>
+                      </div>
+
+                      {/* Známky v archu */}
+                      <div className="border-t border-black300/20 pt-3">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="style-body text-secondary/70 text-[13px]">Známky v archu</span>
+                          {tpl.shopUrl && (
+                            <a
+                              href={tpl.shopUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="style-body text-primary hover:text-primary-hover transition-colors flex items-center gap-1 text-[13px]"
+                            >
+                              Zobrazit v e-shopu
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                              </svg>
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {previewsToShow.map((src, idx) => (
+                            <div
+                              key={idx}
+                              className="w-10 h-10 rounded-[4px] overflow-hidden bg-black400 border border-black300/20 shrink-0 relative cursor-zoom-in"
+                              onClick={(e) => { e.stopPropagation(); setLightboxImg(src); }}
+                              onContextMenu={(e) => e.preventDefault()}
+                            >
+                              <Image src={src} alt="" fill className="object-cover pointer-events-none" onDragStart={(e) => e.preventDefault()} />
+                              <div className="absolute inset-0 z-10 bg-transparent" />
+                            </div>
+                          ))}
+                          {previewsToShow.length === 0 && (
+                            <>
+                              <div className="w-10 h-10 rounded-[4px] bg-black400 border border-black300/20 shrink-0" />
+                              <div className="w-10 h-10 rounded-[4px] bg-black400 border border-black300/20 shrink-0" />
+                            </>
+                          )}
+                          {overflow > 0 && (
+                            <div className="w-10 h-10 rounded-[4px] bg-black300/20 border border-black300/20 flex items-center justify-center shrink-0">
+                              <span className="text-black200 font-semibold text-[13px]">+{overflow}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Tlačítko */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedTemplate(tpl.id); }}
+                        className={`w-full mt-1 inline-flex items-center justify-center gap-2 font-medium tracking-[-0.02em] rounded-[12px] transition-all duration-300 hover:scale-[1.03] active:scale-95 text-[16px] p-[14px]
+                          ${isSelected
+                            ? 'bg-primary text-black hover:bg-primary-hover'
+                            : 'bg-transparent border border-primary text-primary hover:bg-white/5 hover:border-primary-hover hover:text-primary-hover'
+                          }`}
+                      >
+                        {isSelected && (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                        {isSelected ? 'Vybráno' : 'Vybrat'}
+                      </button>
                     </div>
                   </div>
                 );
@@ -238,18 +286,12 @@ export default function EditorPage() {
         )}
       </main>
 
-      {/* --- FIXNÍ PATIČKA PRO KROK 1 (Sjednocený design s editorem) (NEDOTČENO) --- */}
+      {/* FIXNÍ PATIČKA — KROK 1 */}
       {currentStep === 1 && (
         <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center z-[100] pb-safe">
-          <div className="layout-container flex justify-end items-center">
-            <Button 
-              onClick={() => handleNextStep()} 
-              disabled={!selectedTemplate} 
-              arrow="right"
-              className="w-full md:w-auto h-[48px]"
-            >
-              Další krok
-            </Button>
+          <div className="layout-container flex justify-between items-center">
+            <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
+            <Button onClick={() => handleNextStep()} arrow="right">Pokračovat</Button>
           </div>
         </footer>
       )}

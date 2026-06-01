@@ -239,7 +239,7 @@ export default function StampEditor({ onComplete, isMobileLandscape = false }: S
       `}</style>
 
       {showLandscapeHint && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black style-body-bold px-4 py-2 rounded-full shadow-2xl animate-pulse pointer-events-none whitespace-nowrap">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary text-black style-body-bold px-4 py-2 rounded-full shadowl animate-pulse pointer-events-none whitespace-nowrap">
           Otočte zpět na výšku pro zobrazení menu
         </div>
       )}
