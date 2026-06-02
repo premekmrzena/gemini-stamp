@@ -60,9 +60,9 @@ export default function Hero() {
           </div>
         </div>
       ))}
-      <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-start">
+      <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-center">
         <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10">
-          <span className="text-[var(--color-tag-novinka)] mr-1">★★★★☆</span>
+          <span className="text-[var(--color-tag-novinka)] mr-1">★★★★</span>
           Již 1&nbsp;247+ spokojených zákazníků
         </div>
       </div>
@@ -121,16 +121,24 @@ export default function Hero() {
 
         {/* Button */}
         <div className="mt-4 md:mt-10 flex justify-center w-full">
-          <div className="inline-flex relative">
-            <Image
-              src="/images/handarrow.svg"
-              alt="Ukazatel"
-              width={60}
-              height={60}
-              className="absolute -left-[70px] bottom-3 pointer-events-none md:w-[70px] md:-left-[84px] md:bottom-[14px] lg:w-[80px] lg:-left-[95px] lg:bottom-[14px]"
-            />
-            <Link href="/vytvorit-arch">
-              <Button>Vybrat šablonu a začít tvořit</Button>
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-5">
+            <div className="inline-flex relative">
+              <Image
+                src="/images/handarrow.svg"
+                alt="Ukazatel"
+                width={60}
+                height={60}
+                className="absolute -left-[70px] bottom-3 pointer-events-none md:w-[70px] md:-left-[84px] md:bottom-[14px] lg:w-[80px] lg:-left-[95px] lg:bottom-[14px]"
+              />
+              <Link href="/vytvorit-arch">
+                <Button>Vybrat šablonu a začít tvořit</Button>
+              </Link>
+            </div>
+            <Link
+              href="/co-je-kreativni-arch"
+              className="style-body text-secondary/60 hover:text-secondary transition-colors underline underline-offset-4 decoration-secondary/30 hover:decoration-secondary/60"
+            >
+              Co je Kreativní arch?
             </Link>
           </div>
         </div>
