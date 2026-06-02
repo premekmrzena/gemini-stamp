@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ProductList from '@/components/ProductList';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -64,6 +65,7 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-black pb-20">
+      <Breadcrumbs items={[{ label: current.title }]} />
       <section className="py-8 md:py-12">
         <div className="layout-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

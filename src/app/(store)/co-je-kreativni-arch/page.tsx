@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Button from '@/components/Button';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const processSteps = [
   {
@@ -74,6 +75,7 @@ export const metadata = {
 export default function CoJeKreativniArch() {
   return (
     <main className="bg-[#0F172A] text-secondary w-full">
+      <Breadcrumbs items={[{ label: 'Co je Kreativní arch?' }]} />
 
       {/* ——— HERO ——— */}
       <section className="layout-container py-[48px] md:py-[72px] lg:py-[96px] text-center">

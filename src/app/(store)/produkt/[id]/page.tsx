@@ -1,5 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
+import Breadcrumbs from '@/components/Breadcrumbs';
+
+const categoryLabels: Record<string, string> = {
+  'znamky': 'Poštovní známky',
+  'kreativni-archy': 'Kreativní archy',
+  'fdc': 'First Day Cover (FDC)',
+  'plakety': 'Dárkové plakety',
+};
 
 // Vypne cachování pro 100% aktuálnost dat
 export const revalidate = 0;
@@ -61,6 +69,17 @@ export default async function ProductPage({
     if (fallback) relatedProducts = fallback;
   }
 
-  // 3. Vykreslení klientské komponenty (kterou jsme už zabezpečili proti stahování)
-  return <ProductDetailClient product={product} relatedProducts={relatedProducts} />;
+  const categoryLabel = categoryLabels[product.category] || product.category;
+
+  return (
+    <>
+      <Breadcrumbs
+        items={[
+          { label: categoryLabel, href: `/kategorie/${product.category}` },
+          { label: product.name },
+        ]}
+      />
+      <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+    </>
+  );
 }

@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import Link from 'next/link';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
+import Footer from '@/components/Footer';
 import { TEMPLATES } from '@/lib/editorConfig';
 
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
@@ -20,7 +22,6 @@ export default function EditorPage() {
   const [createdStampId, setCreatedStampId] = useState<string | null>(null);
 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   const { addToCart } = useCart();
 
@@ -75,33 +76,36 @@ export default function EditorPage() {
       {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
       <div className="sticky top-0 z-40 w-full"><CheckoutHeader right={<Stepper currentStep={currentStep} />} /></div>
       
-      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto pb-[64px]`}>
+      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${currentStep !== 1 ? 'pb-[64px]' : ''}`}>
         
         {/* === KROK 1: VÝBĚR ŠABLONY === */}
         {currentStep === 1 && (
+          <>
           <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
             <h1 className="style-h1 text-secondary text-center mb-2">Vyberte si šablonu</h1>
-            <p className="style-body text-secondary text-center mb-8 md:mb-[48px]">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
+            <p className="style-body text-secondary text-center mb-3">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
+            <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-black200 hover:text-primary transition-colors mb-8 md:mb-[48px]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
+                <line x1="12" y1="12" x2="12" y2="16" />
+              </svg>
+              Co je kreativní arch?
+            </Link>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
               {TEMPLATES.map((tpl) => {
-                const isSelected = selectedTemplate === tpl.id;
                 const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
 
                 return (
                   <div
                     key={tpl.id}
-                    onClick={() => setSelectedTemplate(tpl.id)}
-                    className={`group relative border rounded-[4px] p-[24px] flex flex-col cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:z-10 select-none
-                      ${isSelected
-                        ? 'border-primary bg-black500 shadow-lg shadow-primary/20'
-                        : 'border-black300/30 bg-[#0F172A] hover:bg-black500 hover:border-black300/60 hover:shadow-xl'
-                      }`}
+                    className="group relative border border-black300/30 bg-[#0F172A] rounded-[4px] p-[24px] flex flex-col hover:bg-black500 hover:border-black300/60 hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all duration-300 select-none"
                   >
                     {/* Náhled šablony */}
                     <div
                       className="relative w-full aspect-[4130/2550] bg-black400 rounded-[4px] overflow-hidden cursor-zoom-in mb-[20px] flex-shrink-0"
-                      onClick={(e) => { e.stopPropagation(); setLightboxImg(tpl.backgroundImage); }}
+                      onClick={() => setLightboxImg(tpl.backgroundImage)}
                       onContextMenu={(e) => e.preventDefault()}
                     >
                       <Image
@@ -112,13 +116,6 @@ export default function EditorPage() {
                         onDragStart={(e) => e.preventDefault()}
                       />
                       <div className="absolute inset-0 z-10 bg-transparent" />
-                      {isSelected && (
-                        <div className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </div>
-                      )}
                     </div>
 
                     {/* Obsah */}
@@ -137,27 +134,20 @@ export default function EditorPage() {
                         </span>
                       </div>
 
-                      <p className="style-body text-secondary/70 mb-[32px]">{tpl.description}</p>
+                      <p className="style-body text-secondary/70 mb-[24px]">{tpl.description}</p>
 
                       {/* CTA */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelectedTemplate(tpl.id); }}
-                        className={`style-body font-bold flex items-center justify-center gap-2 mt-auto transition-colors duration-200 ${
-                          isSelected ? 'text-success cursor-default' : 'text-primary hover:text-primary/80 cursor-pointer'
-                        }`}
-                      >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="9 12 11 14 15 10" />
-                        </svg>
-                        {isSelected ? 'Vybráno' : 'Vybrat'}
-                      </button>
+                      <Button onClick={() => handleNextStep()} className="mt-auto">
+                        Vybrat šablonu
+                      </Button>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
+          <Footer />
+          </>
         )}
 
         {/* === KROK 2: EDITOR NÁVRHU === */}
@@ -218,15 +208,6 @@ export default function EditorPage() {
         )}
       </main>
 
-      {/* FIXNÍ PATIČKA — KROK 1 */}
-      {currentStep === 1 && (
-        <footer className="w-full shrink-0 bg-black500 border-t border-black300/30 h-[64px] flex items-center justify-center z-[100] pb-safe">
-          <div className="layout-container flex justify-between items-center">
-            <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
-            <Button onClick={() => handleNextStep()} arrow="right" disabled={!selectedTemplate}>Pokračovat</Button>
-          </div>
-        </footer>
-      )}
     </div>
   );
 }

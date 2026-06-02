@@ -23,7 +23,7 @@ function MobileMiniMap({ template, activeSlotId, mainText, photos }: MiniMapProp
   const bWidth = maxX - minX;
   const bHeight = maxY - minY;
   return (
-    <div className="relative bg-secondary rounded-[4px] shrink-0" style={{ width: '167px', height: '103px', padding: '12px' }}>
+    <div className="relative bg-black200 rounded-[4px] shrink-0" style={{ width: '167px', height: '103px', padding: '12px' }}>
       <div className="relative w-full h-full">
         {template.slots.map((slot) => {
           const isActive = activeSlotId === slot.id;
@@ -69,7 +69,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const [fontSize, setFontSize] = useState(80);
   const [fontFamily, setFontFamily] = useState('Poppins');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
-  const [textPos, setTextPos] = useState({ x: 50, y: 35 });
+  const [textPos, setTextPos] = useState({ x: 50, y: 22 });
   const [useShadow, setUseShadow] = useState(false);
   const [shadowColor] = useState('#000000');
   const [shadowBlur] = useState(15);
@@ -275,7 +275,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                 ) : slot.type !== 'text' ? (
                   <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors">
                     <Image src="/images/add-image-ico.svg" alt="+" width={32} height={32} className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <span className="style-body-bold text-black200 transition-opacity">Vložit fotku</span>
+                    <span className="style-body-bold text-black300 transition-opacity">Vložit fotku</span>
                   </div>
                 ) : null}
 
@@ -283,7 +283,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                 {slot.type === 'text' && (
                   <>
                     <div className="absolute cursor-move select-none p-0 whitespace-pre active:opacity-80 group/text w-max max-w-full touch-none"
-                      style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: mainText ? textColor : '#94a3b8', fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.05, textShadow: useShadow && mainText ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
+                      style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: mainText ? textColor : '#8B95AC', fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.05, textShadow: useShadow && mainText ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
                       onMouseDown={(e) => handleMouseDown('text', slot.id, e)}
                     >
                       <span className="relative z-10 border border-transparent group-hover/text:border-primary/50 p-1 rounded inline-block">
@@ -297,7 +297,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                         onClick={(e) => openPhotoPickerForSlot(slot.id, e)}
                       >
                         <Image src="/images/add-image-ico.svg" alt="+" width={32} height={32} className="mb-1 opacity-80" />
-                        <span className="style-body-bold text-black200">Vložit fotku</span>
+                        <span className="style-body-bold text-black300">Vložit fotku</span>
                       </div>
                     )}
                   </>
@@ -377,7 +377,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
           </div>
         ) : (
           <>
-            <div className="w-full flex items-center gap-[16px] pt-[16px] pb-[12px] px-6 shrink-0 z-40">
+            <div className="w-full flex items-center gap-[16px] pt-[28px] pb-[14px] px-6 shrink-0 z-40">
               <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} mainText={mainText} photos={photos} />
               <div className="flex flex-col gap-[4px]">
                 <h2 className="style-h3 text-secondary">
@@ -388,10 +388,10 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                 </span>
               </div>
             </div>
-            <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center px-6 pb-6 pt-0 relative overflow-hidden">
-              <div className="mobile-slot-wrapper w-full h-full flex items-center justify-center">
+            <div className="flex-1 min-h-0 w-full flex flex-col items-center pt-[14px] px-6 pb-6 relative overflow-hidden">
+              <div className="mobile-slot-wrapper w-full flex items-center justify-center">
                 <div
-                  className="relative shadow-2xl bg-secondary border border-black300 w-full touch-none rounded-[4px] overflow-hidden"
+                  className="relative shadow-2xl bg-secondary border-[3px] border-success w-full touch-none rounded-[4px] overflow-hidden"
                   style={{ aspectRatio: `${currentMobileSlot!.width} / ${currentMobileSlot!.height}`, maxHeight: '65vh' }}
                   onClick={() => handleSlotClick(currentMobileSlot!.id)}
                 >
@@ -400,8 +400,8 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                     {/* Photo upload placeholder — non-text slots only */}
                     {!photos[currentMobileSlot!.id] && currentMobileSlot?.type !== 'text' && (
                       <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer">
-                        <Image src="/images/add-image-ico.svg" alt="Přidat" width={64} height={64} className="mb-3 opacity-80" />
-                        <span className="style-body-bold text-black200">Vložit fotku</span>
+                        <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="mb-1 opacity-80" />
+                        <span className="style-body-bold text-black300 text-[20px]">Vložit fotku</span>
                       </div>
                     )}
 
@@ -422,7 +422,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                     {isMobileTextStep && (
                       <>
                         <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none"
-                          style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: mainText ? textColor : '#94a3b8', fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.2, textShadow: useShadow && mainText ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
+                          style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: mainText ? textColor : '#8B95AC', fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.2, textShadow: useShadow && mainText ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
                           onTouchStart={(e) => handleTouchStart('text', currentMobileSlot!.id, e)}
                           onClick={() => setShowTextPanel(true)}
                         >
@@ -431,11 +431,11 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                         {!photos[currentMobileSlot!.id] && (
                           <div
                             className="absolute left-0 right-0 flex flex-col items-center justify-center bg-secondary cursor-pointer z-[5]"
-                            style={{ top: '38%', height: '48%' }}
+                            style={{ top: '44%', height: '40%' }}
                             onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
                           >
-                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={64} height={64} className="mb-3 opacity-80" />
-                            <span className="style-body-bold text-black200">Vložit fotku</span>
+                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="mb-1 opacity-80" />
+                            <span className="style-body-bold text-black300 text-[20px]">Vložit fotku</span>
                           </div>
                         )}
                       </>
@@ -445,7 +445,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
               </div>
 
               {isMobileTextStep && !isPreviewStep && (
-                <div className="flex flex-col items-center gap-[8px] mt-[12px]">
+                <div className="flex flex-col items-center gap-[8px] mt-[20px]">
                   <button
                     onClick={() => setShowTextPanel(true)}
                     className="inline-flex items-center gap-[8px] style-body-bold text-primary"
