@@ -23,11 +23,11 @@ function MobileMiniMap({ template, activeSlotId, mainText, photos }: MiniMapProp
   const bWidth = maxX - minX;
   const bHeight = maxY - minY;
   return (
-    <div className="relative bg-black200 rounded-[4px] shrink-0" style={{ width: '167px', height: '103px', padding: '12px' }}>
+    <div className="relative bg-black400 rounded-[4px] shrink-0" style={{ width: '143px', height: '88px', padding: '8px' }}>
       <div className="relative w-full h-full">
         {template.slots.map((slot) => {
           const isActive = activeSlotId === slot.id;
-          const isFilled = slot.type === 'text' ? mainText.length > 0 : !!photos[slot.id];
+          const isFilled = !!photos[slot.id];
           const leftPercent = ((slot.x - minX) / bWidth) * 100;
           const topPercent = ((slot.y - minY) / bHeight) * 100;
           const widthPercent = (slot.width / bWidth) * 100;
@@ -69,7 +69,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const [fontSize, setFontSize] = useState(80);
   const [fontFamily, setFontFamily] = useState('Poppins');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
-  const [textPos, setTextPos] = useState({ x: 50, y: 22 });
+  const [textPos, setTextPos] = useState({ x: 50, y: 78 });
   const [useShadow, setUseShadow] = useState(false);
   const [shadowColor] = useState('#000000');
   const [shadowBlur] = useState(15);
@@ -377,18 +377,18 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
           </div>
         ) : (
           <>
-            <div className="w-full flex items-center gap-[16px] pt-[28px] pb-[14px] px-6 shrink-0 z-40">
+            <div className="w-full flex items-center gap-[16px] pt-[32px] pb-[32px] px-6 shrink-0 z-40">
               <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} mainText={mainText} photos={photos} />
-              <div className="flex flex-col gap-[4px]">
+              <div className="flex flex-col gap-[8px]">
                 <h2 className="style-h3 text-secondary">
-                  {isMobileTextStep ? 'Vložit text a foto' : 'Vložte fotografii'}
+                  {activeTemplate.name}
                 </h2>
                 <span className="style-body text-secondary/70">
                   Fotografie {mobileStep + 1} z {totalSlotsSteps}
                 </span>
               </div>
             </div>
-            <div className="flex-1 min-h-0 w-full flex flex-col items-center pt-[14px] px-6 pb-6 relative overflow-hidden">
+            <div className="flex-1 min-h-0 w-full flex flex-col items-center pt-0 px-6 pb-6 relative overflow-hidden">
               <div className="mobile-slot-wrapper w-full flex items-center justify-center">
                 <div
                   className="relative shadow-2xl bg-secondary border-[3px] border-success w-full touch-none rounded-[4px] overflow-hidden"
@@ -421,21 +421,31 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                     {/* Text slot: text overlay + photo upload trigger */}
                     {isMobileTextStep && (
                       <>
-                        <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none"
-                          style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: mainText ? textColor : '#8B95AC', fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.2, textShadow: useShadow && mainText ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
-                          onTouchStart={(e) => handleTouchStart('text', currentMobileSlot!.id, e)}
-                          onClick={() => setShowTextPanel(true)}
-                        >
-                          <span className="border-2 border-transparent">{mainText || 'Napište vlastní text'}</span>
-                        </div>
-                        {!photos[currentMobileSlot!.id] && (
-                          <div
-                            className="absolute left-0 right-0 flex flex-col items-center justify-center bg-secondary cursor-pointer z-[5]"
-                            style={{ top: '44%', height: '40%' }}
-                            onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
+                        {mainText && (
+                          <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none"
+                            style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.2, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
+                            onTouchStart={(e) => handleTouchStart('text', currentMobileSlot!.id, e)}
+                            onClick={() => setShowTextPanel(true)}
                           >
-                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="mb-1 opacity-80" />
-                            <span className="style-body-bold text-black300 text-[20px]">Vložit fotku</span>
+                            <span className="border-2 border-transparent">{mainText}</span>
+                          </div>
+                        )}
+                        {!photos[currentMobileSlot!.id] && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-between z-[5]" style={{ paddingTop: '12%', paddingBottom: '12%' }}>
+                            <div
+                              className="cursor-pointer flex-1 flex items-center"
+                              onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
+                            >
+                              <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="opacity-80" />
+                            </div>
+                            {!mainText && (
+                              <h2
+                                className="style-h2 text-success cursor-pointer"
+                                onClick={() => setShowTextPanel(true)}
+                              >
+                                Napište vlastní text
+                              </h2>
+                            )}
                           </div>
                         )}
                       </>
@@ -445,7 +455,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
               </div>
 
               {isMobileTextStep && !isPreviewStep && (
-                <div className="flex flex-col items-center gap-[8px] mt-[20px]">
+                <div className="flex flex-col items-center gap-[8px] mt-[32px]">
                   <button
                     onClick={() => setShowTextPanel(true)}
                     className="inline-flex items-center gap-[8px] style-body-bold text-primary"
@@ -456,7 +466,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                     </svg>
                     Upravit text
                   </button>
-                  <p className="style-body text-secondary/60 text-center">Text posunete tažením prstu</p>
+                  <p className="style-body text-secondary/60 text-center">Text v okně můžete posouvat</p>
                 </div>
               )}
             </div>
@@ -473,7 +483,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                 >Zpět</Button>
                 <Button
                   onClick={() => { if (isPreviewStep) handleUploadAndComplete(); else if (isLastSlotStep) handleMobilePreview(); else setMobileStep((prev) => prev + 1); }}
-                  disabled={isUploading || (!isPreviewStep && currentMobileSlot?.type !== 'text' && !photos[currentMobileSlot?.id || ''])}
+                  disabled={isUploading || (!isPreviewStep && !photos[currentMobileSlot?.id || ''])}
                   arrow="right" className="flex-1 h-[48px]"
                 >
                   {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : isMobileTextStep ? 'Pokračovat' : 'Další fotografie'}
