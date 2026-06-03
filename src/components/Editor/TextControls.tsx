@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import ColorPickerInput from './ColorPickerInput';
 
 const FONT_OPTIONS = [
   { name: 'Moderní (Poppins)', value: 'Poppins' },
@@ -74,9 +75,7 @@ export default function TextControls({
               </svg>
             </div>
           </div>
-          <div className="w-[48px] h-[48px] rounded-[4px] overflow-hidden shrink-0 relative" style={{ backgroundColor: textColor }}>
-            <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="absolute inset-[-10px] w-[68px] h-[68px] cursor-pointer opacity-0" />
-          </div>
+          <ColorPickerInput value={textColor} onChange={setTextColor} />
         </div>
 
         <div className="flex items-center justify-between h-[24px]">

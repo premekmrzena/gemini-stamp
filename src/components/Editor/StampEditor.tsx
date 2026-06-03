@@ -7,6 +7,7 @@ import { TEMPLATES, Template, PhotoState, TextState } from '@/lib/editorConfig';
 import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
 import { supabase } from '@/lib/supabase';
 import TextControls from './TextControls';
+import ColorPickerInput from './ColorPickerInput';
 
 type MiniMapProps = {
   template: Template;
@@ -74,6 +75,9 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
   const [shadowColor] = useState('#000000');
   const [shadowBlur] = useState(15);
 
+  const [desktopSize, setDesktopSize] = useState<{ w: number; h: number } | null>(null);
+  const desktopContainerRef = useRef<HTMLDivElement>(null);
+
   const isDragging = useRef<false | 'photo' | 'text' | 'resize'>(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const photoStart = useRef({ x: 0, y: 0 });
@@ -99,8 +103,17 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
         const el = document.querySelector(`.mobile-slot-${currentMobileSlot.id}`);
         if (el) setViewRatio(currentMobileSlot.width / el.getBoundingClientRect().width);
       } else {
-        const el = document.querySelector('.desktop-canvas-wrapper');
-        if (el) setViewRatio(activeTemplate.width / el.getBoundingClientRect().width);
+        const container = desktopContainerRef.current;
+        if (container) {
+          const cs = getComputedStyle(container);
+          const cw = container.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          const ch = container.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+          const ratio = activeTemplate.width / activeTemplate.height;
+          const w = cw / ch > ratio ? ch * ratio : cw;
+          const h = w / ratio;
+          setDesktopSize({ w, h });
+          setViewRatio(activeTemplate.width / w);
+        }
       }
     };
     updateRatio();
@@ -248,10 +261,13 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
 
       {/* DESKTOP */}
       <div className="hidden md:flex flex-col w-full min-h-[calc(100vh-80px)]" style={{ paddingBottom: showThankYou ? '0px' : '64px' }}>
-        <div className="flex-1 w-full flex items-center justify-center p-8" onClick={() => setActiveSlotId(null)}>
+        <div ref={desktopContainerRef} className="flex-1 w-full flex items-center justify-center p-8" onClick={() => setActiveSlotId(null)}>
           <div
             className="desktop-canvas-wrapper relative shadow-2xl bg-secondary border border-black300/10 shrink-0 touch-none rounded-[4px] overflow-hidden"
-            style={{ aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '100%', maxWidth: '100%' }}
+            style={desktopSize
+              ? { width: `${desktopSize.w}px`, height: `${desktopSize.h}px` }
+              : { aspectRatio: `${activeTemplate.width} / ${activeTemplate.height}`, height: '100%', maxWidth: '100%' }
+            }
             onClick={(e) => e.stopPropagation()}
           >
             <img src={activeTemplate.backgroundImage} className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="Šablona" />
@@ -274,7 +290,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                   </div>
                 ) : slot.type !== 'text' ? (
                   <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors">
-                    <Image src="/images/add-image-ico.svg" alt="+" width={32} height={32} className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <Image src="/images/add-image-ico.svg" alt="+" width={64} height={64} className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity" />
                     <span className="style-body-bold text-black300 transition-opacity">Vložit fotku</span>
                   </div>
                 ) : null}
@@ -282,22 +298,32 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                 {/* Text slot: text overlay + photo upload trigger */}
                 {slot.type === 'text' && (
                   <>
-                    <div className="absolute cursor-move select-none p-0 whitespace-pre active:opacity-80 group/text w-max max-w-full touch-none"
-                      style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: mainText ? textColor : '#8B95AC', fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.05, textShadow: useShadow && mainText ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
-                      onMouseDown={(e) => handleMouseDown('text', slot.id, e)}
-                    >
-                      <span className="relative z-10 border border-transparent group-hover/text:border-primary/50 p-1 rounded inline-block">
-                        {mainText || 'Napište vlastní text'}
-                      </span>
-                    </div>
+                    {mainText && (
+                      <div className="absolute cursor-move select-none p-0 whitespace-pre active:opacity-80 group/text w-max max-w-full touch-none"
+                        style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.05, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
+                        onMouseDown={(e) => handleMouseDown('text', slot.id, e)}
+                      >
+                        <span className="relative z-10 border border-transparent group-hover/text:border-primary/50 p-1 rounded inline-block">
+                          {mainText}
+                        </span>
+                      </div>
+                    )}
                     {!photos[slot.id] && (
                       <div
-                        className="absolute inset-x-0 flex flex-col items-center justify-center cursor-pointer z-[5] hover:opacity-80 transition-opacity"
-                        style={{ top: '48%', height: '38%' }}
+                        className="absolute top-0 left-0 right-0 flex items-center justify-center cursor-pointer z-[2] hover:opacity-80 transition-opacity"
+                        style={{ height: '58%' }}
                         onClick={(e) => openPhotoPickerForSlot(slot.id, e)}
                       >
-                        <Image src="/images/add-image-ico.svg" alt="+" width={32} height={32} className="mb-1 opacity-80" />
-                        <span className="style-body-bold text-black300">Vložit fotku</span>
+                        <Image src="/images/add-image-ico.svg" alt="+" width={64} height={64} className="opacity-80" />
+                      </div>
+                    )}
+                    {!mainText && (
+                      <div
+                        className="absolute bottom-0 left-0 right-0 flex items-center justify-center z-[5] text-center px-2"
+                        style={{ height: '42%' }}
+                        onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}
+                      >
+                        <h2 className="style-h3 text-success">Napište vlastní text</h2>
                       </div>
                     )}
                   </>
@@ -335,7 +361,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
 
             <footer className="w-full border-t border-black300/30 h-[64px] flex items-center justify-center">
               <div className="w-full max-w-[1440px] mx-auto px-[84px] flex justify-between items-center">
-                <Button onClick={() => window.history.back()} variant="outlined" arrow="left">Zpět</Button>
+                <Button onClick={() => window.location.href = '/vytvorit-arch'} variant="outlined" arrow="left">Zpět</Button>
                 <Button onClick={handleUploadAndComplete} disabled={!allPhotosFilled || isUploading} arrow="right">
                   {isUploading ? 'Ukládám...' : 'Dokončit'}
                 </Button>
@@ -391,7 +417,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
             <div className="flex-1 min-h-0 w-full flex flex-col items-center pt-0 px-6 pb-6 relative overflow-hidden">
               <div className="mobile-slot-wrapper w-full flex items-center justify-center">
                 <div
-                  className="relative shadow-2xl bg-secondary border-[3px] border-success w-full touch-none rounded-[4px] overflow-hidden"
+                  className="relative bg-secondary border-[3px] border-success w-full touch-none rounded-[4px] overflow-hidden"
                   style={{ aspectRatio: `${currentMobileSlot!.width} / ${currentMobileSlot!.height}`, maxHeight: '65vh' }}
                   onClick={() => handleSlotClick(currentMobileSlot!.id)}
                 >
@@ -431,21 +457,21 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                           </div>
                         )}
                         {!photos[currentMobileSlot!.id] && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-between z-[5]" style={{ paddingTop: '12%', paddingBottom: '12%' }}>
-                            <div
-                              className="cursor-pointer flex-1 flex items-center"
-                              onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
-                            >
-                              <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="opacity-80" />
-                            </div>
-                            {!mainText && (
-                              <h2
-                                className="style-h2 text-success cursor-pointer"
-                                onClick={() => setShowTextPanel(true)}
-                              >
-                                Napište vlastní text
-                              </h2>
-                            )}
+                          <div
+                            className="absolute top-0 left-0 right-0 flex items-center justify-center cursor-pointer z-[2]"
+                            style={{ height: '58%' }}
+                            onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
+                          >
+                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="opacity-80" />
+                          </div>
+                        )}
+                        {!mainText && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 flex items-center justify-center z-[5] cursor-pointer"
+                            style={{ height: '42%' }}
+                            onClick={() => setShowTextPanel(true)}
+                          >
+                            <h2 className="style-h2 text-success">Napište vlastní text</h2>
                           </div>
                         )}
                       </>
@@ -474,7 +500,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
         )}
 
         {!showThankYou && (
-          <div className="fixed bottom-0 left-0 w-full z-[100] bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
+          <div className="fixed bottom-0 left-0 w-full z-[100] bg-black500">
             <footer className="w-full border-t border-black300/30 h-[64px] flex items-center justify-center pb-safe">
               <div className="w-full px-[24px] flex justify-between items-center gap-3">
                 <Button
@@ -486,7 +512,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                   disabled={isUploading || (!isPreviewStep && !photos[currentMobileSlot?.id || ''])}
                   arrow="right" className="flex-1 h-[48px]"
                 >
-                  {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : isMobileTextStep ? 'Pokračovat' : 'Další fotografie'}
+                  {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : isLastSlotStep ? 'Vytvořit náhled' : 'Další fotografie'}
                 </Button>
               </div>
             </footer>
@@ -495,7 +521,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
 
         {/* Slide-up text panel */}
         {isMobileTextStep && !isPreviewStep && !showThankYou && (
-          <div className={`fixed inset-x-0 bottom-0 z-[200] bg-black500 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out max-h-[70vh] overflow-y-auto ${showTextPanel ? 'translate-y-0' : 'translate-y-full'}`}>
+          <div className={`fixed inset-x-0 bottom-0 z-[200] bg-black500 transition-transform duration-500 ease-out max-h-[70vh] overflow-y-auto ${showTextPanel ? 'translate-y-0 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]' : 'translate-y-full'}`}>
             <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-black300/20">
               <span className="style-body-bold text-secondary">Upravit text</span>
               <button onClick={() => setShowTextPanel(false)} className="w-8 h-8 flex items-center justify-center text-black200 hover:text-secondary transition-colors">
@@ -526,9 +552,7 @@ export default function StampEditor({ onComplete }: StampEditorProps) {
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#0F172A" strokeWidth="1.5"><path d="M1 1.5L6 6.5L11 1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
                 </div>
-                <div className="w-[48px] h-[48px] rounded-[4px] overflow-hidden shrink-0 relative" style={{ backgroundColor: textColor }}>
-                  <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="absolute inset-[-10px] w-[68px] h-[68px] cursor-pointer opacity-0" />
-                </div>
+                <ColorPickerInput value={textColor} onChange={setTextColor} />
               </div>
               <div className="flex items-center justify-between">
                 <input type="range" min="40" max="300" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))}

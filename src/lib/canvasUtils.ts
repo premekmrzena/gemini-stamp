@@ -56,16 +56,33 @@ export async function generateCanvasDataUrl(
     }
     ctx.fillStyle = text.textColor;
     ctx.font = `600 ${text.fontSize}px ${text.fontFamily}, sans-serif`;
-    ctx.textAlign = text.textAlign;
     ctx.textBaseline = 'middle';
     const lines = text.mainText.split('\n');
     const lineHeight = text.fontSize * 1.2;
     const anchorX = textSlot.x + (text.textPos.x / 100) * textSlot.width;
     const anchorY = textSlot.y + (text.textPos.y / 100) * textSlot.height;
     const blockOffset = ((lines.length - 1) * lineHeight) / 2;
-    lines.forEach((line, i) => {
-      ctx.fillText(line, anchorX, anchorY - blockOffset + i * lineHeight);
-    });
+    if (text.textAlign === 'center') {
+      ctx.textAlign = 'center';
+      lines.forEach((line, i) => {
+        ctx.fillText(line, anchorX, anchorY - blockOffset + i * lineHeight);
+      });
+    } else {
+      // DOM uses translate(-50%,-50%) so anchorX is always the center of the bounding box.
+      // Canvas textAlign shifts the draw origin, so we compensate using the widest line.
+      const maxLineWidth = Math.max(...lines.map((l) => ctx.measureText(l).width));
+      if (text.textAlign === 'left') {
+        ctx.textAlign = 'left';
+        lines.forEach((line, i) => {
+          ctx.fillText(line, anchorX - maxLineWidth / 2, anchorY - blockOffset + i * lineHeight);
+        });
+      } else {
+        ctx.textAlign = 'right';
+        lines.forEach((line, i) => {
+          ctx.fillText(line, anchorX + maxLineWidth / 2, anchorY - blockOffset + i * lineHeight);
+        });
+      }
+    }
     ctx.restore();
   }
 
