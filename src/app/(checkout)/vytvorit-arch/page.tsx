@@ -105,11 +105,11 @@ export default function EditorPage() {
                     {/* Náhled šablony */}
                     <div
                       className="relative w-full aspect-[4130/2550] bg-black400 rounded-[4px] overflow-hidden cursor-zoom-in mb-[20px] flex-shrink-0"
-                      onClick={() => setLightboxImg(tpl.backgroundImage)}
+                      onClick={() => setLightboxImg(tpl.stampPreviews[0] ?? tpl.backgroundImage)}
                       onContextMenu={(e) => e.preventDefault()}
                     >
                       <Image
-                        src={tpl.backgroundImage}
+                        src={tpl.stampPreviews[0] ?? tpl.backgroundImage}
                         alt={tpl.name}
                         fill
                         className="object-contain pointer-events-none group-hover:scale-[1.03] transition-transform duration-500"
@@ -194,7 +194,7 @@ export default function EditorPage() {
               </svg>
             </button>
             
-            <div className="relative w-full max-w-[90vw] max-h-[90vh] aspect-video md:aspect-auto md:h-full">
+            <div className="relative w-full max-w-[1080px] max-h-[90vh] aspect-video md:aspect-auto md:h-full">
               <Image 
                 src={lightboxImg} 
                 alt="Detailní náhled" 
