@@ -47,11 +47,12 @@ function MobileMiniMap({ template, activeSlotId, mainText, photos }: MiniMapProp
 
 interface StampEditorProps {
   onComplete: (stampId?: string) => void;
+  templateId: string;
 }
 
-export default function StampEditor({ onComplete }: StampEditorProps) {
+export default function StampEditor({ onComplete, templateId }: StampEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const activeTemplate = TEMPLATES[0];
+  const activeTemplate = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
 
   const [photos, setPhotos] = useState<Record<string, PhotoState>>({});
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);

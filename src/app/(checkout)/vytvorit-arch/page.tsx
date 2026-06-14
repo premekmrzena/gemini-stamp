@@ -19,19 +19,20 @@ const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
 
 export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [createdStampId, setCreatedStampId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
   const { addToCart } = useCart();
 
-  const handleNextStep = () => setCurrentStep(prev => prev + 1);
+  const handleSelectTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setCurrentStep(prev => prev + 1);
+  };
 
   // LOGIKA INTEGRACE DO KOŠÍKU
   const handleEditorComplete = async (stampId?: string) => {
     if (stampId) {
-      setCreatedStampId(stampId);
-      
       try {
         const { data, error } = await supabase
           .from('custom_stamps')
@@ -137,7 +138,7 @@ export default function EditorPage() {
                       <p className="style-body text-secondary/70 mb-[24px]">{tpl.description}</p>
 
                       {/* CTA */}
-                      <Button onClick={() => handleNextStep()} className="mt-auto">
+                      <Button onClick={() => handleSelectTemplate(tpl.id)} className="mt-auto">
                         Vybrat šablonu
                       </Button>
                     </div>
@@ -152,7 +153,7 @@ export default function EditorPage() {
 
         {/* === KROK 2: EDITOR NÁVRHU === */}
         {currentStep === 2 && (
-          <StampEditor onComplete={handleEditorComplete} />
+          <StampEditor onComplete={handleEditorComplete} templateId={selectedTemplateId} />
         )}
 
         {/* === KROK 3: ÚSPĚCH A PŘESUN DO KOŠÍKU === */}
