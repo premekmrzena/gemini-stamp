@@ -2,11 +2,40 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { ORDER_STATUSES } from '@/lib/constants';
+import { OrderStatus, Product } from '@/types/database';
+import { ProductFormModal } from '@/components/admin/ProductFormModal';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
-  MapPin, Calendar, Check, Trash2,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff
+  MapPin, Calendar,
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, AlertTriangle, Archive
 } from 'lucide-react';
+import JSZip from 'jszip';
+
+const LOW_STOCK_THRESHOLD = 5;
+
+const STATUS_COLOR_CLASSES: Record<'neutral' | 'success' | 'danger', string> = {
+  success: 'bg-success/10 text-success border-success/20',
+  danger: 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20',
+  neutral: 'bg-primary/10 text-primary border-primary/20',
+};
+
+function getStatusColorClasses(status: OrderStatus | undefined) {
+  const group = ORDER_STATUSES.find((s) => s.value === status)?.group ?? 'neutral';
+  return STATUS_COLOR_CLASSES[group];
+}
+
+const PICKUP_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'K vyzvednutí', 'Vyzvednuto', 'Uzavřeno'];
+const SHIPPING_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'Odesláno', 'Doručeno', 'Uzavřeno'];
+
+// Vrací další stav v "šťastné cestě" objednávky podle způsobu dopravy.
+// Stavy mimo tuto cestu (Zrušeno, Vráceno, Reklamace...) jsou výjimky řešené jen manuálně přes select.
+function getNextStatus(order: { status?: OrderStatus; shipping_method?: string }): OrderStatus | null {
+  const flow = (order.shipping_method || '').toLowerCase().includes('osobní odběr') ? PICKUP_FLOW : SHIPPING_FLOW;
+  const currentIndex = flow.indexOf(order.status || 'Nová');
+  if (currentIndex === -1 || currentIndex === flow.length - 1) return null;
+  return flow[currentIndex + 1];
+}
 
 export default function AdminDashboard() {
   // --- STAVY PRO AUTENTIZACI ---
@@ -26,11 +55,17 @@ export default function AdminDashboard() {
   const [dateFilter, setDateFilter] = useState('');
 
   // --- STAVY PRO PRODUKTY ---
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [productFormTarget, setProductFormTarget] = useState<Product | 'new' | null>(null);
 
   // --- STAVY PRO TISKOVÁ DATA ARCHŮ ---
   const [customStampsData, setCustomStampsData] = useState<Record<string, string>>({});
+  const [bulkDownloading, setBulkDownloading] = useState(false);
+
+  // --- STAV PRO SLEDOVACÍ ČÍSLO ZÁSILKY ---
+  const [trackingNumberInput, setTrackingNumberInput] = useState('');
+  const [savingTracking, setSavingTracking] = useState(false);
 
   useEffect(() => {
     async function checkUser() {
@@ -62,10 +97,17 @@ export default function AdminDashboard() {
     setProductsLoading(true);
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, category, price, is_active, show_on_homepage, tag_last_pieces, tag_top')
+      .select('*')
       .order('created_at', { ascending: false });
     if (!error) setProducts(data || []);
     setProductsLoading(false);
+  }
+
+  function handleProductSaved(saved: Product) {
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.id === saved.id);
+      return exists ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev];
+    });
   }
 
   async function toggleHomepage(productId: string, current: boolean) {
@@ -161,7 +203,11 @@ export default function AdminDashboard() {
     loadCustomStampsPrintUrls();
   }, [selectedOrder]);
 
-  async function handleLogin(e: React.FormEvent) {
+  useEffect(() => {
+    setTrackingNumberInput(selectedOrder?.tracking_number || '');
+  }, [selectedOrder?.id]);
+
+  async function handleLogin(e: React.SubmitEvent) {
     e.preventDefault();
     setLoginError(null);
     setIsLoggingIn(true);
@@ -181,7 +227,7 @@ export default function AdminDashboard() {
     await supabase.auth.signOut();
   }
 
-  async function updateOrderStatus(orderId: string, newStatus: string) {
+  async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
     const { error } = await supabase
       .from('orders')
       .update({ status: newStatus })
@@ -192,6 +238,91 @@ export default function AdminDashboard() {
     } else {
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
+    }
+  }
+
+  async function handleSaveTrackingNumber() {
+    if (!selectedOrder || !trackingNumberInput.trim()) return;
+    const trimmed = trackingNumberInput.trim();
+
+    setSavingTracking(true);
+    const { error } = await supabase
+      .from('orders')
+      .update({ tracking_number: trimmed })
+      .eq('id', selectedOrder.id);
+
+    if (error) {
+      alert('Uložení sledovacího čísla selhalo. (Pozor: je potřeba mít spuštěnou migraci docs/sql/002_orders_tracking_number.sql.)');
+      setSavingTracking(false);
+      return;
+    }
+
+    setOrders(orders.map((o) => (o.id === selectedOrder.id ? { ...o, tracking_number: trimmed } : o)));
+    setSelectedOrder((prev: any) => (prev ? { ...prev, tracking_number: trimmed } : null));
+
+    try {
+      const res = await fetch('/api/send-shipping-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: selectedOrder.billing_email,
+          orderId: selectedOrder.id.slice(-6).toUpperCase(),
+          customerName: selectedOrder.billing_first_name,
+          trackingNumber: trimmed,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      alert('Sledovací číslo uloženo a e-mail zákazníkovi odeslán.');
+    } catch {
+      alert('Sledovací číslo bylo uloženo, ale e-mail se nepodařilo odeslat.');
+    } finally {
+      setSavingTracking(false);
+    }
+  }
+
+  async function handleBulkPrintDownload() {
+    const itemsToDownload = filteredOrders.flatMap((order) =>
+      (order.cart_items || [])
+        .filter((item: any) => item.name.toLowerCase().includes('vlastní'))
+        .map((item: any, idx: number) => ({ orderShort: order.id.slice(-6).toUpperCase(), itemId: item.id, itemIndex: idx + 1 }))
+    );
+
+    if (itemsToDownload.length === 0) {
+      alert('V aktuálním filtru nejsou žádné vlastní archy ke stažení.');
+      return;
+    }
+
+    setBulkDownloading(true);
+    try {
+      const { data, error } = await supabase
+        .from('custom_stamps')
+        .select('id, print_url')
+        .in('id', itemsToDownload.map((i) => i.itemId));
+      if (error || !data) throw error || new Error('Žádná data');
+
+      const urlById = new Map(data.map((d: any) => [d.id, d.print_url]));
+      const zip = new JSZip();
+
+      for (const item of itemsToDownload) {
+        const printUrl = urlById.get(item.itemId);
+        if (!printUrl) continue;
+        const res = await fetch(printUrl);
+        const blob = await res.blob();
+        zip.file(`${item.orderShort}_${item.itemIndex}.png`, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `tiskove-archy_${dateFilter || 'vse'}.zip`;
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error('Chyba při hromadném stažení:', err);
+      alert('Hromadné stažení tiskových archů se nezdařilo.');
+    } finally {
+      setBulkDownloading(false);
     }
   }
 
@@ -263,6 +394,8 @@ export default function AdminDashboard() {
   // 📊 MAIN DASHBOARD
   // ========================================================
   const totalRevenue = filteredOrders.reduce((sum, order) => sum + (Number(order.total_price) || 0), 0);
+  const averageOrderValue = filteredOrders.length ? totalRevenue / filteredOrders.length : 0;
+  const pendingShipmentCount = filteredOrders.filter((o) => ['Zaplaceno', 'Připravujeme'].includes(o.status)).length;
 
   return (
     <div className="min-h-screen bg-black text-secondary p-4 md:p-8">
@@ -317,7 +450,16 @@ export default function AdminDashboard() {
 
         {/* PRODUKTY - HOMEPAGE */}
         {activeTab === 'produkty' && (
-          <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button
+                onClick={() => setProductFormTarget('new')}
+                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer"
+              >
+                <Plus size={16} /> Nový produkt
+              </button>
+            </div>
+            <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
             {productsLoading ? (
               <div className="p-10 text-center text-black300 style-body">Načítám produkty...</div>
             ) : (
@@ -327,9 +469,11 @@ export default function AdminDashboard() {
                     <tr>
                       <th className="p-4 font-normal">Produkt</th>
                       <th className="p-4 font-normal">Kategorie</th>
+                      <th className="p-4 font-normal text-center">Sklad</th>
                       <th className="p-4 font-normal text-center">TOP rank</th>
                       <th className="p-4 font-normal text-center">Poslední kusy</th>
                       <th className="p-4 font-normal text-right">Homepage</th>
+                      <th className="p-4 font-normal text-right">Akce</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black300/20">
@@ -340,6 +484,19 @@ export default function AdminDashboard() {
                           <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
                         </td>
                         <td className="p-4 style-body text-black300 capitalize">{product.category || '—'}</td>
+                        <td className="p-4 text-center">
+                          {product.stock_quantity <= 0 ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">
+                              <AlertTriangle size={12} /> Vyprodáno
+                            </span>
+                          ) : product.stock_quantity <= LOW_STOCK_THRESHOLD ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-top/10 text-tag-top border-tag-top/30">
+                              <AlertTriangle size={12} /> {product.stock_quantity} ks
+                            </span>
+                          ) : (
+                            <span className="style-body text-black300">{product.stock_quantity} ks</span>
+                          )}
+                        </td>
                         <td className="p-4 text-center">
                           <select
                             value={product.tag_top ?? ''}
@@ -370,7 +527,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4 text-right">
                           <button
-                            onClick={() => toggleHomepage(product.id, product.show_on_homepage)}
+                            onClick={() => toggleHomepage(product.id, !!product.show_on_homepage)}
                             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[6px] style-body-bold transition-all cursor-pointer border ${
                               product.show_on_homepage
                                 ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
@@ -380,19 +537,29 @@ export default function AdminDashboard() {
                             {product.show_on_homepage ? <><Eye size={14} /> Zobrazeno</> : <><EyeOff size={14} /> Skryto</>}
                           </button>
                         </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => setProductFormTarget(product)}
+                            className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[6px] transition-all cursor-pointer"
+                            title="Upravit produkt"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
+            </div>
           </div>
         )}
 
         {/* OBJEDNÁVKY */}
         {activeTab === 'objednavky' && (
         <>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
             <div className="p-3 bg-tag-top/10 rounded-[8px]"><TrendingUp className="text-tag-top" /></div>
             <div>
@@ -407,6 +574,30 @@ export default function AdminDashboard() {
               <p className="style-h2 text-secondary">{filteredOrders.length}</p>
             </div>
           </div>
+          <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
+            <div className="p-3 bg-primary/10 rounded-[8px]"><TrendingUp className="text-primary" /></div>
+            <div>
+              <p className="style-product-tag text-black300 mb-1">Průměrná hodnota</p>
+              <p className="style-h2 text-secondary">{Math.round(averageOrderValue).toLocaleString('cs-CZ')} Kč</p>
+            </div>
+          </div>
+          <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
+            <div className="p-3 bg-tag-posledni-kusy/10 rounded-[8px]"><Package className="text-tag-posledni-kusy" /></div>
+            <div>
+              <p className="style-product-tag text-black300 mb-1">Čeká na odeslání</p>
+              <p className="style-h2 text-secondary">{pendingShipmentCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleBulkPrintDownload}
+            disabled={bulkDownloading}
+            className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 disabled:opacity-50 text-secondary px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer border border-black300/20"
+          >
+            <Archive size={16} /> {bulkDownloading ? 'Stahuji a balím...' : 'Stáhnout tiskové archy (ZIP)'}
+          </button>
         </div>
 
         {/* TABULKA */}
@@ -441,13 +632,7 @@ export default function AdminDashboard() {
                         <div className="text-[11px] font-mono text-black300 uppercase mt-1">#{order.id.slice(-6)}</div>
                       </td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded-[4px] style-product-tag border ${
-                          order.status === 'Vyřízeno' 
-                            ? 'bg-success/10 text-success border-success/20' 
-                            : order.status === 'Zrušeno'
-                            ? 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20'
-                            : 'bg-primary/10 text-primary border-primary/20'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-[4px] style-product-tag border ${getStatusColorClasses(order.status)}`}>
                           {order.status || 'Nová'}
                         </span>
                       </td>
@@ -485,18 +670,44 @@ export default function AdminDashboard() {
               {/* AKCE STAVU */}
               <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
                 <span className="style-product-tag text-black300">Změnit stav:</span>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => updateOrderStatus(selectedOrder.id, 'Vyřízeno')}
-                    className="flex items-center gap-1.5 bg-success/10 hover:bg-success text-success hover:text-secondary border border-success/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                <div className="flex items-center gap-3">
+                  {getNextStatus(selectedOrder) && (
+                    <button
+                      onClick={() => updateOrderStatus(selectedOrder.id, getNextStatus(selectedOrder)!)}
+                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                    >
+                      Další krok: {getNextStatus(selectedOrder)}
+                    </button>
+                  )}
+                  <select
+                    value={selectedOrder.status || 'Nová'}
+                    onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
+                    className={`px-3 py-2 rounded-[6px] style-body-bold border cursor-pointer outline-none transition-all ${getStatusColorClasses(selectedOrder.status)}`}
                   >
-                    <Check size={16} /> Vyřízeno
-                  </button>
-                  <button 
-                    onClick={() => updateOrderStatus(selectedOrder.id, 'Zrušeno')}
-                    className="flex items-center gap-1.5 bg-tag-posledni-kusy/10 hover:bg-tag-posledni-kusy text-tag-posledni-kusy hover:text-secondary border border-tag-posledni-kusy/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                    {ORDER_STATUSES.map(({ value }) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* SLEDOVACÍ ČÍSLO ZÁSILKY */}
+              <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+                <span className="style-product-tag text-black300">Sledovací číslo:</span>
+                <div className="flex items-center gap-3 flex-1 min-w-[220px]">
+                  <input
+                    type="text"
+                    value={trackingNumberInput}
+                    onChange={(e) => setTrackingNumberInput(e.target.value)}
+                    placeholder="např. CP123456789CZ"
+                    className="flex-1 bg-black300/10 border border-black300/30 rounded-[6px] px-3 py-2 style-body text-secondary placeholder:text-black300/50 outline-none focus:border-primary transition-all"
+                  />
+                  <button
+                    onClick={handleSaveTrackingNumber}
+                    disabled={savingTracking || !trackingNumberInput.trim()}
+                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
                   >
-                    <Trash2 size={16} /> Zrušit
+                    <Mail size={14} /> {savingTracking ? 'Odesílám...' : 'Uložit a poslat e-mail'}
                   </button>
                 </div>
               </div>
@@ -580,6 +791,15 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* FORMULÁŘ NOVÝ/EDITACE PRODUKTU */}
+      {productFormTarget && (
+        <ProductFormModal
+          product={productFormTarget === 'new' ? null : productFormTarget}
+          onClose={() => setProductFormTarget(null)}
+          onSaved={handleProductSaved}
+        />
       )}
     </div>
   );

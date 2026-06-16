@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     if (orderId) {
       const { error } = await supabase
         .from('orders')
-        .update({ status: 'Zaplacena' })
+        .update({ status: 'Zaplaceno' })
         .eq('id', orderId);
 
       if (error) {

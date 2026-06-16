@@ -1,3 +1,21 @@
+import { OrderStatus } from '@/types/database';
+
+export const ORDER_STATUSES: { value: OrderStatus; group: 'neutral' | 'success' | 'danger' }[] = [
+  { value: 'Nová', group: 'neutral' },
+  { value: 'Připravujeme', group: 'neutral' },
+  { value: 'Zaplaceno', group: 'neutral' },
+  { value: 'Odesláno', group: 'neutral' },
+  { value: 'K vyzvednutí', group: 'neutral' },
+  { value: 'Doručeno', group: 'success' },
+  { value: 'Vyzvednuto', group: 'success' },
+  { value: 'Zrušeno', group: 'danger' },
+  { value: 'Vráceno', group: 'danger' },
+  { value: 'Vráceny peníze', group: 'success' },
+  { value: 'Ztracená zásilka', group: 'danger' },
+  { value: 'Reklamace', group: 'danger' },
+  { value: 'Uzavřeno', group: 'success' },
+];
+
 export const INTERNATIONAL_COUNTRIES = [
   '',
   'Japonsko',

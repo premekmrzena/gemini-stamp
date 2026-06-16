@@ -1,18 +1,20 @@
+export type ProductCategory = 'znamky' | 'kreativni-archy' | 'fdc' | 'plakety';
+
 export type Product = {
   id: string;
   name: string;
-  short_description: string;
-  detailed_description: string;
+  short_description: string | null;
+  detailed_description: string | null;
   price: number;
   weight_grams: number;
   image_url: string;
   gallery_images: string[] | null;
-  category: string;
+  category: ProductCategory;
   stock_quantity: number;
   is_active: boolean;
   tag_new: boolean;
   tag_last_pieces: boolean;
-  tag_top: boolean;
+  tag_top: number | null;
   catalog_number: string | null;
   stamp_type: string | null;
   release_date: string | null;
@@ -22,15 +24,23 @@ export type Product = {
   engraver: string | null;
   related_stamp_id: string[] | null;
   created_at: string;
+  show_on_homepage: boolean | null;
 };
 
 export type OrderStatus =
   | 'Nová'
-  | 'Zaplacena'
-  | 'Zpracovává se'
+  | 'Připravujeme'
+  | 'Zaplaceno'
   | 'Odesláno'
-  | 'Dokončeno'
-  | 'Zrušeno';
+  | 'K vyzvednutí'
+  | 'Doručeno'
+  | 'Vyzvednuto'
+  | 'Zrušeno'
+  | 'Vráceno'
+  | 'Vráceny peníze'
+  | 'Ztracená zásilka'
+  | 'Reklamace'
+  | 'Uzavřeno';
 
 export type CartItemSnapshot = {
   id: string;
@@ -77,6 +87,7 @@ export type Order = {
   shipping_region: string;
   shipping_zip: string;
   shipping_country: string;
+  tracking_number: string | null;
 };
 
 export type CustomStamp = {
