@@ -75,7 +75,10 @@ export default function EditorPage() {
     <div className="w-full h-[100dvh] flex flex-col bg-black overflow-hidden text-secondary select-none font-sans antialiased">
       
       {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
-      <div className="sticky top-0 z-40 w-full"><CheckoutHeader right={<Stepper currentStep={currentStep} />} /></div>
+      <div className="sticky top-0 z-40 w-full"><CheckoutHeader
+        center={currentStep === 2 ? <h3 className="style-h4 text-secondary">{TEMPLATES.find(t => t.id === selectedTemplateId)?.name}</h3> : undefined}
+        right={<Stepper currentStep={currentStep} />}
+      /></div>
       
       <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${currentStep !== 1 ? 'pb-[64px]' : ''}`}>
         

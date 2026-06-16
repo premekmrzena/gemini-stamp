@@ -94,7 +94,7 @@ export const TEMPLATES: Template[] = [
     stampCount: 7,
     stampPreviews: ['/templates/03_Mucha_preview.jpg'],
     slots: [
-      { id: '1', x: 698,  y: 532,  width: 626,  height: 532,  type: 'photo' },
+      { id: '1', x: 698,  y: 502,  width: 626,  height: 532,  type: 'photo' },
       { id: '2', x: 1372, y: 502,  width: 1386, height: 1112, type: 'text' },
       { id: '3', x: 3232, y: 502,  width: 626,  height: 532,  type: 'photo' },
       { id: '4', x: 272,  y: 1082, width: 626,  height: 532,  type: 'photo' },
