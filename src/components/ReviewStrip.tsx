@@ -11,7 +11,7 @@ import Image from 'next/image';
 export default function ReviewStrip() {
   return (
     <section className="w-full">
-      <div className="layout-container py-5">
+      <div className="layout-container">
         <div className="flex gap-3 overflow-hidden">
           {reviews.map((r) => (
             <div
