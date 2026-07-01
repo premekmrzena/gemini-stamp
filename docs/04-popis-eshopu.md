@@ -1,6 +1,6 @@
 # 4. Popis e-shopu (funkční přehled)
 
-> Obecné shrnutí toho, co e-shop dělá a jak se v něm zákazník pohybuje, bez nutnosti číst kód. Popis odpovídá skutečnému chování k 2026-06-16, doplněno o slevy a recenze na mobilu k 2026-07-01.
+> Obecné shrnutí toho, co e-shop dělá a jak se v něm zákazník pohybuje, bez nutnosti číst kód. Popis odpovídá skutečnému chování k 2026-06-16, doplněno o slevy a recenze na mobilu k 2026-07-01, doplněno o flow „Začít tvořit“ pro kreativní archy k 2026-07-01.
 
 ## 1. Homepage
 
@@ -24,6 +24,8 @@ Produkty patří do jedné ze 4 kategorií (`znamky`, `kreativni-archy`, `fdc`, 
 
 Kliknutím na produkt se zákazník dostane na detail (`/produkt/[id]`): hlavní obrázek + galerie, název, cena (se stejnou logikou slevy jako na kartě), technické parametry (katalogové číslo, typ známky, datum vydání, rozměry, designér, rytec…) a popis v rozbalovacích sekcích, plus 3 související produkty na konci stránky (ty sleva zohledňují také). Tlačítkem „Do košíku“ se produkt přidá do košíku přímo z detailu i z karty produktu na výpisu – do košíku jde vždy aktuální efektivní cena (zlevněná, pokud je nastavená).
 
+**Výjimka pro kategorii `kreativni-archy`:** karta produktu i detail místo „Do košíku“ zobrazují tlačítko **„Začít tvořit“** (ikona štětce) – klik vede rovnou do editoru (`/vytvorit-arch?productId={id}`), kde se podle `productId` (mapování na `TEMPLATES` v `src/lib/editorConfig.ts`) automaticky přeskočí výběr šablony a otevře se editor s příslušnou šablonou předvyplněnou, viz [sekce 3](#3-editor-kreativní-archy). U těchto produktů se v Parametrech zobrazují jen Kategorie, Katalogové číslo, Rozměr a Hmotnost (technické parametry specifické pro známky – typ známky, datum vydání, designér, rytec – dávají smysl jen u kategorie `znamky`, u archů se skrývají). Titulek popisové sekce je u všech kategorií „Detailní popis“ (dřív „Detailní popis známky“).
+
 Košík je udržován v `CartContext` a ukládá se do `localStorage` (klíč `razitka-cart`), takže zákazníkovi zůstane i po zavření prohlížeče.
 
 ## 2. Košík
@@ -44,7 +46,9 @@ Stránka „Děkujeme“ zobrazí číslo objednávky, vyčistí košík a záka
 
 ## 3. Editor (Kreativní archy)
 
-Na `/vytvorit-arch` si zákazník nejprve vybere jednu z 5 šablon archu (každá má jiný motiv, počet fotek a náhled). Po výběru se otevře canvas editor.
+Na `/vytvorit-arch` si zákazník nejprve vybere jednu z 5 šablon archu (každá má jiný motiv, počet fotek a náhled) – u každé šablony je nad tlačítkem „Vybrat šablonu“ i podtržený textový odkaz „Detail šablony“ vedoucí na detail odpovídajícího produktu (`tpl.shopUrl` v `editorConfig.ts`). Po výběru se otevře canvas editor.
+
+Pokud zákazník přijde z karty/detailu produktu kategorie `kreativni-archy` (tlačítko „Začít tvořit“, viz [sekce 1](#1-homepage)), stránka přečte `productId` z URL (`?productId=...`), najde odpovídající šablonu a rovnou přeskočí na canvas editor – krok výběru šablony se v tomto případě vůbec nezobrazí.
 
 V editoru zákazník:
 - nahrává fotky do jednotlivých fotoslotů (klik na prázdný slot otevře výběr souboru), může je v rámci slotu posouvat a zvětšovat/zmenšovat
