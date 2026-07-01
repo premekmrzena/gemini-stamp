@@ -12,11 +12,11 @@ export default function ReviewStrip() {
   return (
     <section className="w-full">
       <div className="layout-container">
-        <div className="flex gap-3 overflow-hidden">
+        <div className="flex gap-3 overflow-x-auto lg:overflow-hidden snap-x snap-mandatory scrollbar-hide">
           {reviews.map((r) => (
             <div
               key={r.id}
-              className="flex items-center gap-3 shrink-0 bg-black500 rounded px-4 py-3 min-w-[190px] lg:min-w-0 lg:flex-1"
+              className="flex items-center gap-3 shrink-0 snap-start bg-black500 rounded px-4 py-3 min-w-[190px] lg:min-w-0 lg:flex-1"
             >
               <div className="relative w-9 h-9 rounded overflow-hidden shrink-0">
                 <Image src={r.photo} alt={r.name} fill className="object-cover" />

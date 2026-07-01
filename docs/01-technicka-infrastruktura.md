@@ -58,6 +58,8 @@
 - **E-maily jedou ze sandbox domény** `onboarding@resend.dev` – nutno před spuštěním nastavit vlastní ověřenou doménu v Resendu (sandbox typicky umí odeslat jen na ověřenou adresu vlastníka Resend účtu, ne libovolnému zákazníkovi)
 
 ## Změny
+- 2026-07-01: Slevy na produktech – nový sloupec `products.sale_price` (migrace `docs/sql/003_products_sale_price.sql`, spuštěna), efektivní cena se počítá přes `src/lib/pricing.ts` a je vynucená i server-side v `/api/create-order`. Zobrazení přeškrtnuté ceny na homepage, detailu produktu i v adminu, nové pole ve `ProductFormModal` – viz [sekce 3](03-databaze.md), [sekce 4](04-popis-eshopu.md#1-homepage), [sekce 5](05-administrace.md#3-záložka-homepage-produkty)
+- 2026-07-01: Recenze na homepage (`ReviewStrip.tsx`) jsou na mobilu/tabletu vodorovně swipovatelné (scroll-snap); štítky produktu (`ProductCard.tsx`) posunuté k pravému okraji karty bez zaoblení na vnější straně
 - 2026-06-16: Dashboard – formulář na produkty (`ProductFormModal`), hlídání nízkého skladu, rychlý „další krok“ stavu objednávky, souhrnné karty (průměrná hodnota, čeká na odeslání), hromadný ZIP export tiskových archů, sledovací číslo zásilky + e-mail
 - 2026-06-16: Migrace `docs/sql/002_orders_tracking_number.sql` spuštěna v Supabase – `orders.tracking_number` existuje a je funkční
 - 2026-06-16: Smazán nepoužívaný endpoint `POST /api/send-confirmation` (duplicita s `src/lib/email.ts`, nikde se nevolal)

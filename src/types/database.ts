@@ -6,6 +6,7 @@ export type Product = {
   short_description: string | null;
   detailed_description: string | null;
   price: number;
+  sale_price: number | null;
   weight_grams: number;
   image_url: string;
   gallery_images: string[] | null;

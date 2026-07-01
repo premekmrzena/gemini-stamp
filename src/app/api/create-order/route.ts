@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { getShippingOptions, PAYMENT_OPTIONS } from '@/lib/constants';
 import { sendOrderConfirmation } from '@/lib/email';
 import { CartItemSnapshot } from '@/types/database';
+import { getEffectivePrice } from '@/lib/pricing';
 
 type CreateOrderBody = {
   cartItems: CartItemSnapshot[];
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       if (item.item_type === 'product') {
         const { data: product, error } = await supabase
           .from('products')
-          .select('id, name, price, weight_grams')
+          .select('id, name, price, sale_price, weight_grams')
           .eq('id', item.id)
           .eq('is_active', true)
           .single();
@@ -40,14 +41,15 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: `Produkt ${item.id} nenalezen nebo není aktivní` }, { status: 400 });
         }
 
-        computedSubtotal += product.price * item.quantity;
+        const effectivePrice = getEffectivePrice(product.price, product.sale_price);
+        computedSubtotal += effectivePrice * item.quantity;
         totalWeightGrams += (product.weight_grams || 0) * item.quantity;
-        validatedItems.push({ ...item, price: product.price, weight_grams: product.weight_grams });
+        validatedItems.push({ ...item, price: effectivePrice, weight_grams: product.weight_grams });
 
       } else if (item.item_type === 'custom') {
         const { data: stamp, error } = await supabase
           .from('custom_stamps')
-          .select('id, preview_url, products(name, price, weight_grams)')
+          .select('id, preview_url, products(name, price, sale_price, weight_grams)')
           .eq('id', item.id)
           .single();
 
@@ -60,11 +62,12 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: 'Produkt pro vlastní razítko nenalezen' }, { status: 400 });
         }
 
-        computedSubtotal += (product as any).price * item.quantity;
+        const effectivePrice = getEffectivePrice((product as any).price, (product as any).sale_price);
+        computedSubtotal += effectivePrice * item.quantity;
         totalWeightGrams += ((product as any).weight_grams || 0) * item.quantity;
         validatedItems.push({
           ...item,
-          price: (product as any).price,
+          price: effectivePrice,
           weight_grams: (product as any).weight_grams,
         });
       } else {

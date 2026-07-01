@@ -19,6 +19,7 @@ const EMPTY_FORM: ProductFormData = {
   short_description: '',
   detailed_description: '',
   price: 0,
+  sale_price: null,
   weight_grams: 0,
   image_url: '',
   gallery_images: [],
@@ -164,6 +165,17 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
             <div>
               <label className={labelClass}>Cena (Kč)</label>
               <input type="number" min={0} className={inputClass} value={form.price} onChange={(e) => set('price', Number(e.target.value))} />
+            </div>
+            <div>
+              <label className={labelClass}>Zlevněná cena (Kč)</label>
+              <input
+                type="number"
+                min={0}
+                placeholder="bez slevy"
+                className={inputClass}
+                value={form.sale_price ?? ''}
+                onChange={(e) => set('sale_price', e.target.value === '' ? null : Number(e.target.value))}
+              />
             </div>
             <div>
               <label className={labelClass}>Sklad (ks)</label>

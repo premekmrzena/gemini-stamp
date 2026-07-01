@@ -5,8 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
+import { getSalePrice } from '@/lib/pricing';
 
 export default function ProductDetailClient({ product, relatedProducts }: any) {
+  const salePrice = getSalePrice(product.price, product.sale_price);
   const [isDescOpen, setIsDescOpen] = useState(true);
   const [isParamsOpen, setIsParamsOpen] = useState(true); 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
@@ -125,18 +127,25 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
 
             <div className="w-full flex flex-col items-center lg:items-start mb-6 pt-2">
               <div className="mb-6 select-none">
-                <span className="style-product-price text-success">
-                  Cena {product.price} Kč
-                </span>
+                {salePrice ? (
+                  <span className="style-product-price flex items-center gap-2">
+                    <span className="text-black300 line-through">{product.price} Kč</span>
+                    <span className="text-success">{salePrice} Kč</span>
+                  </span>
+                ) : (
+                  <span className="style-product-price text-success">
+                    Cena {product.price} Kč
+                  </span>
+                )}
               </div>
 
-              <Button 
+              <Button
                 className="w-full md:w-[320px] relative z-20"
                 onClick={() => {
                   addToCart({
                     id: product.id,
                     name: product.name,
-                    price: product.price,
+                    price: salePrice ?? product.price,
                     quantity: 1,
                     image_url: mainImage,
                     weight_grams: product.weight_grams,
@@ -209,18 +218,20 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
           <div className="border-t border-black300/30 pt-16">
             <h2 className="style-h2 text-center mb-12 select-none">Mohlo by vás také zajímat</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
-              {relatedProducts.map((relProd: any) => (
+              {relatedProducts.map((relProd: any) => {
+                const relSalePrice = getSalePrice(relProd.price, relProd.sale_price);
+                return (
                 <div key={relProd.id} className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col hover:bg-black500 hover:scale-[1.02] hover:z-10 transition-all duration-300">
                   <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={`Detail produktu ${relProd.name}`}></Link>
-                  <div 
+                  <div
                     className="relative w-full h-[120px] bg-transparent mb-6 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none"
                     onContextMenu={(e) => e.preventDefault()}
                   >
-                    <Image 
-                        src={relProd.image_url} 
-                        alt={relProd.name} 
-                        fill 
-                        className="object-contain pointer-events-none" 
+                    <Image
+                        src={relProd.image_url}
+                        alt={relProd.name}
+                        fill
+                        className="object-contain pointer-events-none"
                         onDragStart={(e) => e.preventDefault()}
                     />
                     {/* ŠTÍT PRO SOUVISEJÍCÍ */}
@@ -228,10 +239,18 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                   </div>
                   <div className="flex flex-col items-center text-center relative z-10 pointer-events-none select-none">
                     <h3 className="style-h4 mb-4 line-clamp-2 h-[48px] flex items-center">{relProd.name}</h3>
-                    <span className="style-product-price text-success">Cena {relProd.price} Kč</span>
+                    {relSalePrice ? (
+                      <span className="style-product-price flex items-center gap-2">
+                        <span className="text-black300 line-through">{relProd.price} Kč</span>
+                        <span className="text-success">{relSalePrice} Kč</span>
+                      </span>
+                    ) : (
+                      <span className="style-product-price text-success">Cena {relProd.price} Kč</span>
+                    )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

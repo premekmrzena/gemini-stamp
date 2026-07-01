@@ -481,7 +481,14 @@ export default function AdminDashboard() {
                       <tr key={product.id} className="hover:bg-black/30 transition-colors">
                         <td className="p-4">
                           <p className="style-body-bold text-secondary">{product.name}</p>
-                          <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
+                          {product.sale_price != null && product.sale_price > 0 && product.sale_price < product.price ? (
+                            <p className="style-product-tag mt-1">
+                              <span className="text-black300 line-through">{product.price} Kč</span>{' '}
+                              <span className="text-success">{product.sale_price} Kč</span>
+                            </p>
+                          ) : (
+                            <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
+                          )}
                         </td>
                         <td className="p-4 style-body text-black300 capitalize">{product.category || '—'}</td>
                         <td className="p-4 text-center">

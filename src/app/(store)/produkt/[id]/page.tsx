@@ -49,7 +49,7 @@ export default async function ProductPage({
     // Stáhneme všechna ID, která jsi ručně vybral v DB
     const { data: related, error: relatedError } = await supabase
       .from('products')
-      .select('id, name, price, image_url')
+      .select('id, name, price, sale_price, image_url')
       .in('id', product.related_stamp_id);
 
     if (related && !relatedError) {
@@ -61,7 +61,7 @@ export default async function ProductPage({
   if (relatedProducts.length === 0) {
     const { data: fallback } = await supabase
       .from('products')
-      .select('id, name, price, image_url')
+      .select('id, name, price, sale_price, image_url')
       .neq('id', product.id) // Vynecháme aktuální produkt
       .order('created_at', { ascending: false })
       .limit(3);

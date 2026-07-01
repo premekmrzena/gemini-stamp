@@ -59,6 +59,15 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* 3. NAŠE STYLY Z FIGMY */
 @keyframes kenburns {
   0%   { transform: scale(1)    translate(0,    0);    }

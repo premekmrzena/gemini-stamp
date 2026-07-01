@@ -1,6 +1,6 @@
 # 5. Administrace
 
-> Pohled admina, který zpracovává objednávky a správu produktů. Popis odpovídá skutečnému stavu kódu k 2026-06-16 — `src/app/admin/dashboard/page.tsx` je jediná admin obrazovka v aplikaci, formulář na produkty žije v `src/components/admin/ProductFormModal.tsx`.
+> Pohled admina, který zpracovává objednávky a správu produktů. Popis odpovídá skutečnému stavu kódu k 2026-06-16, doplněno o slevu k 2026-07-01 — `src/app/admin/dashboard/page.tsx` je jediná admin obrazovka v aplikaci, formulář na produkty žije v `src/components/admin/ProductFormModal.tsx`.
 
 ## 1. Přístup
 
@@ -28,9 +28,9 @@ Admin jednotlivý tiskový soubor stáhne a pošle do tiskárny manuálně, nebo
 
 ## 3. Záložka Homepage produkty
 
-Tlačítko **„Nový produkt“** nahoře otevře `ProductFormModal` prázdný; ikona tužky u řádku ho otevře předvyplněný daným produktem (edit). Formulář pokrývá celé schéma `products` (`name`, `category`, `price`, `weight_grams`, `stock_quantity`, `is_active`, `tag_new`, `short_description`, `detailed_description`, `catalog_number`, `stamp_type`, `release_date`, `dimensions_mm`, `designer`, `engraver`) + upload `image_url`/`gallery_images` přes `/api/upload-stamp` (stejná cesta jako u editoru archů). Uložení dělá `insert`/`update` do Supabase a optimisticky promítne výsledek do tabulky. Pole `tag_top`, `tag_last_pieces`, `related_stamp_id`, `print_sheets` se v tomto formuláři needitují — `tag_top`/`tag_last_pieces` zůstávají v tabulce níž, `related_stamp_id`/`print_sheets` se zatím neřeší vůbec (needitují se nikde v appce).
+Tlačítko **„Nový produkt“** nahoře otevře `ProductFormModal` prázdný; ikona tužky u řádku ho otevře předvyplněný daným produktem (edit). Formulář pokrývá celé schéma `products` (`name`, `category`, `price`, `sale_price`, `weight_grams`, `stock_quantity`, `is_active`, `tag_new`, `short_description`, `detailed_description`, `catalog_number`, `stamp_type`, `release_date`, `dimensions_mm`, `designer`, `engraver`) + upload `image_url`/`gallery_images` přes `/api/upload-stamp` (stejná cesta jako u editoru archů). Pole **„Zlevněná cena (Kč)“** je nepovinné (prázdné = bez slevy); sleva se na webu i v košíku aktivuje jen když je vyplněná, kladná a nižší než `price` (`src/lib/pricing.ts`) – jinak se produkt chová, jako by slevu neměl. Uložení dělá `insert`/`update` do Supabase a optimisticky promítne výsledek do tabulky. Pole `tag_top`, `tag_last_pieces`, `related_stamp_id`, `print_sheets` se v tomto formuláři needitují — `tag_top`/`tag_last_pieces` zůstávají v tabulce níž, `related_stamp_id`/`print_sheets` se zatím neřeší vůbec (needitují se nikde v appce).
 
-Tabulka všech produktů (řazená od nejnovějšího). Sloupec **Sklad** zvýrazní nízký stav (`stock_quantity <= 5`, oranžově) a vyprodáno (`stock_quantity <= 0`, červeně) — jen vizuální upozornění, nic se neděje automaticky. U každého produktu lze dál měnit **zobrazovací příznaky**:
+Tabulka všech produktů (řazená od nejnovějšího) zobrazuje u ceny i slevu, pokud je nastavená (přeškrtnutá původní cena vedle zlevněné). Sloupec **Sklad** zvýrazní nízký stav (`stock_quantity <= 5`, oranžově) a vyprodáno (`stock_quantity <= 0`, červeně) — jen vizuální upozornění, nic se neděje automaticky. U každého produktu lze dál měnit **zobrazovací příznaky**:
 
 | Akce | Co dělá | Sloupec v DB |
 |---|---|---|

@@ -1,6 +1,6 @@
 # 3. Databáze (Supabase)
 
-> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
+> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
 
 ## `products`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -10,6 +10,7 @@
 | short_description | text | ne (nullable) | – |
 | detailed_description | text | ne (nullable) | – |
 | price | integer | ano | – |
+| sale_price | numeric | ne (nullable) | – |
 | weight_grams | integer | ano | `0` |
 | image_url | text | ano | – |
 | gallery_images | text[] | ne (nullable) | – |
@@ -73,3 +74,4 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 ## Provedené SQL migrace
 - `docs/sql/001_orders_status_check.sql` – provedeno 2026-06-16 v Supabase SQL editoru, bez dopadu na stávající data.
 - `docs/sql/002_orders_tracking_number.sql` – provedeno 2026-06-16, doplnil `orders.tracking_number` (text, nullable) pro sledovací číslo zásilky, viz [sekce 5](05-administrace.md#2-záložka-objednávky).
+- `docs/sql/003_products_sale_price.sql` – provedeno 2026-07-01, doplnil `products.sale_price` (numeric, nullable) pro slevy, viz [sekce 4](04-popis-eshopu.md#1-homepage) a [sekce 5](05-administrace.md#3-záložka-homepage-produkty).
