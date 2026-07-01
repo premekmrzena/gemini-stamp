@@ -12,9 +12,9 @@ const sliderImages = [
 ];
 
 const steps = [
-  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber si\nšablonu', text: 'Z historie, umění nebo známé památky.' },
-  { id: 2, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj\nsvoje fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
-  { id: 3, title: 'Napiš vlastní text', mobileTitle: 'Napiš\nvlastní text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
+  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber šablonu', text: 'Z historie, umění nebo známé památky.' },
+  { id: 2, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
+  { id: 3, title: 'Napiš vlastní text', mobileTitle: 'Napiš text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
 ];
 
 export default function Hero() {
@@ -60,17 +60,18 @@ export default function Hero() {
           </div>
         </div>
       ))}
-      <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-center">
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-success animate-pulse-dot shrink-0"></span>
-            5 návštěvníků právě vytváří vlastní kreativní arch
-          </div>
-          <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10">
-            <span className="text-[var(--color-tag-novinka)] mr-1">★★★★</span>
-            Již 1&nbsp;247+ spokojených zákazníků
-          </div>
-        </div>
+    </div>
+  );
+
+  const badges = (
+    <div className="flex flex-row flex-wrap items-center justify-center gap-2">
+      <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+        <span className="h-2 w-2 rounded-full bg-success animate-pulse-dot shrink-0"></span>
+        5 návštěvníků právě vytváří kreativní arch
+      </div>
+      <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] px-3 py-1.5 rounded-full border border-white/10">
+        <span className="text-[var(--color-tag-novinka)] mr-1">★★★★</span>
+        Již 1&nbsp;247+ spokojených zákazníků
       </div>
     </div>
   );
@@ -102,23 +103,27 @@ export default function Hero() {
             ))}
           </div>
 
-          <div className="order-1 lg:order-2 w-full max-w-[700px] shrink">
+          <div className="order-1 lg:order-2 w-full max-w-[700px] shrink relative">
             {renderSlider()}
+            <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-center">
+              {badges}
+            </div>
           </div>
         </div>
 
         {/* Mobile */}
-        <div className="md:hidden w-full flex justify-center mb-4">
+        <div className="md:hidden w-full flex flex-col items-center gap-3 mb-4">
           {renderSlider('max-w-[500px]')}
+          {badges}
         </div>
 
-        <div className="md:hidden flex flex-row items-start justify-center w-full mb-8 gap-2">
+        <div className="hidden flex flex-row items-start justify-center w-full mb-8 gap-2">
           {steps.map((step) => (
             <div key={`mobile-${step.id}`} className="flex flex-col items-center text-center flex-1 min-w-0 gap-2 px-1">
               <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[18px] shrink-0">
                 {step.id}
               </div>
-              <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary whitespace-pre-line">
+              <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary">
                 {step.mobileTitle}
               </p>
             </div>
