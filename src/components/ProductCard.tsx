@@ -3,7 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import AddToCartButton from '@/components/AddToCartButton';
+import StartCreatingButton from '@/components/StartCreatingButton';
 import { getSalePrice } from '@/lib/pricing';
+import { ProductCategory } from '@/types/database';
 
 export type ProductType = {
   id: string;
@@ -13,6 +15,7 @@ export type ProductType = {
   sale_price: number | null;
   image_url: string;
   stock_quantity: number;
+  category: ProductCategory;
   tag_new: boolean;
   tag_top: number | null;
   tag_last_pieces: boolean;
@@ -24,6 +27,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
   const isNovinka = product.tag_new;
   const isJenUNas = !isTop && !isNovinka;
   const salePrice = getSalePrice(product.price, product.sale_price);
+  const isCreativeArch = product.category === 'kreativni-archy';
 
 
   return (
@@ -91,7 +95,11 @@ export default function ProductCard({ product }: { product: ProductType }) {
         </div>
 
         <div className="w-full flex justify-center pointer-events-auto">
-          <AddToCartButton product={{ ...product, price: salePrice ?? product.price }} />
+          {isCreativeArch ? (
+            <StartCreatingButton productId={product.id} />
+          ) : (
+            <AddToCartButton product={{ ...product, price: salePrice ?? product.price }} />
+          )}
         </div>
       </div>
     </div>

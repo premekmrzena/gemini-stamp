@@ -25,6 +25,17 @@ export default function EditorPage() {
 
   const { addToCart } = useCart();
 
+  // Příchod z karty/detailu produktu ("Začít tvořit") – rovnou do editoru dané šablony
+  useEffect(() => {
+    const productId = new URLSearchParams(window.location.search).get('productId');
+    if (!productId) return;
+    const template = TEMPLATES.find((t) => t.productId === productId);
+    if (template) {
+      setSelectedTemplateId(template.id);
+      setCurrentStep(2);
+    }
+  }, []);
+
   const handleSelectTemplate = (templateId: string) => {
     setSelectedTemplateId(templateId);
     setCurrentStep(prev => prev + 1);
@@ -140,10 +151,22 @@ export default function EditorPage() {
 
                       <p className="style-body text-secondary/70 mb-[24px]">{tpl.description}</p>
 
-                      {/* CTA */}
-                      <Button onClick={() => handleSelectTemplate(tpl.id)} className="mt-auto">
-                        Vybrat šablonu
-                      </Button>
+                      <div className="mt-auto flex flex-col items-center gap-[12px]">
+                        {tpl.shopUrl && (
+                          <Link
+                            href={tpl.shopUrl}
+                            onClick={(e) => e.stopPropagation()}
+                            className="style-body text-black200 underline hover:text-primary transition-colors"
+                          >
+                            Detail šablony
+                          </Link>
+                        )}
+
+                        {/* CTA */}
+                        <Button onClick={() => handleSelectTemplate(tpl.id)}>
+                          Vybrat šablonu
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );

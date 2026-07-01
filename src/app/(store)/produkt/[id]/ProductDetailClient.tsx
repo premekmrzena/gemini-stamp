@@ -3,12 +3,16 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/Button';
+import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getSalePrice } from '@/lib/pricing';
 
 export default function ProductDetailClient({ product, relatedProducts }: any) {
   const salePrice = getSalePrice(product.price, product.sale_price);
+  const isCreativeArch = product.category === 'kreativni-archy';
+  const router = useRouter();
   const [isDescOpen, setIsDescOpen] = useState(true);
   const [isParamsOpen, setIsParamsOpen] = useState(true); 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
@@ -40,7 +44,9 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
     { label: 'Výtvarný návrh', value: product.designer },
     { label: 'Autor rytiny', value: product.engraver },
     { label: 'Hmotnost', value: product.weight_grams ? `${product.weight_grams} g` : null },
-  ].filter(param => param.value);
+  ]
+    .filter(param => param.value)
+    .filter(param => !isCreativeArch || ['Kategorie', 'Katalogové číslo', 'Rozměr', 'Hmotnost'].includes(param.label));
 
   return (
     <section className="bg-black text-secondary w-full pt-[32px] md:pt-[54px] lg:pt-[64px] pb-[64px] min-h-screen">
@@ -139,22 +145,34 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                 )}
               </div>
 
-              <Button
-                className="w-full md:w-[320px] relative z-20"
-                onClick={() => {
-                  addToCart({
-                    id: product.id,
-                    name: product.name,
-                    price: salePrice ?? product.price,
-                    quantity: 1,
-                    image_url: mainImage,
-                    weight_grams: product.weight_grams,
-                    item_type: 'product',
-                  });
-                }}
-              >
-                Do košíku
-              </Button>
+              {isCreativeArch ? (
+                <Button
+                  className="w-full md:w-[320px] relative z-20"
+                  onClick={() => router.push(`/vytvorit-arch?productId=${product.id}`)}
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <Paintbrush size={20} />
+                    Začít tvořit
+                  </span>
+                </Button>
+              ) : (
+                <Button
+                  className="w-full md:w-[320px] relative z-20"
+                  onClick={() => {
+                    addToCart({
+                      id: product.id,
+                      name: product.name,
+                      price: salePrice ?? product.price,
+                      quantity: 1,
+                      image_url: mainImage,
+                      weight_grams: product.weight_grams,
+                      item_type: 'product',
+                    });
+                  }}
+                >
+                  Do košíku
+                </Button>
+              )}
             </div>
 
             {/* PARAMETRY */}
@@ -193,7 +211,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                   className="w-full flex items-center justify-between cursor-pointer text-left group"
                   onClick={() => setIsDescOpen(!isDescOpen)}
                 >
-                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">Detailní popis známky</h2>
+                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">Detailní popis</h2>
                   <svg 
                     className={`w-6 h-6 transition-transform duration-300 ${isDescOpen ? 'rotate-180' : ''}`} 
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
