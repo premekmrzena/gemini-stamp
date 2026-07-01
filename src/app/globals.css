@@ -84,6 +84,14 @@ body {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.8); opacity: 0.3; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
 /*
  * layout-container: max-width 1440px, fluid padding mobile→tablet→desktop
  * Psáno v plain CSS — @apply s arbitrary hodnotami není spolehlivé v Tailwind v4
@@ -112,7 +120,7 @@ body {
 
 @layer components {
   .style-h1 {
-    @apply font-semibold text-[24px] leading-[1.4] tracking-[-0.01em] md:text-[32px] md:tracking-[-0.02em] lg:text-[42px];
+    @apply font-semibold text-[24px] leading-[1.4] tracking-[-0.01em] md:text-[32px] md:tracking-[-0.02em] lg:text-[40px];
   }
 
   .style-h2 {
@@ -128,11 +136,11 @@ body {
   }
 
   .style-body {
-    @apply font-normal text-[13px] leading-[1.4] tracking-normal md:text-[14px] lg:text-[15px];
+    @apply font-normal text-[13px] leading-[1.4] tracking-normal md:text-[14px] lg:text-[14px];
   }
 
   .style-body-bold {
-    @apply font-semibold text-[13px] leading-[1.4] tracking-normal md:text-[14px] lg:text-[15px];
+    @apply font-semibold text-[13px] leading-[1.4] tracking-normal md:text-[14px] lg:text-[14px];
   }
 
   .style-perex {

@@ -6,15 +6,15 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 
 const sliderImages = [
-  '/images/hero-image.png',
-  '/images/hero-image02.png',
-  '/images/hero-image03.png',
+  '/images/hero01_700x394.png',
+  '/images/hero02_700x394.png',
+  '/images/hero03_700x394.png',
 ];
 
 const steps = [
-  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber si\nšablonu', text: 'Vytvořte si kreativní arch se známkami, které vám učarují.' },
-  { id: 2, title: 'Napiš vlastní text', mobileTitle: 'Napiš\nvlastní text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
-  { id: 3, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj\nsvoje fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
+  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber si\nšablonu', text: 'Z historie, umění nebo známé památky.' },
+  { id: 2, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj\nsvoje fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
+  { id: 3, title: 'Napiš vlastní text', mobileTitle: 'Napiš\nvlastní text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
 ];
 
 export default function Hero() {
@@ -38,7 +38,7 @@ export default function Hero() {
   }, [currentSlide]);
 
   const renderSlider = (className?: string) => (
-    <div className={`relative w-full ${className ?? ''}`} style={{ aspectRatio: '7 / 5' }}>
+    <div className={`relative w-full aspect-[7/5] lg:aspect-[16/9] ${className ?? ''}`}>
       {sliderImages.map((src, index) => (
         <div
           key={index}
@@ -61,9 +61,15 @@ export default function Hero() {
         </div>
       ))}
       <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-center">
-        <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10">
-          <span className="text-[var(--color-tag-novinka)] mr-1">★★★★</span>
-          Již 1&nbsp;247+ spokojených zákazníků
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-success animate-pulse-dot shrink-0"></span>
+            5 návštěvníků právě vytváří vlastní kreativní arch
+          </div>
+          <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] sm:text-xs px-3 py-1.5 rounded-full border border-white/10">
+            <span className="text-[var(--color-tag-novinka)] mr-1">★★★★</span>
+            Již 1&nbsp;247+ spokojených zákazníků
+          </div>
         </div>
       </div>
     </div>
@@ -87,10 +93,10 @@ export default function Hero() {
           <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-6 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0">
             {steps.map((step) => (
               <div key={step.id} className="flex flex-col items-center text-center flex-1 lg:flex-none">
-                <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[26px] lg:text-[32px] mb-3 shrink-0">
+                <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] mb-3 shrink-0">
                   {step.id}
                 </div>
-                <h3 className="style-h3 mb-2">{step.title}</h3>
+                <h3 className="style-h4 mb-1">{step.title}</h3>
                 <p className="style-body text-secondary/80 max-w-[240px]">{step.text}</p>
               </div>
             ))}
@@ -109,7 +115,7 @@ export default function Hero() {
         <div className="md:hidden flex flex-row items-start justify-center w-full mb-8 gap-2">
           {steps.map((step) => (
             <div key={`mobile-${step.id}`} className="flex flex-col items-center text-center flex-1 min-w-0 gap-2 px-1">
-              <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] shrink-0">
+              <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[18px] shrink-0">
                 {step.id}
               </div>
               <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary whitespace-pre-line">
