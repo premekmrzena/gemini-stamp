@@ -19,7 +19,7 @@ const steps = [
 
 export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const kenburnsRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const kenburnsRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,19 +31,22 @@ export default function Hero() {
   // Restart Ken Burns on newly active slide and keep inactive slides paused,
   // so a hidden slide never finishes zooming in (and freezing zoomed) before it's shown
   useEffect(() => {
-    kenburnsRefs.current.forEach((el, index) => {
-      if (!el) return;
-      if (index === currentSlide) {
-        el.style.animation = 'none';
-        void el.offsetHeight; // force reflow
-        el.style.animation = '';
-      } else {
-        el.style.animationPlayState = 'paused';
-      }
+    Object.values(kenburnsRefs.current).forEach((refs) => {
+      refs.forEach((el, index) => {
+        if (!el) return;
+        if (index === currentSlide) {
+          el.style.animation = 'none';
+          void el.offsetHeight; // force reflow
+          el.style.animation = '';
+          el.style.animationPlayState = 'running';
+        } else {
+          el.style.animationPlayState = 'paused';
+        }
+      });
     });
   }, [currentSlide]);
 
-  const renderSlider = (className?: string) => (
+  const renderSlider = (variant: 'desktop' | 'mobile', className?: string) => (
     <div className={`relative w-full aspect-[7/5] lg:aspect-[16/9] ${className ?? ''}`}>
       {sliderImages.map((src, index) => (
         <div
@@ -53,7 +56,10 @@ export default function Hero() {
           }`}
         >
           <div
-            ref={(el) => { kenburnsRefs.current[index] = el; }}
+            ref={(el) => {
+              if (!kenburnsRefs.current[variant]) kenburnsRefs.current[variant] = [];
+              kenburnsRefs.current[variant][index] = el;
+            }}
             className="absolute inset-0 animate-kenburns"
           >
             <Image
@@ -111,7 +117,7 @@ export default function Hero() {
           </div>
 
           <div className="order-1 lg:order-2 w-full max-w-[700px] shrink relative">
-            {renderSlider()}
+            {renderSlider('desktop')}
             <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-center">
               {badges}
             </div>
@@ -120,7 +126,7 @@ export default function Hero() {
 
         {/* Mobile */}
         <div className="md:hidden w-full flex flex-col items-center mb-4">
-          {renderSlider('max-w-[500px]')}
+          {renderSlider('mobile', 'max-w-[500px]')}
         </div>
 
         <div className="hidden flex flex-row items-start justify-center w-full mb-8 gap-2">
