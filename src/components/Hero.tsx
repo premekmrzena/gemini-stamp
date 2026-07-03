@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 
 const sliderImages = [
-  '/images/hero01_700x394.png',
-  '/images/hero02_700x394.png',
-  '/images/hero03_700x394.png',
+  '/images/hero01_1400x788.png',
+  '/images/hero02_1400x788.png',
+  '/images/hero03_1400x788.png',
 ];
 
 const steps = [
@@ -28,13 +28,19 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, []);
 
-  // Restart Ken Burns on newly active slide without remounting Image
+  // Restart Ken Burns on newly active slide and keep inactive slides paused,
+  // so a hidden slide never finishes zooming in (and freezing zoomed) before it's shown
   useEffect(() => {
-    const el = kenburnsRefs.current[currentSlide];
-    if (!el) return;
-    el.style.animation = 'none';
-    void el.offsetHeight; // force reflow
-    el.style.animation = '';
+    kenburnsRefs.current.forEach((el, index) => {
+      if (!el) return;
+      if (index === currentSlide) {
+        el.style.animation = 'none';
+        void el.offsetHeight; // force reflow
+        el.style.animation = '';
+      } else {
+        el.style.animationPlayState = 'paused';
+      }
+    });
   }, [currentSlide]);
 
   const renderSlider = (className?: string) => (
@@ -54,7 +60,8 @@ export default function Hero() {
               src={src}
               alt="Vytvoř si vlastní arch se známkami a fotkami"
               fill
-              priority={index === 0}
+              sizes="(max-width: 767px) 535px, 750px"
+              preload={index === 0}
               className="object-contain drop-shadow-2xl"
             />
           </div>
