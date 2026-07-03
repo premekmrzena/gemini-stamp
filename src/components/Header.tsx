@@ -30,7 +30,7 @@ export default function Header() {
           <nav className="flex items-center text-[15px] lg:text-[16px] font-medium tracking-[-0.02em] leading-none whitespace-nowrap">
             <Link href="/kategorie/znamky" className="pr-[22px] hover:text-primary-hover transition">Známky</Link>
             <span className="w-px h-5 bg-secondary/30" />
-            <Link href="/kategorie/kreativni-archy" className="px-[22px] hover:text-primary-hover transition">Kreativní archy</Link>
+            <Link href="/vytvorit-arch" className="px-[22px] hover:text-primary-hover transition">Kreativní archy</Link>
             <span className="w-px h-5 bg-secondary/30" />
             <Link href="/kategorie/fdc" className="px-[22px] hover:text-primary-hover transition">First day cover</Link>
             <span className="w-px h-5 bg-secondary/30" />
@@ -91,7 +91,7 @@ export default function Header() {
         <div className="absolute top-full left-0 w-full bg-hamburger-bcgr border-t border-black400 shadow-2xl md:hidden flex flex-col">
           <nav className="flex flex-col text-[16px] font-medium tracking-[-0.02em] px-[24px] py-4 gap-2">
             <Link href="/kategorie/znamky" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Známky</Link>
-            <Link href="/kategorie/kreativni-archy" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Kreativní archy</Link>
+            <Link href="/vytvorit-arch" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Kreativní archy</Link>
             <Link href="/kategorie/fdc" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">First day cover</Link>
             <Link href="/kategorie/plakety" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Dárkové plakety</Link>
           </nav>

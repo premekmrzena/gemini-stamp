@@ -11,6 +11,9 @@ import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
 import Footer from '@/components/Footer';
 import { TEMPLATES } from '@/lib/editorConfig';
+import { getSalePrice } from '@/lib/pricing';
+
+type TemplatePrice = { price: number; sale_price: number | null };
 
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
   ssr: false,
@@ -21,7 +24,7 @@ export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
-  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [prices, setPrices] = useState<Record<string, TemplatePrice>>({});
 
   const { addToCart } = useCart();
 
@@ -34,6 +37,25 @@ export default function EditorPage() {
       setSelectedTemplateId(template.id);
       setCurrentStep(2);
     }
+  }, []);
+
+  // Ceny šablon dotažené ze Supabase (stejný zdroj jako kategorie/detail produktu)
+  useEffect(() => {
+    async function fetchPrices() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, price, sale_price')
+        .in('id', TEMPLATES.map((t) => t.productId));
+
+      if (error || !data) return;
+
+      const byId: Record<string, TemplatePrice> = {};
+      for (const row of data) {
+        byId[row.id] = { price: row.price, sale_price: row.sale_price };
+      }
+      setPrices(byId);
+    }
+    fetchPrices();
   }, []);
 
   const handleSelectTemplate = (templateId: string) => {
@@ -111,30 +133,35 @@ export default function EditorPage() {
             <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
               {TEMPLATES.map((tpl) => {
                 const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
+                const priceInfo = prices[tpl.productId];
+                const salePrice = priceInfo ? getSalePrice(priceInfo.price, priceInfo.sale_price) : null;
 
                 return (
                   <div
                     key={tpl.id}
                     className="group relative border border-black300/30 bg-[#0F172A] rounded-[4px] p-[24px] flex flex-col hover:bg-black500 hover:border-black300/60 hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all duration-300 select-none"
+                    onContextMenu={(e) => e.preventDefault()}
                   >
+                    {/* Celá karta směřuje na detail produktu */}
+                    <Link
+                      href={`/produkt/${tpl.productId}`}
+                      className="absolute inset-0 z-20 rounded-[4px] cursor-pointer"
+                      aria-label={`Detail šablony ${tpl.name}`}
+                    />
+
                     {/* Náhled šablony */}
-                    <div
-                      className="relative w-full aspect-[4130/2550] bg-black400 rounded-[4px] overflow-hidden cursor-zoom-in mb-[20px] flex-shrink-0"
-                      onClick={() => setLightboxImg(tpl.stampPreviews[0] ?? tpl.backgroundImage)}
-                      onContextMenu={(e) => e.preventDefault()}
-                    >
+                    <div className="relative w-full aspect-[4130/2550] bg-black400 rounded-[4px] overflow-hidden mb-[20px] flex-shrink-0 pointer-events-none">
                       <Image
                         src={tpl.stampPreviews[0] ?? tpl.backgroundImage}
                         alt={tpl.name}
                         fill
-                        className="object-contain pointer-events-none group-hover:scale-[1.03] transition-transform duration-500"
+                        className="object-contain group-hover:scale-[1.03] transition-transform duration-500"
                         onDragStart={(e) => e.preventDefault()}
                       />
-                      <div className="absolute inset-0 z-10 bg-transparent" />
                     </div>
 
                     {/* Obsah */}
-                    <div className="flex flex-col flex-grow items-center text-center">
+                    <div className="flex flex-col flex-grow items-center text-center pointer-events-none">
                       <h3 className="style-h4 text-secondary mb-[8px]">{tpl.name}</h3>
 
                       {/* Pill */}
@@ -151,17 +178,22 @@ export default function EditorPage() {
 
                       <p className="style-body text-secondary/70 mb-[24px]">{tpl.description}</p>
 
-                      <div className="mt-auto flex flex-col items-center gap-[12px]">
-                        {tpl.shopUrl && (
-                          <Link
-                            href={tpl.shopUrl}
-                            onClick={(e) => e.stopPropagation()}
-                            className="style-body text-black200 underline hover:text-primary transition-colors"
-                          >
-                            Detail šablony
-                          </Link>
-                        )}
+                      {priceInfo && (
+                        <div className="mb-[12px]">
+                          {salePrice ? (
+                            <span className="style-product-price flex items-center gap-2">
+                              <span className="text-black300 line-through">{priceInfo.price} Kč</span>
+                              <span className="text-success">{salePrice} Kč</span>
+                            </span>
+                          ) : (
+                            <span className="style-product-price text-success">
+                              Cena {priceInfo.price} Kč
+                            </span>
+                          )}
+                        </div>
+                      )}
 
+                      <div className="mt-auto flex flex-col items-center gap-[12px] relative z-30 pointer-events-auto">
                         {/* CTA */}
                         <Button onClick={() => handleSelectTemplate(tpl.id)}>
                           Vybrat šablonu
@@ -204,35 +236,6 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* OCHRANA V LIGHTBOXU - STEJNÁ JAKO V DETAILU PRODUKTU */}
-        {lightboxImg && (
-          <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out select-none"
-            onClick={() => setLightboxImg(null)}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            <button 
-              className="absolute top-6 right-6 text-secondary hover:text-primary transition-colors z-[110]"
-              onClick={() => setLightboxImg(null)}
-            >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-            
-            <div className="relative w-full max-w-[1080px] max-h-[90vh] aspect-video md:aspect-auto md:h-full">
-              <Image 
-                src={lightboxImg} 
-                alt="Detailní náhled" 
-                fill 
-                className="object-contain pointer-events-none" 
-                onDragStart={(e) => e.preventDefault()}
-              />
-              <div className="absolute inset-0 z-[105] bg-transparent" />
-            </div>
-          </div>
-        )}
       </main>
 
     </div>
