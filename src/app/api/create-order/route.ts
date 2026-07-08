@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { getShippingOptions, PAYMENT_OPTIONS } from '@/lib/constants';
 import { sendOrderConfirmation } from '@/lib/email';
 import { CartItemSnapshot } from '@/types/database';
-import { getEffectivePrice } from '@/lib/pricing';
+import { getEffectivePrice, computeDiscountAmount } from '@/lib/pricing';
 
 type CreateOrderBody = {
   cartItems: CartItemSnapshot[];
@@ -12,12 +12,13 @@ type CreateOrderBody = {
   formData: Record<string, string>;
   customerNote: string;
   shippingIsDifferent: boolean;
+  discountCode: string | null;
 };
 
 export async function POST(req: Request) {
   try {
     const body: CreateOrderBody = await req.json();
-    const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent } = body;
+    const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent, discountCode } = body;
 
     if (!cartItems?.length) {
       return NextResponse.json({ error: 'Košík je prázdný' }, { status: 400 });
@@ -86,7 +87,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Neplatná metoda platby' }, { status: 400 });
     }
 
-    const totalPrice = computedSubtotal + shippingOption.price + paymentOption.price;
+    // Slevový kód se validuje znovu server-side — klientský stav se nikdy nepovažuje za platný
+    let discountAmount = 0;
+    if (discountCode) {
+      const { data: discountData, error: discountError } = await supabase.rpc('validate_discount_code', { p_code: discountCode });
+      const discountResult = Array.isArray(discountData) ? discountData[0] : discountData;
+
+      if (discountError || !discountResult?.is_valid) {
+        return NextResponse.json(
+          { error: discountResult?.message || 'Slevový kód se nepodařilo ověřit' },
+          { status: 400 }
+        );
+      }
+
+      discountAmount = computeDiscountAmount(computedSubtotal, { type: discountResult.code_type, value: discountResult.code_value });
+    }
+
+    const totalPrice = computedSubtotal - discountAmount + shippingOption.price + paymentOption.price;
 
     const orderData = {
       status: 'Nová',
@@ -98,6 +115,8 @@ export async function POST(req: Request) {
       cart_items: validatedItems,
       customer_note: customerNote ?? '',
       shipping_is_different: shippingIsDifferent,
+      discount_code: discountCode ?? null,
+      discount_amount: discountAmount,
       ...formData,
     };
 
@@ -108,6 +127,12 @@ export async function POST(req: Request) {
       .single();
 
     if (insertError) throw insertError;
+
+    if (discountCode) {
+      supabase.rpc('redeem_discount_code', { p_code: discountCode }).then(({ error }) => {
+        if (error) console.error('Chyba při uplatnění slevového kódu:', error);
+      });
+    }
 
     const shortOrderId = data.id.slice(-8).toUpperCase();
     sendOrderConfirmation({

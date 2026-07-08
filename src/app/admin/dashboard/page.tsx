@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ORDER_STATUSES } from '@/lib/constants';
-import { OrderStatus, Product } from '@/types/database';
+import { OrderStatus, Product, DiscountCode } from '@/types/database';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
+import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, AlertTriangle, Archive
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, AlertTriangle, Archive, Tag
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -47,7 +48,7 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // --- STAVY PRO DASHBOARD ---
-  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty'>('objednavky');
+  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty' | 'slevy'>('objednavky');
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,11 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productFormTarget, setProductFormTarget] = useState<Product | 'new' | null>(null);
+
+  // --- STAVY PRO SLEVOVÉ KÓDY ---
+  const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
+  const [discountCodesLoading, setDiscountCodesLoading] = useState(false);
+  const [discountFormTarget, setDiscountFormTarget] = useState<DiscountCode | 'new' | null>(null);
 
   // --- STAVY PRO TISKOVÁ DATA ARCHŮ ---
   const [customStampsData, setCustomStampsData] = useState<Record<string, string>>({});
@@ -75,6 +81,7 @@ export default function AdminDashboard() {
       if (user) {
         fetchOrders();
         fetchProducts();
+        fetchDiscountCodes();
       }
     }
     checkUser();
@@ -84,6 +91,7 @@ export default function AdminDashboard() {
       if (session?.user) {
         fetchOrders();
         fetchProducts();
+        fetchDiscountCodes();
       } else {
         setOrders([]);
         setFilteredOrders([]);
@@ -107,6 +115,23 @@ export default function AdminDashboard() {
     setProducts((prev) => {
       const exists = prev.some((p) => p.id === saved.id);
       return exists ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev];
+    });
+  }
+
+  async function fetchDiscountCodes() {
+    setDiscountCodesLoading(true);
+    const { data, error } = await supabase
+      .from('discount_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error) setDiscountCodes(data || []);
+    setDiscountCodesLoading(false);
+  }
+
+  function handleDiscountCodeSaved(saved: DiscountCode) {
+    setDiscountCodes((prev) => {
+      const exists = prev.some((d) => d.id === saved.id);
+      return exists ? prev.map((d) => (d.id === saved.id ? saved : d)) : [saved, ...prev];
     });
   }
 
@@ -446,6 +471,12 @@ export default function AdminDashboard() {
           >
             <Home size={16} /> Homepage produkty
           </button>
+          <button
+            onClick={() => setActiveTab('slevy')}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'slevy' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+          >
+            <Tag size={16} /> Slevové kódy
+          </button>
         </div>
 
         {/* PRODUKTY - HOMEPAGE */}
@@ -555,6 +586,86 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            </div>
+          </div>
+        )}
+
+        {/* SLEVOVÉ KÓDY */}
+        {activeTab === 'slevy' && (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button
+                onClick={() => setDiscountFormTarget('new')}
+                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer"
+              >
+                <Plus size={16} /> Nový kód
+              </button>
+            </div>
+            <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+            {discountCodesLoading ? (
+              <div className="p-10 text-center text-black300 style-body">Načítám slevové kódy...</div>
+            ) : discountCodes.length === 0 ? (
+              <div className="p-10 text-center text-black300 style-body">Zatím žádné slevové kódy.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-black/50 text-black300 style-product-tag">
+                    <tr>
+                      <th className="p-4 font-normal">Kód</th>
+                      <th className="p-4 font-normal">Sleva</th>
+                      <th className="p-4 font-normal">Platnost</th>
+                      <th className="p-4 font-normal text-center">Použití</th>
+                      <th className="p-4 font-normal text-center">Stav</th>
+                      <th className="p-4 font-normal text-right">Akce</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black300/20">
+                    {discountCodes.map((dc) => {
+                      const isExpired = new Date(dc.valid_until) < new Date();
+                      return (
+                        <tr key={dc.id} className="hover:bg-black/30 transition-colors">
+                          <td className="p-4 style-body-bold text-secondary font-mono">{dc.code}</td>
+                          <td className="p-4 style-body text-black300">
+                            {dc.type === 'percentage' ? `${dc.value} %` : `${dc.value} Kč`}
+                          </td>
+                          <td className="p-4 style-body text-black300">
+                            {dc.valid_from ? `${new Date(dc.valid_from).toLocaleDateString('cs-CZ')} – ` : ''}
+                            {new Date(dc.valid_until).toLocaleDateString('cs-CZ')}
+                          </td>
+                          <td className="p-4 text-center style-body text-black300">
+                            {dc.used_count} / {dc.max_uses ?? '∞'}
+                          </td>
+                          <td className="p-4 text-center">
+                            {isExpired ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">
+                                Vypršel
+                              </span>
+                            ) : dc.is_active ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-success/10 text-success border-success/20">
+                                Aktivní
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-black300/10 text-black300 border-black300/20">
+                                Neaktivní
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => setDiscountFormTarget(dc)}
+                              className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[6px] transition-all cursor-pointer"
+                              title="Upravit kód"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -806,6 +917,15 @@ export default function AdminDashboard() {
           product={productFormTarget === 'new' ? null : productFormTarget}
           onClose={() => setProductFormTarget(null)}
           onSaved={handleProductSaved}
+        />
+      )}
+
+      {/* FORMULÁŘ NOVÝ/EDITACE SLEVOVÉHO KÓDU */}
+      {discountFormTarget && (
+        <DiscountCodeFormModal
+          discountCode={discountFormTarget === 'new' ? null : discountFormTarget}
+          onClose={() => setDiscountFormTarget(null)}
+          onSaved={handleDiscountCodeSaved}
         />
       )}
     </div>

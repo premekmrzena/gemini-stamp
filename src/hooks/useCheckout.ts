@@ -12,6 +12,7 @@ type CheckoutSubmitParams = {
   formData: FormData;
   customerNote: string;
   shippingIsDifferent: boolean;
+  discountCode: string | null;
 };
 
 export function useCheckout() {
@@ -37,6 +38,7 @@ export function useCheckout() {
           formData: params.formData,
           customerNote: params.customerNote,
           shippingIsDifferent: params.shippingIsDifferent,
+          discountCode: params.discountCode,
         }),
       });
 

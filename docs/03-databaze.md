@@ -50,6 +50,24 @@
 | billing_address_line2 / billing_region | text | ne (nullable) | – |
 | shipping_is_different | boolean | ano | `false` |
 | shipping_first_name … shipping_country (celý doručovací blok) | text | ne (nullable) | – |
+| discount_code | text, uplatněný slevový kód (NEPROVEDENO, viz migrace níže) | ne (nullable) | – |
+| discount_amount | numeric, výše slevy v Kč (NEPROVEDENO, viz migrace níže) | ano | `0` |
+
+## `discount_codes` (NEPROVEDENO – čeká na spuštění migrace)
+| Sloupec | Typ | Povinné při insertu | Default |
+|---|---|---|---|
+| id | uuid (PK) | ano | `gen_random_uuid()` |
+| code | text, unikátní, porovnává se case-insensitive (`upper(trim())`) | ano | – |
+| type | text, `CHECK` na `percentage` / `fixed` | ano | – |
+| value | numeric, `CHECK value > 0` | ano | – |
+| max_uses | integer, nullable = neomezeno | ne (nullable) | – |
+| used_count | integer, spravuje jen RPC funkce `redeem_discount_code` | ano | `0` |
+| valid_from | timestamptz, nullable = platí od vytvoření | ne (nullable) | – |
+| valid_until | timestamptz | ano | – |
+| is_active | boolean | ano | `true` |
+| created_at | timestamptz | ano | `now()` |
+
+RLS: `anon` k tabulce nemá žádný přístup (ani čtení), `authenticated` (přihlášený admin) má plný CRUD. Jediný veřejný přístup je přes dvě `SECURITY DEFINER` RPC funkce – `validate_discount_code(p_code)` (ověří kód, vrátí typ/hodnotu jen když je platný) a `redeem_discount_code(p_code)` (atomicky navýší `used_count`). Bez toho by šlo přes anon klíč vypsat všechny kódy včetně jejich hodnoty přímo přes REST API. Viz [sekce 4](04-popis-eshopu.md) a [sekce 5](05-administrace.md).
 
 ## `custom_stamps`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -75,3 +93,5 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/001_orders_status_check.sql` – provedeno 2026-06-16 v Supabase SQL editoru, bez dopadu na stávající data.
 - `docs/sql/002_orders_tracking_number.sql` – provedeno 2026-06-16, doplnil `orders.tracking_number` (text, nullable) pro sledovací číslo zásilky, viz [sekce 5](05-administrace.md#2-záložka-objednávky).
 - `docs/sql/003_products_sale_price.sql` – provedeno 2026-07-01, doplnil `products.sale_price` (numeric, nullable) pro slevy, viz [sekce 4](04-popis-eshopu.md#1-homepage) a [sekce 5](05-administrace.md#3-záložka-homepage-produkty).
+- `docs/sql/004_discount_codes.sql` – NEPROVEDENO (čeká na spuštění v Supabase SQL editoru), zavádí tabulku `discount_codes`, RLS (anon bez přístupu, authenticated plný CRUD) a dvě `SECURITY DEFINER` RPC funkce `validate_discount_code`/`redeem_discount_code` pro bezpečné ověření/uplatnění kódu z veřejného klienta bez rizika vypsání všech kódů.
+- `docs/sql/005_orders_discount_columns.sql` – NEPROVEDENO, doplňuje `orders.discount_code` a `orders.discount_amount` pro uložení uplatněné slevy na objednávce.

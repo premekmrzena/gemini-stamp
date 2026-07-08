@@ -36,9 +36,9 @@ Proces objednávky (`/kosik`) má 3 kroky (Stepper):
 2. **Doprava a platba** – výběr dopravy (Osobní odběr Praha zdarma / Česká republika 40–120 Kč podle váhy / Mezinárodní doprava 150–300 Kč) a platby (Online kartou přes Stripe / Bankovní převod)
 3. **Fakturační a doručovací údaje** – kontaktní a fakturační údaje, volitelně firemní údaje (IČO, DIČ), volitelně odlišná doručovací adresa, poznámka k objednávce
 
-Vedle kroků je po celou dobu vidět souhrn objednávky (mezisoučet, doprava, celková cena).
+Vedle kroků je po celou dobu vidět souhrn objednávky (mezisoučet, doprava, celková cena) a pole pro **slevový kód** (mezi mezisoučtem a dopravou). Kód se ověřuje přes RPC funkci `validate_discount_code` (nikdy se nečte přímo z tabulky `discount_codes`, viz [sekce 3](03-databaze.md)), po úspěšném uplatnění se zobrazí jako odstranitelný štítek a sleva se odečte z mezisoučtu (nepočítá se z dopravy). Slevu spravuje admin v dashboardu, viz [sekce 5](05-administrace.md#4-záložka-slevové-kódy).
 
-Po odeslání formuláře se zavolá `/api/create-order`, který znovu ověří ceny i dostupnost položek proti databázi (nikdy nevěří cenám z prohlížeče) a vytvoří objednávku se stavem `Nová`. Přepočet ceny počítá i se slevou (`sale_price`, viz `src/lib/pricing.ts`) – i kdyby klient poslal jinou cenu, server vždy dosadí platnou zlevněnou (nebo plnou) cenu z DB. Dál se liší podle zvolené platby:
+Po odeslání formuláře se zavolá `/api/create-order`, který znovu ověří ceny i dostupnost položek proti databázi (nikdy nevěří cenám z prohlížeče) a vytvoří objednávku se stavem `Nová`. Přepočet ceny počítá i se slevou (`sale_price`, viz `src/lib/pricing.ts`) i s případným slevovým kódem, který se revaliduje znovu server-side (klientský stav se nepovažuje za platný) – i kdyby klient poslal jinou cenu nebo kód mezitím expiroval, server vždy dosadí platnou cenu z DB. Dál se liší podle zvolené platby:
 - **Platba kartou** – otevře se modální okno se Stripe platebním formulářem, po úspěšné platbě přesměruje na `/dekujeme`
 - **Bankovní převod** – přesměruje na `/dekujeme` okamžitě, platební údaje zákazník dostane e-mailem
 

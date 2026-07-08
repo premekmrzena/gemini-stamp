@@ -1,12 +1,12 @@
 # 5. Administrace
 
-> Pohled admina, který zpracovává objednávky a správu produktů. Popis odpovídá skutečnému stavu kódu k 2026-06-16, doplněno o slevu k 2026-07-01 — `src/app/admin/dashboard/page.tsx` je jediná admin obrazovka v aplikaci, formulář na produkty žije v `src/components/admin/ProductFormModal.tsx`.
+> Pohled admina, který zpracovává objednávky a správu produktů. Popis odpovídá skutečnému stavu kódu k 2026-06-16, doplněno o slevu k 2026-07-01 a o slevové kódy k 2026-07-08 — `src/app/admin/dashboard/page.tsx` je jediná admin obrazovka v aplikaci, formulář na produkty žije v `src/components/admin/ProductFormModal.tsx`, formulář na slevové kódy v `src/components/admin/DiscountCodeFormModal.tsx`.
 
 ## 1. Přístup
 
 `/admin/dashboard` je chráněný přihlášením přes Supabase Auth (e-mail + heslo, `supabase.auth.signInWithPassword`). Žádná samoregistrace ani role/oprávnění v aplikaci — kdokoli s platným Supabase Auth účtem se po přihlášení dostane do celého dashboardu. Účty se vytvářejí přímo v Supabase (Authentication), ne v appce.
 
-Dashboard má dvě záložky: **Objednávky** a **Homepage produkty**.
+Dashboard má tři záložky: **Objednávky**, **Homepage produkty** a **Slevové kódy**.
 
 ## 2. Záložka Objednávky
 
@@ -40,7 +40,15 @@ Tabulka všech produktů (řazená od nejnovějšího) zobrazuje u ceny i slevu,
 
 Tyto tři příznaky se uloží ihned (optimistické promítnutí do tabulky + update do Supabase), bez tlačítka „Uložit“ — na rozdíl od formuláře produktu výše, kde se ukládá najednou.
 
-## 4. Fakturace
+## 4. Záložka Slevové kódy
+
+Tlačítko **„Nový kód“** otevře `DiscountCodeFormModal` (stejný vzor jako `ProductFormModal`) — kód, typ slevy (procenta / pevná částka v Kč), hodnota, volitelný max. počet použití (prázdné = neomezeno), platnost od (volitelná) a do (povinná), příznak aktivní. Kód se před uložením vždy převede na velká písmena a ořízne, protože ověřování na frontendu i v RPC funkci `validate_discount_code` porovnává case-insensitive (`upper(trim())`) — musí sedět přesně.
+
+Tabulka kódů zobrazuje typ/hodnotu, platnost, poměr použití (`used_count / max_uses`, `∞` pokud bez limitu) a stav (Aktivní / Neaktivní / Vypršel — poslední se počítá klientsky z `valid_until`, není to samostatný DB sloupec). Žádné tvrdé mazání — jen `is_active` přepínač ve formuláři, stejně jako u produktů. Sloupec `used_count` se needituje, spravuje ho výhradně RPC funkce `redeem_discount_code` při dokončení objednávky.
+
+Bezpečnost: tabulka `discount_codes` má RLS bez policy pro `anon` (veřejný web nikdy nesmí přečíst seznam kódů přímo), admin k ní má přístup jen díky přihlášené (`authenticated`) Supabase Auth session. Zákaznické ověřování/uplatnění kódu v košíku jde výhradně přes dvě `SECURITY DEFINER` RPC funkce — viz [sekce 3](03-databaze.md#discount_codes-neprovedeno--čeká-na-spuštění-migrace) a [sekce 4](04-popis-eshopu.md).
+
+## 5. Fakturace
 
 Fakturace (vystavení daňového dokladu) se řeší mimo appku, plánovaně přes eDoklad API (zatím nenapojeno). Appka už ale sbírá vše, co k tomu eDoklad bude potřebovat: `orders.billing_company_name`/`billing_company_id`/`billing_company_tax_id` (IČO/DIČ, vyplní se jen pokud zákazník zadá firemní údaje v košíku) + plnou fakturační adresu a rozpad položek (`cart_items`). Žádné UI ani API endpoint pro fakturaci v appce zatím není.
 
@@ -48,4 +56,5 @@ Fakturace (vystavení daňového dokladu) se řeší mimo appku, plánovaně př
 - Žádná role/oprávnění — kdokoli s Supabase Auth účtem vidí a může měnit vše (objednávky i produkty)
 - `related_stamp_id` a `print_sheets` se needitují v žádném UI (ani v `ProductFormModal`, ani jinde) — pokud se mají využívat, je potřeba je do formuláře doplnit
 - Žádné notifikace ani audit log akcí admina (kdo a kdy změnil stav/produkt)
-- eDoklad napojení na fakturaci zatím chybí (viz sekce 4 výše)
+- eDoklad napojení na fakturaci zatím chybí (viz sekce 5 výše)
+- Slevové kódy: migrace `docs/sql/004_discount_codes.sql` a `docs/sql/005_orders_discount_columns.sql` zatím neprovedeny v Supabase — záložka a formulář existují v kódu, ale bez migrace nefungují (tabulka/RPC funkce neexistují)

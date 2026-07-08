@@ -24,7 +24,7 @@ const EMPTY_FORM = {
 };
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, removeFromCart, updateQuantity } = useCart();
+  const { cartItems, cartTotal, cartTotalAfterDiscount, discountAmount, appliedDiscount, removeFromCart, updateQuantity } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedShipping, setSelectedShipping] = useState('osobni');
@@ -40,7 +40,7 @@ const CheckoutPage = () => {
   const shippingOptions = getShippingOptions(totalWeightGrams);
   const shippingCost = shippingOptions.find((o) => o.id === selectedShipping)?.price ?? 0;
   const paymentCost = PAYMENT_OPTIONS.find((o) => o.id === selectedPayment)?.price ?? 0;
-  const totalOrderPrice = cartTotal + shippingCost + paymentCost;
+  const totalOrderPrice = cartTotalAfterDiscount + shippingCost + paymentCost;
   const isMezinarodni = selectedShipping === 'mezinarodni';
 
   useEffect(() => { setIsMounted(true); }, []);
@@ -54,7 +54,10 @@ const CheckoutPage = () => {
   };
 
   const handleSubmit = () => {
-    submitOrder({ cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent });
+    submitOrder({
+      cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent,
+      discountCode: appliedDiscount?.code ?? null,
+    });
   };
 
   if (!isMounted) return null;
@@ -114,6 +117,7 @@ const CheckoutPage = () => {
             cartTotal={cartTotal}
             shippingCost={shippingCost}
             totalOrderPrice={totalOrderPrice}
+            discountAmount={discountAmount}
           />
           </div>
         </div>

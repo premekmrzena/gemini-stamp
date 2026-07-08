@@ -1,5 +1,20 @@
 export type ProductCategory = 'znamky' | 'kreativni-archy' | 'fdc' | 'plakety';
 
+export type DiscountType = 'percentage' | 'fixed';
+
+export type DiscountCode = {
+  id: string;
+  code: string;
+  type: DiscountType;
+  value: number;
+  max_uses: number | null;
+  used_count: number;
+  valid_from: string | null;
+  valid_until: string;
+  is_active: boolean;
+  created_at: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -89,6 +104,8 @@ export type Order = {
   shipping_zip: string;
   shipping_country: string;
   tracking_number: string | null;
+  discount_code: string | null;
+  discount_amount: number;
 };
 
 export type CustomStamp = {

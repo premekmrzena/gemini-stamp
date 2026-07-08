@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import CartToast from '@/components/CartToast';
+import { supabase } from '@/lib/supabase';
+import { computeDiscountAmount } from '@/lib/pricing';
+import { DiscountType } from '@/types/database';
 
 export type CartItem = {
   id: string;
@@ -12,6 +15,14 @@ export type CartItem = {
   weight_grams: number;
   item_type: 'product' | 'custom';
 };
+
+export type AppliedDiscount = {
+  code: string;
+  type: DiscountType;
+  value: number;
+};
+
+const DISCOUNT_STORAGE_KEY = 'razitka-discount-code';
 
 type ToastState = {
   visible: boolean;
@@ -28,6 +39,13 @@ type CartContextType = {
   cartTotal: number;
   toast: ToastState;
   dismissToast: () => void;
+  appliedDiscount: AppliedDiscount | null;
+  discountAmount: number;
+  cartTotalAfterDiscount: number;
+  discountLoading: boolean;
+  discountError: string | null;
+  applyDiscountCode: (code: string) => Promise<boolean>;
+  removeDiscountCode: () => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -37,6 +55,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [toast, setToast] = useState<ToastState>({ visible: false, item: null });
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+
+  const applyDiscountCode = async (code: string, opts?: { silent?: boolean }): Promise<boolean> => {
+    const trimmed = code.trim();
+    if (!trimmed) return false;
+
+    setDiscountLoading(true);
+    if (!opts?.silent) setDiscountError(null);
+
+    const { data, error } = await supabase.rpc('validate_discount_code', { p_code: trimmed });
+    const result = Array.isArray(data) ? data[0] : data;
+
+    setDiscountLoading(false);
+
+    if (error || !result?.is_valid) {
+      setAppliedDiscount(null);
+      localStorage.removeItem(DISCOUNT_STORAGE_KEY);
+      if (!opts?.silent) setDiscountError(result?.message || 'Slevový kód se nepodařilo ověřit');
+      return false;
+    }
+
+    setAppliedDiscount({ code: trimmed.toUpperCase(), type: result.code_type, value: result.code_value });
+    localStorage.setItem(DISCOUNT_STORAGE_KEY, trimmed.toUpperCase());
+    setDiscountError(null);
+    return true;
+  };
+
+  const removeDiscountCode = () => {
+    setAppliedDiscount(null);
+    setDiscountError(null);
+    localStorage.removeItem(DISCOUNT_STORAGE_KEY);
+  };
 
   useEffect(() => {
     const savedCart = localStorage.getItem('razitka-cart');
@@ -48,6 +101,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
     setIsLoaded(true);
+
+    const savedCode = localStorage.getItem(DISCOUNT_STORAGE_KEY);
+    if (savedCode) {
+      // Tichá revalidace — kód mohl mezitím expirovat nebo být deaktivován,
+      // takže se nespoléhá na to, co bylo uloženo v localStorage.
+      applyDiscountCode(savedCode, { silent: true });
+    }
   }, []);
 
   useEffect(() => {
@@ -89,6 +149,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('razitka-cart');
     }
+    removeDiscountCode();
   };
 
   const dismissToast = () => {
@@ -98,10 +159,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discountAmount = computeDiscountAmount(cartTotal, appliedDiscount);
+  const cartTotalAfterDiscount = cartTotal - discountAmount;
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, toast, dismissToast }}
+      value={{
+        cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, toast, dismissToast,
+        appliedDiscount, discountAmount, cartTotalAfterDiscount, discountLoading, discountError,
+        applyDiscountCode, removeDiscountCode,
+      }}
     >
       {children}
       <CartToast />

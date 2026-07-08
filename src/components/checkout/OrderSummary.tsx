@@ -1,14 +1,16 @@
 import Image from 'next/image';
 import { CartItem } from '@/context/CartContext';
+import DiscountCodeInput from './DiscountCodeInput';
 
 type Props = {
   cartItems: CartItem[];
   cartTotal: number;
   shippingCost: number;
   totalOrderPrice: number;
+  discountAmount: number;
 };
 
-export default function OrderSummary({ cartItems, cartTotal, shippingCost, totalOrderPrice }: Props) {
+export default function OrderSummary({ cartItems, cartTotal, shippingCost, totalOrderPrice, discountAmount }: Props) {
   return (
     <aside className="w-full lg:w-1/3 flex flex-col gap-6 lg:sticky lg:top-32 h-fit lg:order-2">
       <div className="bg-secondary rounded-[4px] p-4 shadow-xl text-black flex flex-col">
@@ -32,6 +34,13 @@ export default function OrderSummary({ cartItems, cartTotal, shippingCost, total
             <span>Mezisoučet</span>
             <span>{cartTotal.toLocaleString('cs-CZ')} Kč</span>
           </div>
+          <DiscountCodeInput />
+          {discountAmount > 0 && (
+            <div className="flex justify-between items-center text-success">
+              <span>Sleva</span>
+              <span>-{discountAmount.toLocaleString('cs-CZ')} Kč</span>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <span>Doprava</span>
             <span>{shippingCost} Kč</span>
