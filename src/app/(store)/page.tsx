@@ -1,4 +1,5 @@
 import Hero from '@/components/Hero';
+import ShopInfoStrip from '@/components/ShopInfoStrip';
 import ReviewStrip from '@/components/ReviewStrip';
 import ProductList from '@/components/ProductList';
 import { supabase } from '@/lib/supabase'; // Import našeho připojení k databázi
@@ -24,6 +25,7 @@ export default async function Home() {
     // Zde je to kouzlo: gap se stará o mezery MEZI komponentami, py se stará o okraje nahoře a dole
     <main className="flex flex-col bg-[#0F172A] py-[32px] md:py-[54px] lg:py-[64px] gap-[44px] md:gap-[60px] lg:gap-[64px] w-full min-h-screen">
       <Hero />
+      <ShopInfoStrip />
       <ReviewStrip />
       {/* Předáme stažené produkty do komponenty ProductList */}
       <ProductList products={products || []} />

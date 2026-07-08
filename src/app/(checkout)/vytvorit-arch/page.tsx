@@ -121,7 +121,7 @@ export default function EditorPage() {
           <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
             <h1 className="style-h1 text-secondary text-center mb-2">Vyberte si šablonu</h1>
             <p className="style-body text-secondary text-center mb-3">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
-            <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-black200 hover:text-primary transition-colors mb-8 md:mb-[48px]">
+            <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-primary hover:text-primary-hover transition-colors mb-8 md:mb-[48px]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />

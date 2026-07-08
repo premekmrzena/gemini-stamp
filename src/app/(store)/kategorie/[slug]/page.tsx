@@ -68,9 +68,44 @@ export default function CategoryPage() {
       <Breadcrumbs items={[{ label: current.title }]} />
       <section className="py-8 md:py-12">
         <div className="layout-container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {slug === 'kreativni-archy' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-            <div>
+              <div>
+                <h1 className="style-h1 text-secondary mb-6 lowercase first-letter:uppercase leading-tight">
+                  {current.title}
+                </h1>
+                <p className="style-body text-secondary/70 max-w-xl">
+                  {current.description}
+                </p>
+              </div>
+
+              <div className="relative aspect-video w-full overflow-hidden rounded-[16px] border border-black300 bg-black400">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {current.videoUrl ? (
+                    current.videoUrl.includes('youtube.com') || current.videoUrl.includes('youtu.be') ? (
+                      <iframe
+                        src={current.videoUrl}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video src={current.videoUrl} controls className="w-full h-full object-cover" />
+                    )
+                  ) : (
+                    <div className="p-8 flex items-center justify-center">
+                      <span className="text-secondary/30 style-body italic text-center">
+                        Zde bude vysvětlující video pro kategorii {current.title}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="flex flex-col items-center text-center">
               <h1 className="style-h1 text-secondary mb-6 lowercase first-letter:uppercase leading-tight">
                 {current.title}
               </h1>
@@ -78,31 +113,7 @@ export default function CategoryPage() {
                 {current.description}
               </p>
             </div>
-
-            <div className="relative aspect-video w-full overflow-hidden rounded-[16px] border border-black300 bg-black400">
-              <div className="absolute inset-0 flex items-center justify-center">
-                {current.videoUrl ? (
-                  current.videoUrl.includes('youtube.com') || current.videoUrl.includes('youtu.be') ? (
-                    <iframe
-                      src={current.videoUrl}
-                      className="w-full h-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  ) : (
-                    <video src={current.videoUrl} controls className="w-full h-full object-cover" />
-                  )
-                ) : (
-                  <div className="p-8 flex items-center justify-center">
-                    <span className="text-secondary/30 style-body italic text-center">
-                      Zde bude vysvětlující video pro kategorii {current.title}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
+          )}
         </div>
       </section>
 
