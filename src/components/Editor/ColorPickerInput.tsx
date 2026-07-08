@@ -7,9 +7,10 @@ type Props = {
   value: string;
   onChange: (color: string) => void;
   size?: number;
+  openUpward?: boolean;
 };
 
-export default function ColorPickerInput({ value, onChange, size = 48 }: Props) {
+export default function ColorPickerInput({ value, onChange, size = 48, openUpward = true }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,7 +32,7 @@ export default function ColorPickerInput({ value, onChange, size = 48 }: Props) 
         onClick={() => setOpen((v) => !v)}
       />
       {open && (
-        <div className="absolute z-[300] bottom-[calc(100%+8px)] right-0">
+        <div className={`absolute z-[300] right-0 ${openUpward ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]'}`}>
           <HexColorPicker color={value} onChange={onChange} />
         </div>
       )}

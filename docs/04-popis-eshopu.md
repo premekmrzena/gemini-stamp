@@ -1,10 +1,10 @@
 # 4. Popis e-shopu (funkční přehled)
 
-> Obecné shrnutí toho, co e-shop dělá a jak se v něm zákazník pohybuje, bez nutnosti číst kód. Popis odpovídá skutečnému chování k 2026-06-16, doplněno o slevy a recenze na mobilu k 2026-07-01, doplněno o flow „Začít tvořit“ pro kreativní archy k 2026-07-01.
+> Obecné shrnutí toho, co e-shop dělá a jak se v něm zákazník pohybuje, bez nutnosti číst kód. Popis odpovídá skutečnému chování k 2026-06-16, doplněno o slevy a recenze na mobilu k 2026-07-01, doplněno o flow „Začít tvořit“ pro kreativní archy k 2026-07-01, doplněno o sjednocení vstupu do výběru šablony a ceny na kartách šablon k 2026-07-03.
 
 ## 1. Homepage
 
-Záhlaví (`Header.tsx`) obsahuje logo (odkaz na homepage), menu se 4 kategoriemi (Známky, Kreativní archy, First Day Cover, Dárkové plakety – odkazují na `/kategorie/{slug}`) a ikonu košíku s počtem položek. Na mobilu je menu skryté v hamburgeru.
+Záhlaví (`Header.tsx`) obsahuje logo (odkaz na homepage), menu se 4 kategoriemi a ikonu košíku s počtem položek. Známky, First Day Cover a Dárkové plakety odkazují na `/kategorie/{slug}`; **Kreativní archy** vedou rovnou na výběr šablony `/vytvorit-arch` (Krok 1 editoru, viz [sekce 3](#3-editor-kreativní-archy)) – kategorie `/kategorie/kreativni-archy` samotná v menu už není, `/vytvorit-arch` je pro kreativní archy výchozí stránka. Na mobilu je menu skryté v hamburgeru.
 
 Hero sekce (`Hero.tsx`) je rotující obrázkový slider s nadpisem „Proměň svoje zážitky v krásný sběratelský poklad!“, třemi kroky (1. Vyber si šablonu, 2. Napiš vlastní text, 3. Nahraj svoje fotky) a hlavním CTA tlačítkem „Vybrat šablonu a začít tvořit“, které vede do editoru (`/vytvorit-arch`). Druhý, méně výrazný odkaz vede na vysvětlující stránku „Co je Kreativní arch?“.
 
@@ -20,7 +20,7 @@ Každý produkt může mít libovolnou kombinaci těchto štítků současně (z
 
 Pokud má produkt vyplněnou `sale_price` (nižší než `price`), karta produktu zobrazí přeškrtnutou původní cenu vedle zlevněné – viz [sekce 5](05-administrace.md#3-záložka-homepage-produkty), jak se sleva nastavuje.
 
-Produkty patří do jedné ze 4 kategorií (`znamky`, `kreativni-archy`, `fdc`, `plakety`) a dají se filtrovat i mimo homepage přes menu – stránka `/kategorie/[slug]` zobrazuje všechny produkty dané kategorie se stejným řazením jako homepage.
+Produkty patří do jedné ze 4 kategorií (`znamky`, `kreativni-archy`, `fdc`, `plakety`). Stránka `/kategorie/[slug]` zobrazuje všechny produkty dané kategorie se stejným řazením jako homepage a z menu je dostupná pro `znamky`, `fdc` a `plakety`. `/kategorie/kreativni-archy` jako route dál existuje, ale od 2026-07-03 na ni menu neodkazuje – vstupním bodem pro kreativní archy je `/vytvorit-arch`.
 
 Kliknutím na produkt se zákazník dostane na detail (`/produkt/[id]`): hlavní obrázek + galerie, název, cena (se stejnou logikou slevy jako na kartě), technické parametry (katalogové číslo, typ známky, datum vydání, rozměry, designér, rytec…) a popis v rozbalovacích sekcích, plus 3 související produkty na konci stránky (ty sleva zohledňují také). Tlačítkem „Do košíku“ se produkt přidá do košíku přímo z detailu i z karty produktu na výpisu – do košíku jde vždy aktuální efektivní cena (zlevněná, pokud je nastavená).
 
@@ -46,7 +46,7 @@ Stránka „Děkujeme“ zobrazí číslo objednávky, vyčistí košík a záka
 
 ## 3. Editor (Kreativní archy)
 
-Na `/vytvorit-arch` si zákazník nejprve vybere jednu z 5 šablon archu (každá má jiný motiv, počet fotek a náhled) – u každé šablony je nad tlačítkem „Vybrat šablonu“ i podtržený textový odkaz „Detail šablony“ vedoucí na detail odpovídajícího produktu (`tpl.shopUrl` v `editorConfig.ts`). Po výběru se otevře canvas editor.
+Na `/vytvorit-arch` si zákazník nejprve vybere jednu z 5 šablon archu (každá má jiný motiv, počet fotek, náhled a cenu). Cena karty se dotahuje ze Supabase podle `productId` šablony (`TEMPLATES` v `src/lib/editorConfig.ts`, 1:1 namapované na produkty kategorie `kreativni-archy`) a řídí se stejnou logikou slevy jako zbytek e-shopu (`src/lib/pricing.ts`). Klik kamkoliv na kartu šablony (mimo tlačítko) vede na detail odpovídajícího produktu (`/produkt/{productId}`); tlačítko „Vybrat šablonu“ naopak rovnou otevře canvas editor – samostatný textový odkaz „Detail šablony“ na kartě už není, jeho roli převzala celá karta.
 
 Pokud zákazník přijde z karty/detailu produktu kategorie `kreativni-archy` (tlačítko „Začít tvořit“, viz [sekce 1](#1-homepage)), stránka přečte `productId` z URL (`?productId=...`), najde odpovídající šablonu a rovnou přeskočí na canvas editor – krok výběru šablony se v tomto případě vůbec nezobrazí.
 

@@ -139,7 +139,7 @@ export default function EditorPage() {
                 return (
                   <div
                     key={tpl.id}
-                    className="group relative border border-black300/30 bg-[#0F172A] rounded-[4px] p-[24px] flex flex-col hover:bg-black500 hover:border-black300/60 hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all duration-300 select-none"
+                    className="group relative border border-black300/30 bg-[#0F172A] rounded-[4px] p-[24px] flex flex-col active:bg-black500 active:border-black300/60 active:scale-[0.98] active:z-10 md:hover:bg-black500 md:hover:border-black300/60 md:hover:shadow-xl md:hover:scale-[1.02] md:hover:z-10 transition-all duration-300 select-none"
                     onContextMenu={(e) => e.preventDefault()}
                   >
                     {/* Celá karta směřuje na detail produktu */}
@@ -155,7 +155,7 @@ export default function EditorPage() {
                         src={tpl.stampPreviews[0] ?? tpl.backgroundImage}
                         alt={tpl.name}
                         fill
-                        className="object-contain group-hover:scale-[1.03] transition-transform duration-500"
+                        className="object-contain group-active:scale-[1.03] md:group-hover:scale-[1.03] transition-transform duration-500"
                         onDragStart={(e) => e.preventDefault()}
                       />
                     </div>

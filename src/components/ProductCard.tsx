@@ -32,7 +32,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
 
   return (
     <div
-      className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col hover:bg-black500 hover:scale-[1.02] hover:z-10 transition-all duration-300"
+      className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col active:bg-black500 active:scale-[0.98] active:z-10 md:hover:bg-black500 md:hover:scale-[1.02] md:hover:z-10 transition-all duration-300"
       onContextMenu={(e) => e.preventDefault()}
     >
       <Link
