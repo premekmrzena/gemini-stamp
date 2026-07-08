@@ -555,7 +555,7 @@ export default function StampEditor({ onComplete, templateId }: StampEditorProps
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#0F172A" strokeWidth="1.5"><path d="M1 1.5L6 6.5L11 1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
                 </div>
-                <ColorPickerInput value={textColor} onChange={setTextColor} openUpward={false} />
+                <ColorPickerInput value={textColor} onChange={setTextColor} />
               </div>
               <div className="flex items-center justify-between">
                 <input type="range" min="40" max="300" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))}
