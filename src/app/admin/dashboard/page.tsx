@@ -6,10 +6,11 @@ import { ORDER_STATUSES } from '@/lib/constants';
 import { OrderStatus, Product, DiscountCode } from '@/types/database';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
+import { useBackdropClose } from '@/hooks/useBackdropClose';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, AlertTriangle, Archive, Tag
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -54,6 +55,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [dateFilter, setDateFilter] = useState('');
+  const orderModalBackdrop = useBackdropClose(() => setSelectedOrder(null));
 
   // --- STAVY PRO PRODUKTY ---
   const [products, setProducts] = useState<Product[]>([]);
@@ -163,6 +165,20 @@ export default function AdminDashboard() {
     if (!error) {
       setProducts(products.map(p => p.id === productId ? { ...p, tag_last_pieces: !current } : p));
     }
+  }
+
+  async function deleteProduct(product: Product) {
+    if (!window.confirm(`Opravdu smazat produkt „${product.name}“? Tuto akci nejde vzít zpět.`)) return;
+    const { error } = await supabase.from('products').delete().eq('id', product.id);
+    if (error) {
+      alert(
+        error.code === '23503'
+          ? 'Produkt nejde smazat – používá ho existující zákaznická objednávka z editoru (custom_stamps). Nejdřív deaktivuj produkt (Aktivní: ne) místo mazání.'
+          : `Smazání produktu selhalo: ${error.message}`
+      );
+      return;
+    }
+    setProducts((prev) => prev.filter((p) => p.id !== product.id));
   }
 
   async function fetchOrders() {
@@ -576,13 +592,22 @@ export default function AdminDashboard() {
                           </button>
                         </td>
                         <td className="p-4 text-right">
-                          <button
-                            onClick={() => setProductFormTarget(product)}
-                            className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[6px] transition-all cursor-pointer"
-                            title="Upravit produkt"
-                          >
-                            <Pencil size={16} />
-                          </button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setProductFormTarget(product)}
+                              className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[6px] transition-all cursor-pointer"
+                              title="Upravit produkt"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() => deleteProduct(product)}
+                              className="p-2 text-black300 hover:text-tag-posledni-kusy hover:bg-tag-posledni-kusy/10 rounded-[6px] transition-all cursor-pointer"
+                              title="Smazat produkt"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -770,7 +795,7 @@ export default function AdminDashboard() {
 
       {/* DETAIL OBJEDNÁVKY MODAL */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all" onClick={() => setSelectedOrder(null)}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all" {...orderModalBackdrop}>
           <div className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
               <div>

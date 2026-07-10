@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { DiscountCode, DiscountType } from '@/types/database';
+import { useBackdropClose } from '@/hooks/useBackdropClose';
 
 type DiscountCodeFormData = Omit<DiscountCode, 'id' | 'created_at' | 'used_count'>;
 
@@ -29,6 +30,7 @@ export function DiscountCodeFormModal({ discountCode, onClose, onSaved }: Discou
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const backdropHandlers = useBackdropClose(onClose);
 
   function set<K extends keyof DiscountCodeFormData>(key: K, value: DiscountCodeFormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -63,7 +65,7 @@ export function DiscountCodeFormModal({ discountCode, onClose, onSaved }: Discou
   const labelClass = 'style-product-tag text-black300 block mb-2';
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" {...backdropHandlers}>
       <div
         className="bg-black400 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl"
         onClick={(e) => e.stopPropagation()}

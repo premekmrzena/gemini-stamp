@@ -40,6 +40,8 @@ Tabulka všech produktů (řazená od nejnovějšího) zobrazuje u ceny i slevu,
 
 Tyto tři příznaky se uloží ihned (optimistické promítnutí do tabulky + update do Supabase), bez tlačítka „Uložit“ — na rozdíl od formuláře produktu výše, kde se ukládá najednou.
 
+Vedle tužky (edit) je od 2026-07-10 i ikona koše — **trvalé smazání produktu** (`DELETE` do Supabase, `products` RLS to authenticated roli povoluje, viz [sekce 3](03-databaze.md)). Potvrzuje se prostým `window.confirm`, žádné undo. Pokud je produkt navázaný na existující zákaznický arch (`custom_stamps.product_id`, `FK NOT NULL`), DB mazání odmítne (kód `23503`) a appka to admina upozorní s návrhem produkt radši jen deaktivovat (`is_active` na ne) místo mazání. Objednávky samotné (`orders.cart_items`) na `products.id` nejsou navázané FK vazbou, takže smazání produktu historické objednávky nijak nerozbije, jen z nich zmizí možnost dohledat aktuální detail produktu.
+
 ## 4. Záložka Slevové kódy
 
 Tlačítko **„Nový kód“** otevře `DiscountCodeFormModal` (stejný vzor jako `ProductFormModal`) — kód, typ slevy (procenta / pevná částka v Kč), hodnota, volitelný max. počet použití (prázdné = neomezeno), platnost od (volitelná) a do (povinná), příznak aktivní. Kód se před uložením vždy převede na velká písmena a ořízne, protože ověřování na frontendu i v RPC funkci `validate_discount_code` porovnává case-insensitive (`upper(trim())`) — musí sedět přesně.

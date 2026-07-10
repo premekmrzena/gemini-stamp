@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Upload, Trash2, Loader2, ImagePlus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Product, ProductCategory } from '@/types/database';
+import { useBackdropClose } from '@/hooks/useBackdropClose';
 
 const CATEGORY_LABELS: Record<ProductCategory, string> = {
   'znamky': 'Známky',
@@ -64,6 +65,7 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const backdropHandlers = useBackdropClose(onClose);
 
   function set<K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -135,7 +137,7 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
   const labelClass = 'style-product-tag text-black300 block mb-2';
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" {...backdropHandlers}>
       <div
         className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
