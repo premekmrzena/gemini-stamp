@@ -100,10 +100,10 @@ export async function generateCanvasDataUrl(
   return tCanvas.toDataURL('image/jpeg', 0.95);
 }
 
-export async function uploadBase64ToBlob(base64Data: string, filename: string) {
+export async function uploadBase64ToBlob(base64Data: string, filename: string, folder: string) {
   const res = await fetch(base64Data);
   const blob = await res.blob();
-  const response = await fetch(`/api/upload-stamp?filename=${encodeURIComponent(filename)}`, {
+  const response = await fetch(`/api/upload-stamp?filename=${encodeURIComponent(filename)}&folder=${encodeURIComponent(folder)}`, {
     method: 'POST',
     body: blob,
   });

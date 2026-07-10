@@ -1,6 +1,6 @@
 # 3. Databáze (Supabase)
 
-> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
+> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
 
 ## `products`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -14,22 +14,22 @@
 | weight_grams | integer | ano | `0` |
 | image_url | text | ano | – |
 | gallery_images | text[] | ne (nullable) | – |
-| category | enum `product_category` (`znamky`, `kreativni-archy`, `fdc`, `plakety`) | ano | – |
+| category | enum `product_category` (`znamky`, `znamkove-archy`, `kreativni-archy`, `fdc`, `plakety`) | ano | – |
 | stock_quantity | integer | ano | `0` |
 | is_active | boolean | ano | `true` |
 | tag_new | boolean | ano | `false` |
 | tag_last_pieces | boolean | ano | `false` |
 | tag_top | **integer** (TOP rank 1–6) | ne (nullable) | – |
 | catalog_number | text | ne (nullable) | – |
-| stamp_type | text | ne (nullable) | – |
 | release_date | date | ne (nullable) | – |
-| print_sheets | text | ne (nullable) | – |
 | dimensions_mm | text | ne (nullable) | – |
 | designer | text | ne (nullable) | – |
 | engraver | text | ne (nullable) | – |
 | related_stamp_id | uuid[] | ne (nullable) | – |
 | created_at | timestamptz | ano | `now()` |
 | show_on_homepage | boolean | ne (nullable) | `false` |
+
+RLS: `anon` může jen číst (veřejný výpis produktů na eshopu), `authenticated` (přihlášený admin) má od 2026-07-10 explicitně plný CRUD (`docs/sql/007_products_rls_authenticated_crud.sql`) – předtím chyběla politika pro `INSERT`/`DELETE`, což se projevilo chybou „new row violates row-level security policy“ při zakládání nového produktu v adminu.
 
 ## `orders`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -50,10 +50,10 @@
 | billing_address_line2 / billing_region | text | ne (nullable) | – |
 | shipping_is_different | boolean | ano | `false` |
 | shipping_first_name … shipping_country (celý doručovací blok) | text | ne (nullable) | – |
-| discount_code | text, uplatněný slevový kód (NEPROVEDENO, viz migrace níže) | ne (nullable) | – |
-| discount_amount | numeric, výše slevy v Kč (NEPROVEDENO, viz migrace níže) | ano | `0` |
+| discount_code | text, uplatněný slevový kód | ne (nullable) | – |
+| discount_amount | numeric, výše slevy v Kč | ano | `0` |
 
-## `discount_codes` (NEPROVEDENO – čeká na spuštění migrace)
+## `discount_codes`
 | Sloupec | Typ | Povinné při insertu | Default |
 |---|---|---|---|
 | id | uuid (PK) | ano | `gen_random_uuid()` |
@@ -93,5 +93,8 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/001_orders_status_check.sql` – provedeno 2026-06-16 v Supabase SQL editoru, bez dopadu na stávající data.
 - `docs/sql/002_orders_tracking_number.sql` – provedeno 2026-06-16, doplnil `orders.tracking_number` (text, nullable) pro sledovací číslo zásilky, viz [sekce 5](05-administrace.md#2-záložka-objednávky).
 - `docs/sql/003_products_sale_price.sql` – provedeno 2026-07-01, doplnil `products.sale_price` (numeric, nullable) pro slevy, viz [sekce 4](04-popis-eshopu.md#1-homepage) a [sekce 5](05-administrace.md#3-záložka-homepage-produkty).
-- `docs/sql/004_discount_codes.sql` – NEPROVEDENO (čeká na spuštění v Supabase SQL editoru), zavádí tabulku `discount_codes`, RLS (anon bez přístupu, authenticated plný CRUD) a dvě `SECURITY DEFINER` RPC funkce `validate_discount_code`/`redeem_discount_code` pro bezpečné ověření/uplatnění kódu z veřejného klienta bez rizika vypsání všech kódů.
-- `docs/sql/005_orders_discount_columns.sql` – NEPROVEDENO, doplňuje `orders.discount_code` a `orders.discount_amount` pro uložení uplatněné slevy na objednávce.
+- `docs/sql/004_discount_codes.sql` – provedeno 2026-07-08, zavádí tabulku `discount_codes`, RLS (anon bez přístupu, authenticated plný CRUD) a dvě `SECURITY DEFINER` RPC funkce `validate_discount_code`/`redeem_discount_code` pro bezpečné ověření/uplatnění kódu z veřejného klienta bez rizika vypsání všech kódů.
+- `docs/sql/005_orders_discount_columns.sql` – provedeno 2026-07-08, doplňuje `orders.discount_code` a `orders.discount_amount` pro uložení uplatněné slevy na objednávce.
+- `docs/sql/006_products_category_znamkove_archy.sql` – provedeno 2026-07-10, doplňuje do enumu `product_category` novou hodnotu `znamkove-archy` (5. kategorie produktů, viz [sekce 4](04-popis-eshopu.md)).
+- `docs/sql/007_products_rls_authenticated_crud.sql` – provedeno 2026-07-10, doplňuje `authenticated` roli politiku pro plný CRUD na `products` (`INSERT`/`DELETE` předtím chyběly, `anon` čtení beze změny).
+- `docs/sql/008_products_drop_unused_columns.sql` – provedeno 2026-07-10, smazal sloupce `print_sheets` (bylo prázdné u všech produktů) a `stamp_type` (mělo vyplněnou hodnotu u 8 z 11 produktů – data vědomě zahozena na výslovné přání uživatele). Odstraněno i z `src/types/database.ts`, `ProductFormModal.tsx` a `ProductDetailClient.tsx`.

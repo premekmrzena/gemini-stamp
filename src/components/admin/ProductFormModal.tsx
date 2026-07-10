@@ -7,6 +7,7 @@ import { Product, ProductCategory } from '@/types/database';
 
 const CATEGORY_LABELS: Record<ProductCategory, string> = {
   'znamky': 'Známky',
+  'znamkove-archy': 'Známkové archy',
   'kreativni-archy': 'Kreativní archy',
   'fdc': 'First Day Cover',
   'plakety': 'Dárkové plakety',
@@ -30,9 +31,7 @@ const EMPTY_FORM: ProductFormData = {
   tag_last_pieces: false,
   tag_top: null,
   catalog_number: '',
-  stamp_type: '',
   release_date: '',
-  print_sheets: null,
   dimensions_mm: '',
   designer: '',
   engraver: '',
@@ -40,8 +39,8 @@ const EMPTY_FORM: ProductFormData = {
   show_on_homepage: false,
 };
 
-async function uploadToBlob(file: File): Promise<string> {
-  const res = await fetch(`/api/upload-stamp?filename=${encodeURIComponent(file.name)}`, {
+async function uploadToBlob(file: File, category: ProductCategory): Promise<string> {
+  const res = await fetch(`/api/upload-stamp?filename=${encodeURIComponent(file.name)}&folder=${encodeURIComponent(`products/${category}`)}`, {
     method: 'POST',
     body: file,
   });
@@ -52,11 +51,12 @@ async function uploadToBlob(file: File): Promise<string> {
 
 type ProductFormModalProps = {
   product: Product | null;
+  allProducts: Product[];
   onClose: () => void;
   onSaved: (product: Product) => void;
 };
 
-export function ProductFormModal({ product, onClose, onSaved }: ProductFormModalProps) {
+export function ProductFormModal({ product, allProducts, onClose, onSaved }: ProductFormModalProps) {
   const [form, setForm] = useState<ProductFormData>(
     product ? { ...EMPTY_FORM, ...product } : EMPTY_FORM
   );
@@ -73,7 +73,7 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
     setUploadingImage(true);
     setError(null);
     try {
-      const url = await uploadToBlob(file);
+      const url = await uploadToBlob(file, form.category);
       set('image_url', url);
     } catch {
       setError('Nahrání hlavního obrázku selhalo.');
@@ -86,7 +86,7 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
     setUploadingGallery(true);
     setError(null);
     try {
-      const url = await uploadToBlob(file);
+      const url = await uploadToBlob(file, form.category);
       set('gallery_images', [...(form.gallery_images || []), url]);
     } catch {
       setError('Nahrání obrázku do galerie selhalo.');
@@ -97,6 +97,12 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
 
   function removeGalleryImage(url: string) {
     set('gallery_images', (form.gallery_images || []).filter((u) => u !== url));
+  }
+
+  function toggleRelatedProduct(id: string) {
+    const current = form.related_stamp_id || [];
+    const next = current.includes(id) ? current.filter((rid) => rid !== id) : [...current, id];
+    set('related_stamp_id', next.length > 0 ? next : null);
   }
 
   async function handleSubmit(e: React.SubmitEvent) {
@@ -187,7 +193,7 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer style-body text-secondary">
               <input type="checkbox" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} className="w-4 h-4 accent-primary cursor-pointer" />
               Aktivní (prodejný)
@@ -195,6 +201,27 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
             <label className="flex items-center gap-2 cursor-pointer style-body text-secondary">
               <input type="checkbox" checked={form.tag_new} onChange={(e) => set('tag_new', e.target.checked)} className="w-4 h-4 accent-primary cursor-pointer" />
               Štítek „novinka“
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer style-body text-secondary">
+              <input type="checkbox" checked={form.tag_last_pieces} onChange={(e) => set('tag_last_pieces', e.target.checked)} className="w-4 h-4 accent-primary cursor-pointer" />
+              Štítek „poslední kusy“
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer style-body text-secondary">
+              <input type="checkbox" checked={!!form.show_on_homepage} onChange={(e) => set('show_on_homepage', e.target.checked)} className="w-4 h-4 accent-primary cursor-pointer" />
+              Zobrazit na homepage
+            </label>
+            <label className="flex items-center gap-2 style-body text-secondary">
+              TOP pořadí
+              <select
+                className={`${inputClass} w-auto h-[36px]`}
+                value={form.tag_top ?? ''}
+                onChange={(e) => set('tag_top', e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">–</option>
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <option key={n} value={n}>TOP {n}</option>
+                ))}
+              </select>
             </label>
           </div>
 
@@ -217,10 +244,6 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
               <input className={inputClass} value={form.catalog_number ?? ''} onChange={(e) => set('catalog_number', e.target.value)} />
             </div>
             <div>
-              <label className={labelClass}>Typ známky</label>
-              <input className={inputClass} value={form.stamp_type ?? ''} onChange={(e) => set('stamp_type', e.target.value)} />
-            </div>
-            <div>
               <label className={labelClass}>Datum vydání</label>
               <input type="date" className={inputClass} value={form.release_date ?? ''} onChange={(e) => set('release_date', e.target.value)} />
             </div>
@@ -235,6 +258,33 @@ export function ProductFormModal({ product, onClose, onSaved }: ProductFormModal
             <div>
               <label className={labelClass}>Rytec</label>
               <input className={inputClass} value={form.engraver ?? ''} onChange={(e) => set('engraver', e.target.value)} />
+            </div>
+          </div>
+
+          {/* SOUVISEJÍCÍ PRODUKTY */}
+          <div>
+            <label className={labelClass}>Související produkty</label>
+            <p className="style-body text-black300/70 mb-2">
+              Zobrazí se na detailu produktu. Když nevybereš žádné, appka sama doplní 3 nejnovější jiné produkty.
+            </p>
+            <div className="max-h-[180px] overflow-y-auto flex flex-wrap gap-2 bg-black border border-black300/50 rounded-[8px] p-3">
+              {allProducts.filter((p) => p.id !== product?.id).map((p) => {
+                const selected = (form.related_stamp_id || []).includes(p.id);
+                return (
+                  <button
+                    type="button"
+                    key={p.id}
+                    onClick={() => toggleRelatedProduct(p.id)}
+                    className={`style-body px-3 h-[32px] rounded-full border transition-all cursor-pointer ${
+                      selected
+                        ? 'bg-primary border-primary text-black'
+                        : 'border-black300/30 text-secondary hover:bg-black300/10'
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

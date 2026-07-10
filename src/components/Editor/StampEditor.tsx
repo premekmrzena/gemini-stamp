@@ -232,8 +232,8 @@ export default function StampEditor({ onComplete, templateId }: StampEditorProps
       const previewDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, true, 1080);
       const printDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, false);
       const timestamp = Date.now();
-      const previewUpload = await uploadBase64ToBlob(previewDataUrl, `arch-${timestamp}-nahled.jpg`);
-      const printUpload = await uploadBase64ToBlob(printDataUrl, `arch-${timestamp}-tisk.jpg`);
+      const previewUpload = await uploadBase64ToBlob(previewDataUrl, `arch-${timestamp}-nahled.jpg`, 'editor-orders');
+      const printUpload = await uploadBase64ToBlob(printDataUrl, `arch-${timestamp}-tisk.jpg`, 'editor-orders');
       const { data, error } = await supabase
         .from('custom_stamps')
         .insert([{ product_id: activeTemplate.productId, preview_url: previewUpload.url, print_url: printUpload.url }])

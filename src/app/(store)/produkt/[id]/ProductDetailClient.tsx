@@ -37,9 +37,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
   const productParameters = [
     { label: 'Kategorie', value: product.category },
     { label: 'Katalogové číslo', value: product.catalog_number },
-    { label: 'Typ známky', value: product.stamp_type },
     { label: 'Datum vydání', value: formatDate(product.release_date) },
-    { label: 'Tiskové listy', value: product.print_sheets },
     { label: 'Rozměr', value: product.dimensions_mm ? `${product.dimensions_mm} mm` : null },
     { label: 'Výtvarný návrh', value: product.designer },
     { label: 'Autor rytiny', value: product.engraver },

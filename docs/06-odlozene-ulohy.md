@@ -28,7 +28,6 @@
 
 | Co chybí | Poznámka |
 |---|---|
-| **`related_stamp_id` a `print_sheets` needitovatelné** | Ani nový formulář `ProductFormModal`, ani žádné jiné UI tato pole nenabízí. Pokud se mají reálně využívat (např. „související produkty" už dnes ukazuje detail produktu, ale výběr se zatím neřeší v adminu), je potřeba je do formuláře doplnit. |
 | **Tiskové archy se tiskárně nepředávají automaticky** | Hromadný ZIP export v dashboardu existuje (viz [sekce 5](05-administrace.md#2-záložka-objednávky)), ale soubor admin pošle tiskárně manuálně — žádná automatizace/integrace. |
 
 ## Jak s touto sekcí pracovat

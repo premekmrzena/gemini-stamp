@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 
 const categoryLabels: Record<string, string> = {
   'znamky': 'Poštovní známky',
+  'znamkove-archy': 'Známkové archy',
   'kreativni-archy': 'Kreativní archy',
   'fdc': 'First Day Cover (FDC)',
   'plakety': 'Dárkové plakety',

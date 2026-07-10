@@ -19,6 +19,11 @@ export default function CategoryPage() {
       description: 'Zde doplň svůj vlastní text pro kategorii Poštovní známky.',
       videoUrl: '/videos/znamky.mp4'
     },
+    'znamkove-archy': {
+      title: 'Známkové archy',
+      description: 'Zde doplň svůj vlastní text pro kategorii Známkové archy.',
+      videoUrl: ''
+    },
     'kreativni-archy': {
       title: 'Kreativní archy',
       description: 'Zde doplň svůj vlastní text pro kategorii Kreativní archy.',
@@ -42,6 +47,13 @@ export default function CategoryPage() {
     videoUrl: ''
   };
 
+  // Známky a Známkové archy se na eshopu vypisují společně na obou slugech.
+  const categoryGroups: Record<string, string[]> = {
+    'znamky': ['znamky', 'znamkove-archy'],
+    'znamkove-archy': ['znamky', 'znamkove-archy'],
+  };
+  const categoriesToFetch = categoryGroups[slug] || [slug];
+
   useEffect(() => {
     if (!slug) return;
     async function fetchCategoryProducts() {
@@ -49,7 +61,7 @@ export default function CategoryPage() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('category', slug)
+        .in('category', categoriesToFetch)
         .eq('is_active', true)
         .order('tag_top', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });

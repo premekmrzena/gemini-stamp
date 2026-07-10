@@ -915,6 +915,7 @@ export default function AdminDashboard() {
       {productFormTarget && (
         <ProductFormModal
           product={productFormTarget === 'new' ? null : productFormTarget}
+          allProducts={products}
           onClose={() => setProductFormTarget(null)}
           onSaved={handleProductSaved}
         />

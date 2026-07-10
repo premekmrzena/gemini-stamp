@@ -1,4 +1,4 @@
-export type ProductCategory = 'znamky' | 'kreativni-archy' | 'fdc' | 'plakety';
+export type ProductCategory = 'znamky' | 'znamkove-archy' | 'kreativni-archy' | 'fdc' | 'plakety';
 
 export type DiscountType = 'percentage' | 'fixed';
 
@@ -32,9 +32,7 @@ export type Product = {
   tag_last_pieces: boolean;
   tag_top: number | null;
   catalog_number: string | null;
-  stamp_type: string | null;
   release_date: string | null;
-  print_sheets: string | null;
   dimensions_mm: string | null;
   designer: string | null;
   engraver: string | null;
