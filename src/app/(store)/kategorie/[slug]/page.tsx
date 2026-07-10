@@ -16,7 +16,7 @@ export default function CategoryPage() {
   const categoryContent: Record<string, { title: string; description: string; videoUrl: string }> = {
     'znamky': {
       title: 'Poštovní známky',
-      description: 'Zde doplň svůj vlastní text pro kategorii Poštovní známky.',
+      description: 'Vstupte do světa, kde se setkávají majestátní evropská historie, architektura, nadčasové umění a hluboká mystika. Česká filatelistická škola je celosvětově uznávaným fenoménem, proslulým nedostižnou precizností tradiční ruční rytiny. Každá známka v této exkluzivní kolekci není jen obyčejným kouskem papíru, ale mistrovským uměleckým dílem a cenným artefaktem, který vypráví ty nejsilnější příběhy starého kontinentu.',
       videoUrl: '/videos/znamky.mp4'
     },
     'znamkove-archy': {

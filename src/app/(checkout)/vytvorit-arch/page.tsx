@@ -119,8 +119,8 @@ export default function EditorPage() {
         {currentStep === 1 && (
           <>
           <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
-            <h1 className="style-h1 text-secondary text-center mb-2">Vyberte si šablonu</h1>
-            <p className="style-body text-secondary text-center mb-3">Zvolte rozvržení pro Váš kreativní arch s vlastními fotografiemi.</p>
+            <h1 className="style-h1 text-secondary text-center mb-6">Vyberte si šablonu</h1>
+            <p className="style-body text-secondary text-center max-w-xl mb-3">Zvěčněte své nejkrásnější vzpomínky do podoby exkluzivního uměleckého díla, jehož hlavním motivem budete vy sami. Náš unikátní editor vám umožní snadno vložit vlastní fotografii do prémiové šablony známkového archu a propojit tak váš osobní příběh s majestátní evropskou tradicí. Vytvořte si během několika okamžiků vysoce reprezentativní památku nebo naprosto jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty.</p>
             <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-primary hover:text-primary-hover transition-colors mb-8 md:mb-[48px]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -162,7 +162,7 @@ export default function EditorPage() {
 
                     {/* Obsah */}
                     <div className="flex flex-col flex-grow items-center text-center pointer-events-none">
-                      <h3 className="style-h4 text-secondary mb-[8px]">{tpl.name}</h3>
+                      <h3 className="style-h4 text-secondary mb-[8px] line-clamp-2 min-h-[2.8em]">{tpl.name}</h3>
 
                       {/* Pill */}
                       <div className="inline-flex items-center gap-[6px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5 mb-[12px]">
@@ -176,24 +176,27 @@ export default function EditorPage() {
                         </span>
                       </div>
 
-                      <p className="style-body text-secondary/70 mb-[24px]">{tpl.description}</p>
+                      <p className="style-body text-secondary/70 mb-[24px] line-clamp-2 min-h-[2.8em]">{tpl.description}</p>
 
-                      {priceInfo && (
-                        <div className="mb-[12px]">
-                          {salePrice ? (
-                            <span className="style-product-price flex items-center gap-2">
-                              <span className="text-black300 line-through">{priceInfo.price} Kč</span>
-                              <span className="text-success">{salePrice} Kč</span>
-                            </span>
+                      <div className="mt-auto flex flex-col items-center gap-[12px] relative z-30 pointer-events-auto">
+                        <div>
+                          {priceInfo ? (
+                            salePrice ? (
+                              <span className="style-product-price flex items-center gap-2">
+                                <span className="text-black300 line-through">{priceInfo.price} Kč</span>
+                                <span className="text-success">{salePrice} Kč</span>
+                              </span>
+                            ) : (
+                              <span className="style-product-price text-success">
+                                Cena {priceInfo.price} Kč
+                              </span>
+                            )
                           ) : (
-                            <span className="style-product-price text-success">
-                              Cena {priceInfo.price} Kč
+                            <span className="style-product-price text-transparent select-none" aria-hidden="true">
+                              Cena 000 Kč
                             </span>
                           )}
                         </div>
-                      )}
-
-                      <div className="mt-auto flex flex-col items-center gap-[12px] relative z-30 pointer-events-auto">
                         {/* CTA */}
                         <Button onClick={() => handleSelectTemplate(tpl.id)}>
                           Vybrat šablonu

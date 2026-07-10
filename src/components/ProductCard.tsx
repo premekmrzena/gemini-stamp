@@ -76,7 +76,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
       </div>
 
       <div className="flex flex-col flex-grow items-center text-center relative z-10 pointer-events-none select-none">
-        <h3 className="style-h4 mb-2">{product.name}</h3>
+        <h3 className="style-h4 mb-2 line-clamp-2 min-h-[2.8em]">{product.name}</h3>
         <p className="style-body text-secondary/70 mb-4 line-clamp-3">{product.short_description}</p>
       </div>
 
