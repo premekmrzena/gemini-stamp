@@ -235,7 +235,15 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
             </div>
             <div>
               <label className={labelClass}>Detailní popis</label>
-              <textarea className={textareaClass} value={form.detailed_description ?? ''} onChange={(e) => set('detailed_description', e.target.value)} />
+              <textarea
+                className={textareaClass}
+                value={form.detailed_description ?? ''}
+                onChange={(e) => set('detailed_description', e.target.value)}
+                placeholder="Lze použít HTML tagy: <h3>, <h4>, <strong>, <ul><li>...</li></ul>, <p>, <br>"
+              />
+              <p className="style-label text-black300 mt-1">
+                Povolené HTML tagy: &lt;h3&gt;, &lt;h4&gt;, &lt;strong&gt;, &lt;ul&gt;/&lt;ol&gt;/&lt;li&gt;, &lt;p&gt;, &lt;br&gt;. Ostatní tagy se při zobrazení odstraní.
+              </p>
             </div>
           </div>
 

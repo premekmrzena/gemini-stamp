@@ -8,6 +8,7 @@ import Button from '@/components/Button';
 import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getSalePrice } from '@/lib/pricing';
+import { sanitizeDescriptionHtml } from '@/lib/sanitize';
 
 export default function ProductDetailClient({ product, relatedProducts }: any) {
   const salePrice = getSalePrice(product.price, product.sale_price);
@@ -218,11 +219,10 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
                   </svg>
                 </button>
                 
-                <div className={`${isDescOpen ? 'block' : 'hidden'} mt-4 select-none`}>
-                  <p className="style-body text-white/70 whitespace-pre-line">
-                    {product.detailed_description}
-                  </p>
-                </div>
+                <div
+                  className={`${isDescOpen ? 'block' : 'hidden'} mt-4 select-none rich-description style-body text-white/70 whitespace-pre-line`}
+                  dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(product.detailed_description) }}
+                />
               </div>
             )}
 

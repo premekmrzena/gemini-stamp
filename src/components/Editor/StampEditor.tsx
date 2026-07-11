@@ -8,6 +8,7 @@ import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
 import { supabase } from '@/lib/supabase';
 import TextControls from './TextControls';
 import ColorPickerInput from './ColorPickerInput';
+import { editorFontClassNames } from './editorFonts';
 
 type MiniMapProps = {
   template: Template;
@@ -251,7 +252,7 @@ export default function StampEditor({ onComplete, templateId }: StampEditorProps
 
   return (
     <div
-      className={`w-full flex flex-col text-secondary select-none bg-black font-poppins relative ${!isPreviewStep && !showThankYou ? 'touch-none' : ''}`}
+      className={`w-full flex flex-col text-secondary select-none bg-black font-poppins relative ${editorFontClassNames} ${!isPreviewStep && !showThankYou ? 'touch-none' : ''}`}
       onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUp}
     >
       <style>{`
@@ -549,7 +550,7 @@ export default function StampEditor({ onComplete, templateId }: StampEditorProps
               <div className="flex gap-[16px] h-[48px]">
                 <div className="flex-1 relative">
                   <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full h-full bg-secondary text-black rounded-[4px] pl-4 pr-10 style-body appearance-none outline-none focus:ring-2 focus:ring-success">
-                    {[{ name: 'Moderní (Poppins)', value: 'Poppins' }, { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' }, { name: 'Psací (Dancing Script)', value: 'Dancing Script' }, { name: 'Retro (Pacifico)', value: 'Pacifico' }].map((f) => (
+                    {[{ name: 'Moderní (Poppins)', value: 'Poppins' }, { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' }, { name: 'Psací (Dancing Script)', value: 'Dancing Script' }, { name: 'Retro (Righteous)', value: 'Righteous' }].map((f) => (
                       <option key={f.value} value={f.value}>{f.name}</option>
                     ))}
                   </select>

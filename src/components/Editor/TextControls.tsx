@@ -5,7 +5,7 @@ const FONT_OPTIONS = [
   { name: 'Moderní (Poppins)', value: 'Poppins' },
   { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' },
   { name: 'Psací (Dancing Script)', value: 'Dancing Script' },
-  { name: 'Retro (Pacifico)', value: 'Pacifico' },
+  { name: 'Retro (Righteous)', value: 'Righteous' },
 ];
 
 type Props = {
