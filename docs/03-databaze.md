@@ -1,14 +1,14 @@
 # 3. Databáze (Supabase)
 
-> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
+> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
 
 ## `products`
 | Sloupec | Typ | Povinné při insertu | Default |
 |---|---|---|---|
 | id | uuid (PK) | ano | `gen_random_uuid()` |
 | name | text | ano | – |
-| short_description | text | ne (nullable) | – |
-| detailed_description | text | ne (nullable) | – |
+| short_description | text, čistý text (žádné HTML) | ne (nullable) | – |
+| detailed_description | text, od 2026-07-11 může obsahovat HTML (`h3`/`h4`/`strong`/`em`/`ul`/`ol`/`li`/`p`/`br`) – sanitizuje se až při renderu, ne při uložení, viz [sekce 4](04-popis-eshopu.md#1-homepage) | ne (nullable) | – |
 | price | integer | ano | – |
 | sale_price | numeric | ne (nullable) | – |
 | weight_grams | integer | ano | `0` |

@@ -1,6 +1,6 @@
 # 4. Popis e-shopu (funkční přehled)
 
-> Obecné shrnutí toho, co e-shop dělá a jak se v něm zákazník pohybuje, bez nutnosti číst kód. Popis odpovídá skutečnému chování k 2026-06-16, doplněno o slevy a recenze na mobilu k 2026-07-01, doplněno o flow „Začít tvořit“ pro kreativní archy k 2026-07-01, doplněno o sjednocení vstupu do výběru šablony a ceny na kartách šablon k 2026-07-03, doplněno o slevové kódy, stránku „Jak nakupovat“ a info pruh na homepage k 2026-07-08.
+> Obecné shrnutí toho, co e-shop dělá a jak se v něm zákazník pohybuje, bez nutnosti číst kód. Popis odpovídá skutečnému chování k 2026-06-16, doplněno o slevy a recenze na mobilu k 2026-07-01, doplněno o flow „Začít tvořit“ pro kreativní archy k 2026-07-01, doplněno o sjednocení vstupu do výběru šablony a ceny na kartách šablon k 2026-07-03, doplněno o slevové kódy, stránku „Jak nakupovat“ a info pruh na homepage k 2026-07-08, doplněno o formátovaný detailní popis a opravu fontů v editoru k 2026-07-11.
 
 ## 1. Homepage
 
@@ -30,6 +30,8 @@ Produkty patří do jedné z 5 kategorií (`znamky`, `znamkove-archy`, `kreativn
 
 Kliknutím na produkt se zákazník dostane na detail (`/produkt/[id]`): hlavní obrázek + galerie, název, cena (se stejnou logikou slevy jako na kartě), technické parametry (katalogové číslo, datum vydání, rozměry, designér, rytec…) a popis v rozbalovacích sekcích, plus 3 související produkty na konci stránky (ty sleva zohledňují také). Tlačítkem „Do košíku“ se produkt přidá do košíku přímo z detailu i z karty produktu na výpisu – do košíku jde vždy aktuální efektivní cena (zlevněná, pokud je nastavená).
 
+Od 2026-07-11 podporuje **detailní popis** (`detailed_description`) základní formátování – admin může v poli psát rovnou HTML tagy `<h3>`, `<h4>`, `<strong>`, `<ul>`/`<ol>`/`<li>`, `<p>`, `<br>` (nápověda přímo ve formuláři, viz [sekce 5](05-administrace.md#3-záložka-homepage-produkty)). Na frontendu se sanitizuje přes `isomorphic-dompurify` (`src/lib/sanitize.ts`) až při vykreslení – ostatní tagy se tiše odstraní. **Krátký popis** (perex na kartě produktu, `short_description`) formátování nepodporuje a zůstává čistý text, protože je ořezaný přes `line-clamp-3` a nadpisy/seznamy by se tam vizuálně rozpadly.
+
 **Výjimka pro kategorii `kreativni-archy`:** karta produktu i detail místo „Do košíku“ zobrazují tlačítko **„Začít tvořit“** (ikona štětce) – klik vede rovnou do editoru (`/vytvorit-arch?productId={id}`), kde se podle `productId` (mapování na `TEMPLATES` v `src/lib/editorConfig.ts`) automaticky přeskočí výběr šablony a otevře se editor s příslušnou šablonou předvyplněnou, viz [sekce 3](#3-editor-kreativní-archy). U těchto produktů se v Parametrech zobrazují jen Kategorie, Katalogové číslo, Rozměr a Hmotnost (technické parametry specifické pro známky – datum vydání, designér, rytec – dávají smysl jen u kategorie `znamky`, u archů se skrývají). Titulek popisové sekce je u všech kategorií „Detailní popis“ (dřív „Detailní popis známky“).
 
 Košík je udržován v `CartContext` a ukládá se do `localStorage` (klíč `razitka-cart`), takže zákazníkovi zůstane i po zavření prohlížeče.
@@ -58,7 +60,7 @@ Pokud zákazník přijde z karty/detailu produktu kategorie `kreativni-archy` (t
 
 V editoru zákazník:
 - nahrává fotky do jednotlivých fotoslotů (klik na prázdný slot otevře výběr souboru), může je v rámci slotu posouvat a zvětšovat/zmenšovat
-- vyplňuje jeden textový slot – má k dispozici zarovnání (vlevo/na střed/vpravo), výběr ze 4 fontů (moderní, elegantní, psací, retro), velikost textu, výběr barvy a volitelný stín textu
+- vyplňuje jeden textový slot – má k dispozici zarovnání (vlevo/na střed/vpravo), výběr ze 4 fontů (moderní = Poppins, elegantní = Playfair Display, psací = Dancing Script, retro = Righteous, viz `src/components/Editor/editorFonts.ts`), velikost textu, výběr barvy a volitelný stín textu. Fonty se musí natahovat přes `next/font/google` (s `variable`, ne `className` – jinak přebijí dědičností výchozí Poppins v celém editoru) – přímý `@import url()` na Google Fonts CDN v `globals.css` se v tomto Turbopack buildu tiše nepropíše do výsledného CSS a font by nefungoval bez jakékoli chybové hlášky (opraveno 2026-07-11, dřív reálně fungoval jen Poppins).
 
 Mobilní zobrazení má jiné ovládání než desktop – prochází se sloty postupně (mini-mapa nahoře, šipky nahoru/dolů) s vysouvacím panelem pro textové úpravy. Tato mobilní část je hotová a uzamčená, úpravy se dělají jen na desktopové verzi (výjimkou jsou cílené opravy chyb na explicitní žádost – např. 2026-07-08 oprava ořezané palety barev (`ColorPickerInput.tsx`): paleta se nadále otevírá nahoru jako dřív, ale její výška se při otevření dynamicky dopočítá z reálně dostupného místa nad tlačítkem, takže se na mobilu vejde celá).
 
