@@ -71,12 +71,14 @@ export default async function ProductPage({
   }
 
   const categoryLabel = categoryLabels[product.category] || product.category;
+  // Kreativní archy nemají vlastní stránku kategorie – vstupním bodem je editor.
+  const categoryHref = product.category === 'kreativni-archy' ? '/vytvorit-arch' : `/kategorie/${product.category}`;
 
   return (
     <>
       <Breadcrumbs
         items={[
-          { label: categoryLabel, href: `/kategorie/${product.category}` },
+          { label: categoryLabel, href: categoryHref },
           { label: product.name },
         ]}
       />

@@ -9,7 +9,7 @@ export default function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
   const all: BreadcrumbItem[] = [{ label: 'Domů', href: '/' }, ...items];
 
   return (
-    <nav className="bg-[#0F172A] border-b border-white/5">
+    <nav className="bg-[#0F172A]">
       <div className="layout-container py-3">
         <ol className="flex items-center gap-1.5 flex-wrap">
           {all.map((item, i) => {
