@@ -26,9 +26,9 @@ export default async function Home() {
     <main className="flex flex-col bg-[#0F172A] py-[32px] md:py-[54px] lg:py-[64px] gap-[44px] md:gap-[60px] lg:gap-[64px] w-full min-h-screen">
       <Hero />
       <ShopInfoStrip />
-      <ReviewStrip />
       {/* Předáme stažené produkty do komponenty ProductList */}
-      <ProductList products={products || []} />
+      <ProductList products={products || []} title="Skvosty, které můžete mít" showCategoryLinks />
+      <ReviewStrip />
     </main>
   );
 }
