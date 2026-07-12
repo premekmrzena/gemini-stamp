@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,10 +10,25 @@ import { supabase } from '@/lib/supabase';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
 import Footer from '@/components/Footer';
-import { TEMPLATES } from '@/lib/editorConfig';
-import { getSalePrice } from '@/lib/pricing';
+import { TEMPLATES, Template } from '@/lib/editorConfig';
+import { getSalePrice, getEffectivePrice } from '@/lib/pricing';
 
-type TemplatePrice = { price: number; sale_price: number | null };
+type TemplatePrice = { price: number; sale_price: number | null; sold_count: number };
+
+const SORT_OPTIONS = {
+  doporucene: { label: 'Doporučené', compare: null },
+  price_asc: { label: 'Cena: od nejnižší', compare: (a: Template, b: Template, prices: Record<string, TemplatePrice>) => priceOf(a, prices) - priceOf(b, prices) },
+  price_desc: { label: 'Cena: od nejvyšší', compare: (a: Template, b: Template, prices: Record<string, TemplatePrice>) => priceOf(b, prices) - priceOf(a, prices) },
+  name_asc: { label: 'Název: A–Z', compare: (a: Template, b: Template) => a.name.localeCompare(b.name, 'cs') },
+  bestseller: { label: 'Nejprodávanější', compare: (a: Template, b: Template, prices: Record<string, TemplatePrice>) => (prices[b.productId]?.sold_count ?? 0) - (prices[a.productId]?.sold_count ?? 0) },
+} as const satisfies Record<string, { label: string; compare: ((a: Template, b: Template, prices: Record<string, TemplatePrice>) => number) | null }>;
+
+type SortKey = keyof typeof SORT_OPTIONS;
+
+function priceOf(tpl: Template, prices: Record<string, TemplatePrice>): number {
+  const info = prices[tpl.productId];
+  return info ? getEffectivePrice(info.price, info.sale_price) : Infinity;
+}
 
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
   ssr: false,
@@ -25,6 +40,7 @@ export default function EditorPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
   const [prices, setPrices] = useState<Record<string, TemplatePrice>>({});
+  const [sortKey, setSortKey] = useState<SortKey>('doporucene');
 
   const { addToCart } = useCart();
 
@@ -44,19 +60,24 @@ export default function EditorPage() {
     async function fetchPrices() {
       const { data, error } = await supabase
         .from('products')
-        .select('id, price, sale_price')
+        .select('id, price, sale_price, sold_count')
         .in('id', TEMPLATES.map((t) => t.productId));
 
       if (error || !data) return;
 
       const byId: Record<string, TemplatePrice> = {};
       for (const row of data) {
-        byId[row.id] = { price: row.price, sale_price: row.sale_price };
+        byId[row.id] = { price: row.price, sale_price: row.sale_price, sold_count: row.sold_count };
       }
       setPrices(byId);
     }
     fetchPrices();
   }, []);
+
+  const sortedTemplates = useMemo(() => {
+    const compare = SORT_OPTIONS[sortKey].compare;
+    return compare ? [...TEMPLATES].sort((a, b) => compare(a, b, prices)) : TEMPLATES;
+  }, [sortKey, prices]);
 
   const handleSelectTemplate = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -118,20 +139,35 @@ export default function EditorPage() {
         {/* === KROK 1: VÝBĚR ŠABLONY === */}
         {currentStep === 1 && (
           <>
-          <div className="layout-container py-8 md:py-[64px] flex flex-col items-center animate-fadeIn">
-            <h1 className="style-h1 text-secondary text-center mb-6">Vyberte si šablonu</h1>
-            <p className="style-body text-secondary text-center max-w-xl mb-3">Zvěčněte své nejkrásnější vzpomínky do podoby exkluzivního uměleckého díla, jehož hlavním motivem budete vy sami. Náš unikátní editor vám umožní snadno vložit vlastní fotografii do prémiové šablony známkového archu a propojit tak váš osobní příběh s majestátní evropskou tradicí. Vytvořte si během několika okamžiků vysoce reprezentativní památku nebo naprosto jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty.</p>
-            <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-primary hover:text-primary-hover transition-colors mb-8 md:mb-[48px]">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
-                <line x1="12" y1="12" x2="12" y2="16" />
-              </svg>
-              Co je kreativní arch?
-            </Link>
+          <section className="py-8 md:py-12">
+            <div className="layout-container flex flex-col items-center text-center animate-fadeIn">
+              <h1 className="style-h1 text-secondary mb-6 lowercase first-letter:uppercase leading-tight">Vyberte si šablonu</h1>
+              <p className="style-body text-secondary/70 max-w-[43rem]">Zvěčněte své nejkrásnější vzpomínky do podoby exkluzivního uměleckého díla, jehož hlavním motivem budete vy sami. Náš unikátní editor vám umožní snadno vložit vlastní fotografii do prémiové šablony známkového archu a propojit tak váš osobní příběh s majestátní evropskou tradicí. Vytvořte si během několika okamžiků vysoce reprezentativní památku nebo naprosto jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty.</p>
+              <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-primary hover:text-primary-hover transition-colors mt-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
+                  <line x1="12" y1="12" x2="12" y2="16" />
+                </svg>
+                Co je kreativní arch?
+              </Link>
+            </div>
+          </section>
 
+          <div className="layout-container pb-8 md:pb-[64px]">
+            <div className="flex justify-end mb-4">
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+              >
+                {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
             <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
-              {TEMPLATES.map((tpl) => {
+              {sortedTemplates.map((tpl) => {
                 const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
                 const priceInfo = prices[tpl.productId];
                 const salePrice = priceInfo ? getSalePrice(priceInfo.price, priceInfo.sale_price) : null;
