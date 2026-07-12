@@ -1,10 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ProductList from '@/components/ProductList';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { getEffectivePrice } from '@/lib/pricing';
+
+type SortableProduct = { name: string; price: number; sale_price: number | null; sold_count: number | null };
+
+const SORT_OPTIONS = {
+  doporucene: { label: 'Doporučené', compare: null },
+  price_asc: { label: 'Cena: od nejnižší', compare: (a: SortableProduct, b: SortableProduct) => getEffectivePrice(a.price, a.sale_price) - getEffectivePrice(b.price, b.sale_price) },
+  price_desc: { label: 'Cena: od nejvyšší', compare: (a: SortableProduct, b: SortableProduct) => getEffectivePrice(b.price, b.sale_price) - getEffectivePrice(a.price, a.sale_price) },
+  name_asc: { label: 'Název: A–Z', compare: (a: SortableProduct, b: SortableProduct) => a.name.localeCompare(b.name, 'cs') },
+  bestseller: { label: 'Nejprodávanější', compare: (a: SortableProduct, b: SortableProduct) => (b.sold_count ?? 0) - (a.sold_count ?? 0) },
+} as const satisfies Record<string, { label: string; compare: ((a: SortableProduct, b: SortableProduct) => number) | null }>;
+
+type SortKey = keyof typeof SORT_OPTIONS;
 
 export default function CategoryPage() {
   const params = useParams();
@@ -12,6 +25,7 @@ export default function CategoryPage() {
 
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>('doporucene');
 
   const categoryContent: Record<string, { title: string; description: string; videoUrl: string }> = {
     'znamky': {
@@ -70,6 +84,11 @@ export default function CategoryPage() {
     }
     fetchCategoryProducts();
   }, [slug]);
+
+  const sortedProducts = useMemo(() => {
+    const compare = SORT_OPTIONS[sortKey].compare;
+    return compare ? [...products].sort(compare) : products;
+  }, [products, sortKey]);
 
   if (!slug && loading) {
     return <div className="min-h-screen bg-black flex items-center justify-center text-secondary">Načítám...</div>;
@@ -134,7 +153,22 @@ export default function CategoryPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary-hover" />
         </div>
       ) : (
-        <ProductList products={products} />
+        <>
+          {products.length > 0 && (
+            <div className="layout-container flex justify-end mb-4">
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+              >
+                {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <ProductList products={sortedProducts} />
+        </>
       )}
     </div>
   );

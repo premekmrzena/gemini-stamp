@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Product, ProductCategory } from '@/types/database';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 
-const CATEGORY_LABELS: Record<ProductCategory, string> = {
+export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   'znamky': 'Známky',
   'znamkove-archy': 'Známkové archy',
   'kreativni-archy': 'Kreativní archy',
@@ -38,6 +38,7 @@ const EMPTY_FORM: ProductFormData = {
   engraver: '',
   related_stamp_id: null,
   show_on_homepage: false,
+  sold_count: 0,
 };
 
 async function uploadToBlob(file: File, category: ProductCategory): Promise<string> {

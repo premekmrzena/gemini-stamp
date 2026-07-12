@@ -1,20 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ORDER_STATUSES } from '@/lib/constants';
-import { OrderStatus, Product, DiscountCode } from '@/types/database';
-import { ProductFormModal } from '@/components/admin/ProductFormModal';
+import { OrderStatus, Product, ProductCategory, DiscountCode } from '@/types/database';
+import { ProductFormModal, CATEGORY_LABELS } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
+import { getEffectivePrice } from '@/lib/pricing';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
-  MapPin, Calendar,
+  MapPin, Calendar, Search,
   LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag
 } from 'lucide-react';
 import JSZip from 'jszip';
 
 const LOW_STOCK_THRESHOLD = 5;
+
+const PRODUCT_SORT_OPTIONS = {
+  created_desc: { label: 'Nejnovější', compare: (a: Product, b: Product) => +new Date(b.created_at) - +new Date(a.created_at) },
+  name_asc: { label: 'Název A–Z', compare: (a: Product, b: Product) => a.name.localeCompare(b.name, 'cs') },
+  name_desc: { label: 'Název Z–A', compare: (a: Product, b: Product) => b.name.localeCompare(a.name, 'cs') },
+  price_asc: { label: 'Cena nejnižší', compare: (a: Product, b: Product) => getEffectivePrice(a.price, a.sale_price) - getEffectivePrice(b.price, b.sale_price) },
+  price_desc: { label: 'Cena nejvyšší', compare: (a: Product, b: Product) => getEffectivePrice(b.price, b.sale_price) - getEffectivePrice(a.price, a.sale_price) },
+  stock_asc: { label: 'Sklad nejnižší', compare: (a: Product, b: Product) => a.stock_quantity - b.stock_quantity },
+  stock_desc: { label: 'Sklad nejvyšší', compare: (a: Product, b: Product) => b.stock_quantity - a.stock_quantity },
+} as const satisfies Record<string, { label: string; compare: (a: Product, b: Product) => number }>;
+
+type ProductSortKey = keyof typeof PRODUCT_SORT_OPTIONS;
 
 const STATUS_COLOR_CLASSES: Record<'neutral' | 'success' | 'danger', string> = {
   success: 'bg-success/10 text-success border-success/20',
@@ -61,6 +74,17 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productFormTarget, setProductFormTarget] = useState<Product | 'new' | null>(null);
+  const [productSearch, setProductSearch] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState<ProductCategory | 'all'>('all');
+  const [productSortKey, setProductSortKey] = useState<ProductSortKey>('created_desc');
+
+  const filteredSortedProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase();
+    return products
+      .filter((p) => productCategoryFilter === 'all' || p.category === productCategoryFilter)
+      .filter((p) => !query || p.name.toLowerCase().includes(query) || (p.catalog_number ?? '').toLowerCase().includes(query))
+      .sort(PRODUCT_SORT_OPTIONS[productSortKey].compare);
+  }, [products, productSearch, productCategoryFilter, productSortKey]);
 
   // --- STAVY PRO SLEVOVÉ KÓDY ---
   const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
@@ -485,7 +509,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('produkty')}
             className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'produkty' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
           >
-            <Home size={16} /> Homepage produkty
+            <Home size={16} /> Produkty
           </button>
           <button
             onClick={() => setActiveTab('slevy')}
@@ -495,10 +519,41 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* PRODUKTY - HOMEPAGE */}
+        {/* PRODUKTY */}
         {activeTab === 'produkty' && (
           <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex items-center">
+                  <Search size={16} className="absolute left-3 text-black300 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Hledat produkt..."
+                    className="bg-black400 border border-black300/30 rounded-[8px] pl-9 pr-4 h-[40px] style-body text-secondary placeholder:text-black300/50 focus:border-primary outline-none transition-all w-[220px]"
+                  />
+                </div>
+                <select
+                  value={productCategoryFilter}
+                  onChange={(e) => setProductCategoryFilter(e.target.value as ProductCategory | 'all')}
+                  className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                >
+                  <option value="all">Všechny kategorie</option>
+                  {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                <select
+                  value={productSortKey}
+                  onChange={(e) => setProductSortKey(e.target.value as ProductSortKey)}
+                  className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                >
+                  {Object.entries(PRODUCT_SORT_OPTIONS).map(([value, { label }]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
               <button
                 onClick={() => setProductFormTarget('new')}
                 className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer"
@@ -509,6 +564,8 @@ export default function AdminDashboard() {
             <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
             {productsLoading ? (
               <div className="p-10 text-center text-black300 style-body">Načítám produkty...</div>
+            ) : filteredSortedProducts.length === 0 ? (
+              <div className="p-10 text-center text-black300 style-body">Žádné produkty neodpovídají filtru.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -524,7 +581,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black300/20">
-                    {products.map((product) => (
+                    {filteredSortedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-black/30 transition-colors">
                         <td className="p-4">
                           <p className="style-body-bold text-secondary">{product.name}</p>
@@ -537,7 +594,7 @@ export default function AdminDashboard() {
                             <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
                           )}
                         </td>
-                        <td className="p-4 style-body text-black300 capitalize">{product.category || '—'}</td>
+                        <td className="p-4 style-body text-black300">{product.category ? CATEGORY_LABELS[product.category] : '—'}</td>
                         <td className="p-4 text-center">
                           {product.stock_quantity <= 0 ? (
                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">

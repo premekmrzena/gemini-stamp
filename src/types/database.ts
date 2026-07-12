@@ -39,6 +39,7 @@ export type Product = {
   related_stamp_id: string[] | null;
   created_at: string;
   show_on_homepage: boolean | null;
+  sold_count: number;
 };
 
 export type OrderStatus =

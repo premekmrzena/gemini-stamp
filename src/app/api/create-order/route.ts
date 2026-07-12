@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     let computedSubtotal = 0;
     let totalWeightGrams = 0;
     const validatedItems: CartItemSnapshot[] = [];
+    const soldIncrements: { productId: string; qty: number }[] = [];
 
     for (const item of cartItems) {
       if (item.item_type === 'product') {
@@ -46,11 +47,12 @@ export async function POST(req: Request) {
         computedSubtotal += effectivePrice * item.quantity;
         totalWeightGrams += (product.weight_grams || 0) * item.quantity;
         validatedItems.push({ ...item, price: effectivePrice, weight_grams: product.weight_grams });
+        soldIncrements.push({ productId: product.id, qty: item.quantity });
 
       } else if (item.item_type === 'custom') {
         const { data: stamp, error } = await supabase
           .from('custom_stamps')
-          .select('id, preview_url, products(name, price, sale_price, weight_grams)')
+          .select('id, preview_url, products(id, name, price, sale_price, weight_grams)')
           .eq('id', item.id)
           .single();
 
@@ -71,6 +73,7 @@ export async function POST(req: Request) {
           price: effectivePrice,
           weight_grams: (product as any).weight_grams,
         });
+        soldIncrements.push({ productId: (product as any).id, qty: item.quantity });
       } else {
         return NextResponse.json({ error: 'Neznámý typ položky v košíku' }, { status: 400 });
       }
@@ -127,6 +130,12 @@ export async function POST(req: Request) {
       .single();
 
     if (insertError) throw insertError;
+
+    for (const { productId, qty } of soldIncrements) {
+      supabase.rpc('increment_product_sold_count', { p_product_id: productId, p_qty: qty }).then(({ error }) => {
+        if (error) console.error('Chyba při aktualizaci sold_count:', error);
+      });
+    }
 
     if (discountCode) {
       supabase.rpc('redeem_discount_code', { p_code: discountCode }).then(({ error }) => {
