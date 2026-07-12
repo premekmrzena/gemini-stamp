@@ -1,6 +1,6 @@
 # 3. Databáze (Supabase)
 
-> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
+> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11, doplněno o `products.sold_count` k 2026-07-12. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
 
 ## `products`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -28,6 +28,7 @@
 | related_stamp_id | uuid[] | ne (nullable) | – |
 | created_at | timestamptz | ano | `now()` |
 | show_on_homepage | boolean | ne (nullable) | `false` |
+| sold_count | integer, od 2026-07-12, počet prodaných kusů pro řazení „Nejprodávanější“ (viz [sekce 4](04-popis-eshopu.md#1-homepage)) | ano | `0` |
 
 RLS: `anon` může jen číst (veřejný výpis produktů na eshopu), `authenticated` (přihlášený admin) má od 2026-07-10 explicitně plný CRUD (`docs/sql/007_products_rls_authenticated_crud.sql`) – předtím chyběla politika pro `INSERT`/`DELETE`, což se projevilo chybou „new row violates row-level security policy“ při zakládání nového produktu v adminu.
 
@@ -92,9 +93,10 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 ## Provedené SQL migrace
 - `docs/sql/001_orders_status_check.sql` – provedeno 2026-06-16 v Supabase SQL editoru, bez dopadu na stávající data.
 - `docs/sql/002_orders_tracking_number.sql` – provedeno 2026-06-16, doplnil `orders.tracking_number` (text, nullable) pro sledovací číslo zásilky, viz [sekce 5](05-administrace.md#2-záložka-objednávky).
-- `docs/sql/003_products_sale_price.sql` – provedeno 2026-07-01, doplnil `products.sale_price` (numeric, nullable) pro slevy, viz [sekce 4](04-popis-eshopu.md#1-homepage) a [sekce 5](05-administrace.md#3-záložka-homepage-produkty).
+- `docs/sql/003_products_sale_price.sql` – provedeno 2026-07-01, doplnil `products.sale_price` (numeric, nullable) pro slevy, viz [sekce 4](04-popis-eshopu.md#1-homepage) a [sekce 5](05-administrace.md#3-záložka-produkty).
 - `docs/sql/004_discount_codes.sql` – provedeno 2026-07-08, zavádí tabulku `discount_codes`, RLS (anon bez přístupu, authenticated plný CRUD) a dvě `SECURITY DEFINER` RPC funkce `validate_discount_code`/`redeem_discount_code` pro bezpečné ověření/uplatnění kódu z veřejného klienta bez rizika vypsání všech kódů.
 - `docs/sql/005_orders_discount_columns.sql` – provedeno 2026-07-08, doplňuje `orders.discount_code` a `orders.discount_amount` pro uložení uplatněné slevy na objednávce.
 - `docs/sql/006_products_category_znamkove_archy.sql` – provedeno 2026-07-10, doplňuje do enumu `product_category` novou hodnotu `znamkove-archy` (5. kategorie produktů, viz [sekce 4](04-popis-eshopu.md)).
 - `docs/sql/007_products_rls_authenticated_crud.sql` – provedeno 2026-07-10, doplňuje `authenticated` roli politiku pro plný CRUD na `products` (`INSERT`/`DELETE` předtím chyběly, `anon` čtení beze změny).
 - `docs/sql/008_products_drop_unused_columns.sql` – provedeno 2026-07-10, smazal sloupce `print_sheets` (bylo prázdné u všech produktů) a `stamp_type` (mělo vyplněnou hodnotu u 8 z 11 produktů – data vědomě zahozena na výslovné přání uživatele). Odstraněno i z `src/types/database.ts`, `ProductFormModal.tsx` a `ProductDetailClient.tsx`.
+- `docs/sql/009_products_sold_count.sql` – provedeno 2026-07-12, doplňuje `products.sold_count` (integer, default `0`) a `SECURITY DEFINER` RPC funkci `increment_product_sold_count(p_product_id, p_qty)` (grant pro `anon`/`authenticated`, protože `/api/create-order` běží pod anon klíčem a `products` nemá pro anon `UPDATE` policy). Volá se fire-and-forget po úspěšném vytvoření objednávky, pro každou položku typu `product` i `custom` (u vlastních archů se dohledá `product_id` přes `custom_stamps.products`). Slouží k řazení „Nejprodávanější“ v kategoriích a na `/vytvorit-arch`, viz [sekce 4](04-popis-eshopu.md).
