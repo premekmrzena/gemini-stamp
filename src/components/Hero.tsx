@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 
 const sliderImages = [
-  '/images/hero01_1400x788.png',
-  '/images/hero02_1400x788.png',
-  '/images/hero03_1400x788.png',
+  '/images/hero01.png',
+  '/images/hero02.png',
+  '/images/hero03.png',
 ];
 
 const steps = [
@@ -47,7 +47,7 @@ export default function Hero() {
   }, [currentSlide]);
 
   const renderSlider = (variant: 'desktop' | 'mobile', className?: string) => (
-    <div className={`relative w-full aspect-[7/5] lg:aspect-[16/9] ${className ?? ''}`}>
+    <div className={`relative w-full aspect-[7/5] lg:aspect-[4/3] ${className ?? ''}`}>
       {sliderImages.map((src, index) => (
         <div
           key={index}
@@ -84,12 +84,12 @@ export default function Hero() {
           Proměň svoje zážitky v krásný sběratelský poklad!
         </h1>
 
-        <p className="hidden md:block style-perex text-center text-secondary/70 mb-6 lg:mb-8 max-w-[620px] mx-auto">
+        <p className="hidden md:block style-perex text-center text-secondary/70 mb-8 lg:mb-8 max-w-[620px] mx-auto">
           Kreativní arch s významnými umělci nebo památkami na poštovních známkách!
         </p>
 
         {/* Desktop / Tablet */}
-        <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-5 lg:gap-12 mx-auto w-full mb-10 lg:mb-0">
+        <div className="hidden md:flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 mx-auto w-full mb-10 lg:mb-0">
 
           <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-6 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0">
             {steps.map((step) => (
@@ -103,13 +103,13 @@ export default function Hero() {
             ))}
           </div>
 
-          <div className="order-1 lg:order-2 w-full max-w-[700px] shrink relative">
+          <div className="order-1 lg:order-2 w-full max-w-[700px] lg:max-w-[525px] shrink relative">
             {renderSlider('desktop')}
           </div>
         </div>
 
         {/* Mobile */}
-        <div className="md:hidden w-full flex flex-col items-center mb-4">
+        <div className="md:hidden w-full flex flex-col items-center mt-6 mb-8">
           {renderSlider('mobile', 'max-w-[500px]')}
         </div>
 

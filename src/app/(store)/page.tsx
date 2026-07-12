@@ -2,6 +2,7 @@ import Hero from '@/components/Hero';
 import ShopInfoStrip from '@/components/ShopInfoStrip';
 import ReviewStrip from '@/components/ReviewStrip';
 import ProductList from '@/components/ProductList';
+import TrustBadges from '@/components/TrustBadges';
 import { supabase } from '@/lib/supabase'; // Import našeho připojení k databázi
 export const revalidate = 60;
 
@@ -29,6 +30,9 @@ export default async function Home() {
       {/* Předáme stažené produkty do komponenty ProductList */}
       <ProductList products={products || []} title="Skvosty, které můžete mít" showCategoryLinks />
       <ReviewStrip />
+      <div className="layout-container">
+        <TrustBadges />
+      </div>
     </main>
   );
 }

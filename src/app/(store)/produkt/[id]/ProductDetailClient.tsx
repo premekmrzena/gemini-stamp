@@ -237,7 +237,11 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
               {relatedProducts.map((relProd: any) => {
                 const relSalePrice = getSalePrice(relProd.price, relProd.sale_price);
                 return (
-                <div key={relProd.id} className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col hover:bg-black500 hover:scale-[1.02] hover:z-10 transition-all duration-300">
+                <div
+                  key={relProd.id}
+                  className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col active:bg-black500 active:scale-[0.98] active:z-10 md:hover:bg-black500 md:hover:scale-[1.02] md:hover:z-10 transition-all duration-300"
+                  onContextMenu={(e) => e.preventDefault()}
+                >
                   <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={`Detail produktu ${relProd.name}`}></Link>
                   <div
                     className="relative w-full h-[120px] bg-transparent mb-6 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none"
