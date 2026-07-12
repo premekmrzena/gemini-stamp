@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
 import Footer from '@/components/Footer';
+import TrustBadges from '@/components/TrustBadges';
 import { TEMPLATES, Template } from '@/lib/editorConfig';
 import { getSalePrice, getEffectivePrice } from '@/lib/pricing';
 
@@ -155,7 +156,8 @@ export default function EditorPage() {
           </section>
 
           <div className="layout-container pb-8 md:pb-[64px]">
-            <div className="flex justify-end mb-4">
+            <div className="flex flex-wrap items-center justify-center md:justify-between gap-3 mb-4">
+              <TrustBadges />
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value as SortKey)}

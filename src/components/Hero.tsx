@@ -76,19 +76,6 @@ export default function Hero() {
     </div>
   );
 
-  const badges = (
-    <div className="flex flex-row flex-wrap items-center justify-center gap-1.5">
-      <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-        <span className="h-2 w-2 rounded-full bg-success animate-pulse-dot shrink-0"></span>
-        5 návštěvníků právě vytváří kreativní arch
-      </div>
-      <div className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] px-3 py-1.5 rounded-full border border-white/10">
-        <span className="text-[var(--color-tag-novinka)] mr-1">★★★★</span>
-        Již 1&nbsp;247+ spokojených zákazníků
-      </div>
-    </div>
-  );
-
   return (
     <section className="bg-black text-secondary w-full overflow-hidden">
       <div className="layout-container">
@@ -118,9 +105,6 @@ export default function Hero() {
 
           <div className="order-1 lg:order-2 w-full max-w-[700px] shrink relative">
             {renderSlider('desktop')}
-            <div className="absolute bottom-3 left-3 right-3 z-10 flex justify-center">
-              {badges}
-            </div>
           </div>
         </div>
 
@@ -164,7 +148,6 @@ export default function Hero() {
               Co je Kreativní arch?
             </Link>
           </div>
-          <div className="md:hidden">{badges}</div>
         </div>
 
       </div>

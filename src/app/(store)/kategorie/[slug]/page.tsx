@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ProductList from '@/components/ProductList';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import TrustBadges from '@/components/TrustBadges';
 import { getEffectivePrice } from '@/lib/pricing';
 
 type SortableProduct = { name: string; price: number; sale_price: number | null; sold_count: number | null };
@@ -115,7 +116,8 @@ export default function CategoryPage() {
       ) : (
         <>
           {products.length > 0 && (
-            <div className="layout-container flex justify-end mb-4">
+            <div className="layout-container flex flex-wrap items-center justify-center md:justify-between gap-3 mb-4">
+              <TrustBadges />
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
