@@ -15,7 +15,7 @@
 | image_url | text | ano | – |
 | gallery_images | text[] | ne (nullable) | – |
 | category | enum `product_category` (`znamky`, `znamkove-archy`, `kreativni-archy`, `fdc`, `plakety`) | ano | – |
-| product_topic | enum `product_topic` (`umeni`, `pamatky`, `znamky`, `archy`), od 2026-07-14, nezávislý na `category` – slouží jen jako tematický filtr ve sloučeném výpisu kategorie Známky (viz [sekce 4](04-popis-eshopu.md)) | ne (nullable) | – |
+| product_topic | pole enumu `product_topic[]` (hodnoty `umeni`, `pamatky`, `znamky`, `archy`), zavedeno 2026-07-14 jako scalar enum, ještě týž den rozšířeno na pole (`docs/sql/011_products_topic_array.sql`) – jeden produkt může mít víc témat zároveň. Nezávislý na `category` – slouží jen jako tematický filtr ve sloučeném výpisu kategorie Známky (viz [sekce 4](04-popis-eshopu.md)) | ne (nullable) | – |
 | stock_quantity | integer | ano | `0` |
 | is_active | boolean | ano | `true` |
 | tag_new | boolean | ano | `false` |
@@ -101,4 +101,5 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/007_products_rls_authenticated_crud.sql` – provedeno 2026-07-10, doplňuje `authenticated` roli politiku pro plný CRUD na `products` (`INSERT`/`DELETE` předtím chyběly, `anon` čtení beze změny).
 - `docs/sql/008_products_drop_unused_columns.sql` – provedeno 2026-07-10, smazal sloupce `print_sheets` (bylo prázdné u všech produktů) a `stamp_type` (mělo vyplněnou hodnotu u 8 z 11 produktů – data vědomě zahozena na výslovné přání uživatele). Odstraněno i z `src/types/database.ts`, `ProductFormModal.tsx` a `ProductDetailClient.tsx`.
 - `docs/sql/009_products_sold_count.sql` – provedeno 2026-07-12, doplňuje `products.sold_count` (integer, default `0`) a `SECURITY DEFINER` RPC funkci `increment_product_sold_count(p_product_id, p_qty)` (grant pro `anon`/`authenticated`, protože `/api/create-order` běží pod anon klíčem a `products` nemá pro anon `UPDATE` policy). Volá se fire-and-forget po úspěšném vytvoření objednávky, pro každou položku typu `product` i `custom` (u vlastních archů se dohledá `product_id` přes `custom_stamps.products`). Slouží k řazení „Nejprodávanější“ v kategoriích a na `/vytvorit-arch`, viz [sekce 4](04-popis-eshopu.md).
-- `docs/sql/010_products_topic.sql` – **zatím neprovedeno**, čeká na spuštění v Supabase SQL editoru. Zavádí enum `product_topic` (`umeni`, `pamatky`, `znamky`, `archy`) a sloupec `products.product_topic` (nullable) pro tematický filtr v kategorii Známky, viz [sekce 4](04-popis-eshopu.md) a [sekce 5](05-administrace.md).
+- `docs/sql/010_products_topic.sql` – provedeno 2026-07-14, zavádí enum `product_topic` (`umeni`, `pamatky`, `znamky`, `archy`) a sloupec `products.product_topic` (nullable) pro tematický filtr v kategorii Známky, viz [sekce 4](04-popis-eshopu.md) a [sekce 5](05-administrace.md).
+- `docs/sql/011_products_topic_array.sql` – provedeno 2026-07-14, mění `products.product_topic` ze scalar enumu na pole `product_topic[]`, aby jeden produkt mohl patřit do víc témat zároveň (např. Umění i Známky).

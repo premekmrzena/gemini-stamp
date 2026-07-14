@@ -97,7 +97,7 @@ export default function CategoryPage() {
 
   const filteredProducts = useMemo(() => {
     if (topicFilter === 'vse') return products;
-    return products.filter((p) => p.product_topic === topicFilter);
+    return products.filter((p) => Array.isArray(p.product_topic) && p.product_topic.includes(topicFilter));
   }, [products, topicFilter]);
 
   const sortedProducts = useMemo(() => {

@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackToTopButton from '@/components/BackToTopButton';
 
 export default function StoreLayout({
   children,
@@ -13,6 +14,7 @@ export default function StoreLayout({
         {children}
       </main>
       <Footer />
+      <BackToTopButton />
     </>
   );
 }

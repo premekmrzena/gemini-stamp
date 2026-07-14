@@ -116,6 +116,12 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
     set('related_stamp_id', next.length > 0 ? next : null);
   }
 
+  function toggleTopic(topic: ProductTopic) {
+    const current = form.product_topic || [];
+    const next = current.includes(topic) ? current.filter((t) => t !== topic) : [...current, topic];
+    set('product_topic', next.length > 0 ? next : null);
+  }
+
   async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!form.name.trim() || !form.image_url) {
@@ -179,18 +185,30 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
                 ))}
               </select>
             </div>
-            <div>
-              <label className={labelClass}>Téma (filtr Známky)</label>
-              <select
-                className={inputClass}
-                value={form.product_topic ?? ''}
-                onChange={(e) => set('product_topic', e.target.value ? (e.target.value as ProductTopic) : null)}
-              >
-                <option value="">– (bez zařazení)</option>
-                {Object.entries(TOPIC_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+            <div className="md:col-span-2">
+              <label className={labelClass}>Témata (filtr Známky)</label>
+              <p className="style-body text-black300/70 mb-2">
+                Lze vybrat víc témat zároveň (např. Umění i Známky). Bez výběru se produkt zobrazí jen pod „Vše“.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(TOPIC_LABELS).map(([value, label]) => {
+                  const selected = (form.product_topic || []).includes(value as ProductTopic);
+                  return (
+                    <button
+                      type="button"
+                      key={value}
+                      onClick={() => toggleTopic(value as ProductTopic)}
+                      className={`style-body px-3 h-[32px] rounded-full border transition-all cursor-pointer ${
+                        selected
+                          ? 'bg-primary border-primary text-black'
+                          : 'border-black300/30 text-secondary hover:bg-black300/10'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <label className={labelClass}>Cena (Kč)</label>

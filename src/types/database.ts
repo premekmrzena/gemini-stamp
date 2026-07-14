@@ -28,7 +28,7 @@ export type Product = {
   image_url: string;
   gallery_images: string[] | null;
   category: ProductCategory;
-  product_topic: ProductTopic | null;
+  product_topic: ProductTopic[] | null;
   stock_quantity: number;
   is_active: boolean;
   tag_new: boolean;
