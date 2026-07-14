@@ -64,7 +64,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
         )}
       </div>
 
-      <div className="relative w-full h-[144px] md:h-[120px] lg:h-[170px] bg-transparent mb-4 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none pointer-events-none">
+      <div className="relative w-full h-[158px] md:h-[120px] lg:h-[170px] bg-transparent mb-4 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none pointer-events-none">
         <Image
           src={product.image_url || '/images/product-image_0001.jpg'}
           alt={product.name}
