@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X, Upload, Trash2, Loader2, ImagePlus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Product, ProductCategory } from '@/types/database';
+import { Product, ProductCategory, ProductTopic } from '@/types/database';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 
 export const CATEGORY_LABELS: Record<ProductCategory, string> = {
@@ -12,6 +12,13 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   'kreativni-archy': 'Kreativní archy',
   'fdc': 'First Day Cover',
   'plakety': 'Dárkové plakety',
+};
+
+export const TOPIC_LABELS: Record<ProductTopic, string> = {
+  'umeni': 'Umění',
+  'pamatky': 'Památky',
+  'znamky': 'Známky',
+  'archy': 'Archy',
 };
 
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
@@ -26,6 +33,7 @@ const EMPTY_FORM: ProductFormData = {
   image_url: '',
   gallery_images: [],
   category: 'znamky',
+  product_topic: null,
   stock_quantity: 0,
   is_active: true,
   tag_new: false,
@@ -167,6 +175,19 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
               <label className={labelClass}>Kategorie</label>
               <select className={inputClass} value={form.category} onChange={(e) => set('category', e.target.value as ProductCategory)}>
                 {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Téma (filtr Známky)</label>
+              <select
+                className={inputClass}
+                value={form.product_topic ?? ''}
+                onChange={(e) => set('product_topic', e.target.value ? (e.target.value as ProductTopic) : null)}
+              >
+                <option value="">– (bez zařazení)</option>
+                {Object.entries(TOPIC_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>

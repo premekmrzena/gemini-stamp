@@ -1,5 +1,7 @@
 export type ProductCategory = 'znamky' | 'znamkove-archy' | 'kreativni-archy' | 'fdc' | 'plakety';
 
+export type ProductTopic = 'umeni' | 'pamatky' | 'znamky' | 'archy';
+
 export type DiscountType = 'percentage' | 'fixed';
 
 export type DiscountCode = {
@@ -26,6 +28,7 @@ export type Product = {
   image_url: string;
   gallery_images: string[] | null;
   category: ProductCategory;
+  product_topic: ProductTopic | null;
   stock_quantity: number;
   is_active: boolean;
   tag_new: boolean;

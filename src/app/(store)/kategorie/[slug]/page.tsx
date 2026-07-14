@@ -7,8 +7,19 @@ import ProductList from '@/components/ProductList';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TrustBadges from '@/components/TrustBadges';
 import { getEffectivePrice } from '@/lib/pricing';
+import { ProductTopic } from '@/types/database';
 
 type SortableProduct = { name: string; price: number; sale_price: number | null; sold_count: number | null };
+
+const TOPIC_FILTER_OPTIONS: Record<'vse' | ProductTopic, string> = {
+  vse: 'Vše',
+  umeni: 'Umění',
+  pamatky: 'Památky',
+  znamky: 'Známky',
+  archy: 'Archy',
+};
+
+type TopicFilterKey = keyof typeof TOPIC_FILTER_OPTIONS;
 
 const SORT_OPTIONS = {
   doporucene: { label: 'Doporučené', compare: null },
@@ -28,6 +39,7 @@ export default function CategoryPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('doporucene');
+  const [topicFilter, setTopicFilter] = useState<TopicFilterKey>('vse');
 
   const categoryContent: Record<string, { title: string; description: string }> = {
     'znamky': {
@@ -59,6 +71,7 @@ export default function CategoryPage() {
     'znamkove-archy': ['znamky', 'znamkove-archy'],
   };
   const categoriesToFetch = categoryGroups[slug] || [slug];
+  const showTopicFilter = slug === 'znamky' || slug === 'znamkove-archy';
 
   // Kreativní archy nemají vlastní stránku kategorie – nahrazeno editorem na /vytvorit-arch.
   useEffect(() => {
@@ -82,10 +95,15 @@ export default function CategoryPage() {
     fetchCategoryProducts();
   }, [slug]);
 
+  const filteredProducts = useMemo(() => {
+    if (topicFilter === 'vse') return products;
+    return products.filter((p) => p.product_topic === topicFilter);
+  }, [products, topicFilter]);
+
   const sortedProducts = useMemo(() => {
     const compare = SORT_OPTIONS[sortKey].compare;
-    return compare ? [...products].sort(compare) : products;
-  }, [products, sortKey]);
+    return compare ? [...filteredProducts].sort(compare) : filteredProducts;
+  }, [filteredProducts, sortKey]);
 
   if (slug === 'kreativni-archy') return null;
 
@@ -118,15 +136,28 @@ export default function CategoryPage() {
           {products.length > 0 && (
             <div className="layout-container flex flex-wrap items-center justify-center md:justify-between gap-3 mb-4">
               <TrustBadges />
-              <select
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-                className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
-              >
-                {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as SortKey)}
+                  className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                >
+                  {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                {showTopicFilter && (
+                  <select
+                    value={topicFilter}
+                    onChange={(e) => setTopicFilter(e.target.value as TopicFilterKey)}
+                    className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                  >
+                    {Object.entries(TOPIC_FILTER_OPTIONS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
           )}
           <ProductList products={sortedProducts} />
