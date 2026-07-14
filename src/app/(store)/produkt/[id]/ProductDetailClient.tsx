@@ -77,7 +77,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
             </div>
             
             {/* OCHRANA NÁHLEDŮ V GALERII */}
-            <div className="flex justify-center lg:justify-start gap-4 overflow-x-auto pb-2 w-full select-none">
+            <div className="flex justify-start gap-4 overflow-x-auto pb-2 w-full select-none">
               {allImages.map((img, idx) => (
                 <div 
                   key={idx} 
