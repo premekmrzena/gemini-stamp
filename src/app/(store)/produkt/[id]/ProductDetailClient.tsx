@@ -55,7 +55,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
           {product.name}
         </h1>
 
-        <div className="flex flex-col lg:flex-row gap-[32px] md:gap-[48px] lg:gap-[64px] mb-[64px]">
+        <div className="flex flex-col lg:flex-row gap-[32px] md:gap-[29px] lg:gap-[42px] mb-[64px]">
           
           <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start gap-4">
             {/* OCHRANA HLAVNÍHO OBRÁZKU */}
