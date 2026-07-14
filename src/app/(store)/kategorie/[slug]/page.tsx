@@ -32,7 +32,7 @@ export default function CategoryPage() {
   const categoryContent: Record<string, { title: string; description: string }> = {
     'znamky': {
       title: 'Poštovní známky',
-      description: 'Vstupte do světa, kde se setkávají majestátní evropská historie, architektura, nadčasové umění a hluboká mystika. Česká filatelistická škola je celosvětově uznávaným fenoménem, proslulým nedostižnou precizností tradiční ruční rytiny. Každá známka v této exkluzivní kolekci není jen obyčejným kouskem papíru, ale mistrovským uměleckým dílem a cenným artefaktem, který vypráví ty nejsilnější příběhy starého kontinentu.',
+      description: 'Nahlédněte do světa české známkové tvorby, která je celosvětově uznávaným fenoménem, proslulým nedostižnou precizností tradiční ruční rytiny. Každá známka je hodnotnou ceninou a sběratelským unikátem. Emise známek se vytiskly ve velmi omezené sérii a již nikdy nebudou dotiskuty. Každá známka je mistrovským uměleckým dílem, které vypráví ty nejsilnější příběhy starého kontinentu.',
     },
     'znamkove-archy': {
       title: 'Známkové archy',
