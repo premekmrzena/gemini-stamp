@@ -44,7 +44,7 @@ export default function CategoryPage() {
   const categoryContent: Record<string, { title: string; description: string }> = {
     'znamky': {
       title: 'Poštovní známky',
-      description: 'Nahlédněte do světa české známkové tvorby, která je celosvětově uznávaným fenoménem, proslulým nedostižnou precizností tradiční ruční rytiny. Každá známka je hodnotnou ceninou a sběratelským unikátem. Emise známek se vytiskly ve velmi omezené sérii a již nikdy nebudou dotiskuty. Každá známka je mistrovským uměleckým dílem, které vypráví ty nejsilnější příběhy starého kontinentu.',
+      description: 'Každá známka je hodnotnou ceninou, sběratelským unikátem a mistrovským uměleckým dílem, které vypráví ty nejsilnější příběhy starého kontinentu. Nahlédněte do světa české známkové tvorby, která je celosvětově uznávaným fenoménem.',
     },
     'znamkove-archy': {
       title: 'Známkové archy',
@@ -52,11 +52,11 @@ export default function CategoryPage() {
     },
     'fdc': {
       title: 'First Day Cover (FDC)',
-      description: 'Zde doplň svůj vlastní text pro kategorii FDC.',
+      description: 'First Day Cover (FDC) je obálka, pohlednice nebo dopisnice s nově vydanou poštovní známkou, která je orazítkována první den jejího oficiálního vydání. Pro filatelisty jde o sběratelsky velmi ceněný a vyhledávaný artikl, který slouží jako historický dokument.',
     },
     'plakety': {
       title: 'Dárkové plakety',
-      description: 'Zde doplň svůj vlastní text pro kategorii Dárkové plakety.',
+      description: 'Dárkové plakety zvýrazňují samotnou známku a dopřávají ji prostor vyniknout. Samotnou destičku nabízíme ve stříbrném nebo mosazném provedení. Můžete si vybrat s gravírovanými vzory a různými okraji.',
     }
   };
 
