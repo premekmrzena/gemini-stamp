@@ -10,8 +10,8 @@ const items = [
         <circle cx="18.5" cy="18.5" r="2.5" />
       </svg>
     ),
-    title: 'Doprava po ČR',
-    text: '40–120 Kč dle váhy',
+    title: 'Doprava',
+    text: 'Do celého světa',
   },
   {
     icon: (
@@ -31,7 +31,7 @@ const items = [
       </svg>
     ),
     title: 'Rychlá výroba',
-    text: '3–10 pracovních dnů',
+    text: '2–7 pracovních dnů',
   },
   {
     icon: (
@@ -56,7 +56,7 @@ export default function ShopInfoStrip() {
               href="/jak-nakupovat"
               className="flex items-center gap-3 bg-black500 rounded px-4 py-3 hover:bg-black400 transition-colors"
             >
-              <div className="shrink-0 w-10 h-10 rounded-[4px] bg-primary/10 text-primary flex items-center justify-center">
+              <div className="shrink-0 text-primary">
                 {item.icon}
               </div>
               <div className="flex flex-col min-w-0">

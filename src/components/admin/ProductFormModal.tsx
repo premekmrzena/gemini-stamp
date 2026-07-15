@@ -47,6 +47,7 @@ const EMPTY_FORM: ProductFormData = {
   related_stamp_id: null,
   show_on_homepage: false,
   sold_count: 0,
+  sort_order: null,
 };
 
 async function uploadToBlob(file: File, category: ProductCategory): Promise<string> {
@@ -264,6 +265,16 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
                   <option key={n} value={n}>TOP {n}</option>
                 ))}
               </select>
+            </label>
+            <label className="flex items-center gap-2 style-body text-secondary">
+              Ruční pořadí
+              <input
+                type="number"
+                placeholder="automaticky"
+                className={`${inputClass} w-24 h-[36px]`}
+                value={form.sort_order ?? ''}
+                onChange={(e) => set('sort_order', e.target.value === '' ? null : Number(e.target.value))}
+              />
             </label>
           </div>
 

@@ -43,6 +43,7 @@ export type Product = {
   created_at: string;
   show_on_homepage: boolean | null;
   sold_count: number;
+  sort_order: number | null;
 };
 
 export type OrderStatus =

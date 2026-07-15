@@ -15,7 +15,9 @@ export default async function Home() {
     .select('*')
     .eq('is_active', true)
     .eq('show_on_homepage', true)
+    .order('sort_order', { ascending: true, nullsFirst: false }) // Ruční pořadí má přednost přede vším
     .order('tag_top', { ascending: true, nullsFirst: false })
+    .order('tag_new', { ascending: false }) // Novinky hned pod TOP produkty
     .order('created_at', { ascending: false }); // Seřadíme od nejnovějších
 
   if (error) {

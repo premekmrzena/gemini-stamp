@@ -85,7 +85,7 @@ export default function Hero() {
         </h1>
 
         <p className="hidden md:block style-perex text-center text-secondary/70 mb-8 lg:mb-8 max-w-[620px] mx-auto">
-          Kreativní arch s významnými umělci nebo památkami na poštovních známkách!
+          Kreativní arch s významnými umělci nebo památkami z Vašich cest!
         </p>
 
         {/* Desktop / Tablet */}

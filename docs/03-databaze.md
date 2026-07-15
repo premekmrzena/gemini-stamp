@@ -1,6 +1,6 @@
 # 3. Databáze (Supabase)
 
-> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11, doplněno o `products.sold_count` k 2026-07-12, doplněno o `products.product_topic` k 2026-07-14. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
+> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11, doplněno o `products.sold_count` k 2026-07-12, doplněno o `products.product_topic` k 2026-07-14, doplněno o `products.sort_order` k 2026-07-15. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
 
 ## `products`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -30,6 +30,7 @@
 | created_at | timestamptz | ano | `now()` |
 | show_on_homepage | boolean | ne (nullable) | `false` |
 | sold_count | integer, od 2026-07-12, počet prodaných kusů pro řazení „Nejprodávanější“ (viz [sekce 4](04-popis-eshopu.md#1-homepage)) | ano | `0` |
+| sort_order | integer, od 2026-07-15 (`docs/sql/012_products_sort_order.sql`), obecné ruční pořadí ve výpisech (homepage i kategorie) – když je vyplněné, má přednost před `tag_top`/`tag_new`/`created_at`; nižší číslo = výš. Nezávislé na `tag_top`, který řadí jen mezi sebou TOP produkty 1–6 | ne (nullable) | – |
 
 RLS: `anon` může jen číst (veřejný výpis produktů na eshopu), `authenticated` (přihlášený admin) má od 2026-07-10 explicitně plný CRUD (`docs/sql/007_products_rls_authenticated_crud.sql`) – předtím chyběla politika pro `INSERT`/`DELETE`, což se projevilo chybou „new row violates row-level security policy“ při zakládání nového produktu v adminu.
 

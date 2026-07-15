@@ -87,7 +87,9 @@ export default function CategoryPage() {
         .select('*')
         .in('category', categoriesToFetch)
         .eq('is_active', true)
+        .order('sort_order', { ascending: true, nullsFirst: false }) // Ruční pořadí má přednost přede vším
         .order('tag_top', { ascending: true, nullsFirst: false })
+        .order('tag_new', { ascending: false }) // Novinky hned pod TOP produkty
         .order('created_at', { ascending: false });
       if (!error) setProducts(data || []);
       setLoading(false);

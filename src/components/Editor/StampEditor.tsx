@@ -49,9 +49,10 @@ function MobileMiniMap({ template, activeSlotId, mainText, photos }: MiniMapProp
 interface StampEditorProps {
   onComplete: (stampId?: string) => void;
   templateId: string;
+  templateName?: string;
 }
 
-export default function StampEditor({ onComplete, templateId }: StampEditorProps) {
+export default function StampEditor({ onComplete, templateId, templateName }: StampEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeTemplate = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
 
@@ -411,7 +412,7 @@ export default function StampEditor({ onComplete, templateId }: StampEditorProps
               <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} mainText={mainText} photos={photos} />
               <div className="flex flex-col gap-[8px]">
                 <h2 className="style-h3 text-secondary">
-                  {activeTemplate.name}
+                  {templateName ?? activeTemplate.name}
                 </h2>
                 <span className="style-body text-secondary/70">
                   Fotografie {mobileStep + 1} z {totalSlotsSteps}

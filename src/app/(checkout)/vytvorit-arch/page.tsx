@@ -14,20 +14,30 @@ import TrustBadges from '@/components/TrustBadges';
 import { TEMPLATES, Template } from '@/lib/editorConfig';
 import { getSalePrice, getEffectivePrice } from '@/lib/pricing';
 
-type TemplatePrice = { price: number; sale_price: number | null; sold_count: number };
+type TemplateInfo = { name: string; short_description: string | null; price: number; sale_price: number | null; sold_count: number; is_active: boolean };
+
+// Název a popis se editují v adminu u produktu a mají přednost před texty natvrdo v editorConfig.ts
+// (ty slouží jen jako záskok, než se data ze Supabase načtou).
+function nameOf(tpl: Template, infos: Record<string, TemplateInfo>): string {
+  return infos[tpl.productId]?.name ?? tpl.name;
+}
+
+function descriptionOf(tpl: Template, infos: Record<string, TemplateInfo>): string {
+  return infos[tpl.productId]?.short_description || tpl.description;
+}
 
 const SORT_OPTIONS = {
   doporucene: { label: 'Doporučené', compare: null },
-  price_asc: { label: 'Cena: od nejnižší', compare: (a: Template, b: Template, prices: Record<string, TemplatePrice>) => priceOf(a, prices) - priceOf(b, prices) },
-  price_desc: { label: 'Cena: od nejvyšší', compare: (a: Template, b: Template, prices: Record<string, TemplatePrice>) => priceOf(b, prices) - priceOf(a, prices) },
-  name_asc: { label: 'Název: A–Z', compare: (a: Template, b: Template) => a.name.localeCompare(b.name, 'cs') },
-  bestseller: { label: 'Nejprodávanější', compare: (a: Template, b: Template, prices: Record<string, TemplatePrice>) => (prices[b.productId]?.sold_count ?? 0) - (prices[a.productId]?.sold_count ?? 0) },
-} as const satisfies Record<string, { label: string; compare: ((a: Template, b: Template, prices: Record<string, TemplatePrice>) => number) | null }>;
+  price_asc: { label: 'Cena: od nejnižší', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(a, infos) - priceOf(b, infos) },
+  price_desc: { label: 'Cena: od nejvyšší', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(b, infos) - priceOf(a, infos) },
+  name_asc: { label: 'Název: A–Z', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => nameOf(a, infos).localeCompare(nameOf(b, infos), 'cs') },
+  bestseller: { label: 'Nejprodávanější', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => (infos[b.productId]?.sold_count ?? 0) - (infos[a.productId]?.sold_count ?? 0) },
+} as const satisfies Record<string, { label: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>) => number) | null }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
-function priceOf(tpl: Template, prices: Record<string, TemplatePrice>): number {
-  const info = prices[tpl.productId];
+function priceOf(tpl: Template, infos: Record<string, TemplateInfo>): number {
+  const info = infos[tpl.productId];
   return info ? getEffectivePrice(info.price, info.sale_price) : Infinity;
 }
 
@@ -40,7 +50,7 @@ export default function EditorPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
-  const [prices, setPrices] = useState<Record<string, TemplatePrice>>({});
+  const [productInfo, setProductInfo] = useState<Record<string, TemplateInfo>>({});
   const [sortKey, setSortKey] = useState<SortKey>('doporucene');
 
   const { addToCart } = useCart();
@@ -56,29 +66,39 @@ export default function EditorPage() {
     }
   }, []);
 
-  // Ceny šablon dotažené ze Supabase (stejný zdroj jako kategorie/detail produktu)
+  // Název, popis a cena šablon dotažené ze Supabase (stejný zdroj jako kategorie/detail produktu) –
+  // mají přednost před texty natvrdo v editorConfig.ts, aby se úpravy v adminu propsaly i sem.
   useEffect(() => {
-    async function fetchPrices() {
+    async function fetchProductInfo() {
       const { data, error } = await supabase
         .from('products')
-        .select('id, price, sale_price, sold_count')
+        .select('id, name, short_description, price, sale_price, sold_count, is_active')
         .in('id', TEMPLATES.map((t) => t.productId));
 
       if (error || !data) return;
 
-      const byId: Record<string, TemplatePrice> = {};
+      const byId: Record<string, TemplateInfo> = {};
       for (const row of data) {
-        byId[row.id] = { price: row.price, sale_price: row.sale_price, sold_count: row.sold_count };
+        byId[row.id] = { name: row.name, short_description: row.short_description, price: row.price, sale_price: row.sale_price, sold_count: row.sold_count, is_active: row.is_active };
       }
-      setPrices(byId);
+      setProductInfo(byId);
     }
-    fetchPrices();
+    fetchProductInfo();
   }, []);
+
+  // Neaktivní produkt (vypnuto v adminu) se ve výběru šablon skrývá, stejně jako všude jinde v e-shopu.
+  // Než se data ze Supabase načtou, šablona zůstává vidět (žádné bliknutí skrytí/zobrazení).
+  const visibleTemplates = useMemo(
+    () => TEMPLATES.filter((t) => productInfo[t.productId]?.is_active !== false),
+    [productInfo]
+  );
 
   const sortedTemplates = useMemo(() => {
     const compare = SORT_OPTIONS[sortKey].compare;
-    return compare ? [...TEMPLATES].sort((a, b) => compare(a, b, prices)) : TEMPLATES;
-  }, [sortKey, prices]);
+    return compare ? [...visibleTemplates].sort((a, b) => compare(a, b, productInfo)) : visibleTemplates;
+  }, [sortKey, productInfo, visibleTemplates]);
+
+  const selectedTemplate = TEMPLATES.find((t) => t.id === selectedTemplateId);
 
   const handleSelectTemplate = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -131,7 +151,7 @@ export default function EditorPage() {
       
       {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
       <div className="sticky top-0 z-40 w-full"><CheckoutHeader
-        center={currentStep === 2 ? <h3 className="style-h4 text-secondary">{TEMPLATES.find(t => t.id === selectedTemplateId)?.name}</h3> : undefined}
+        center={currentStep === 2 && selectedTemplate ? <h3 className="style-h4 text-secondary">{nameOf(selectedTemplate, productInfo)}</h3> : undefined}
         right={<Stepper currentStep={currentStep} />}
       /></div>
       
@@ -143,14 +163,14 @@ export default function EditorPage() {
           <section className="py-8 md:py-12">
             <div className="layout-container flex flex-col items-center text-center animate-fadeIn">
               <h1 className="style-h1 text-secondary mb-6 lowercase first-letter:uppercase leading-tight">Vyberte si šablonu</h1>
-              <p className="style-body text-secondary/70 max-w-[43rem]">Zvěčněte své nejkrásnější vzpomínky do podoby exkluzivního uměleckého díla, jehož hlavním motivem budete vy sami. Náš unikátní editor vám umožní snadno vložit vlastní fotografii do prémiové šablony známkového archu a propojit tak váš osobní příběh s majestátní evropskou tradicí. Vytvořte si během několika okamžiků vysoce reprezentativní památku nebo naprosto jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty.</p>
+              <p className="style-body text-secondary/70 max-w-[43rem]">Vytvořte si během několika okamžiků nádhernou památku nebo jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty. Vytvořte umělecké dílo, jehož hlavním motivem budete vy sami.</p>
               <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-primary hover:text-primary-hover transition-colors mt-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
                   <line x1="12" y1="12" x2="12" y2="16" />
                 </svg>
-                Co je kreativní arch?
+                Co je Kreativní arch?
               </Link>
             </div>
           </section>
@@ -170,9 +190,12 @@ export default function EditorPage() {
             </div>
             <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
               {sortedTemplates.map((tpl) => {
-                const photoCount = tpl.slots.filter((s) => s.type === 'photo').length;
-                const priceInfo = prices[tpl.productId];
+                // Slot typu "text" vždy nese i fotku (zákazník do něj vkládá foto i vlastní text zároveň) – počítá se tedy taky.
+                const photoCount = tpl.slots.length;
+                const priceInfo = productInfo[tpl.productId];
                 const salePrice = priceInfo ? getSalePrice(priceInfo.price, priceInfo.sale_price) : null;
+                const name = nameOf(tpl, productInfo);
+                const description = descriptionOf(tpl, productInfo);
 
                 return (
                   <div
@@ -184,14 +207,14 @@ export default function EditorPage() {
                     <Link
                       href={`/produkt/${tpl.productId}`}
                       className="absolute inset-0 z-20 rounded-[4px] cursor-pointer"
-                      aria-label={`Detail šablony ${tpl.name}`}
+                      aria-label={`Detail šablony ${name}`}
                     />
 
                     {/* Náhled šablony */}
                     <div className="relative w-full aspect-[4130/2550] bg-black400 rounded-[4px] overflow-hidden mb-[20px] flex-shrink-0 pointer-events-none">
                       <Image
                         src={tpl.stampPreviews[0] ?? tpl.backgroundImage}
-                        alt={tpl.name}
+                        alt={name}
                         fill
                         className="object-contain group-active:scale-[1.03] md:group-hover:scale-[1.03] transition-transform duration-500"
                         onDragStart={(e) => e.preventDefault()}
@@ -200,7 +223,7 @@ export default function EditorPage() {
 
                     {/* Obsah */}
                     <div className="flex flex-col flex-grow items-center text-center pointer-events-none">
-                      <h3 className="style-h4 text-secondary mb-[8px] line-clamp-2 min-h-[2.8em]">{tpl.name}</h3>
+                      <h3 className="style-h4 text-secondary mb-[8px] line-clamp-2 min-h-[2.8em]">{name}</h3>
 
                       {/* Pill */}
                       <div className="inline-flex items-center gap-[6px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5 mb-[12px]">
@@ -214,7 +237,17 @@ export default function EditorPage() {
                         </span>
                       </div>
 
-                      <p className="style-body text-secondary/70 mb-[24px] line-clamp-2 min-h-[2.8em]">{tpl.description}</p>
+                      <p className="style-body text-secondary/70 mb-[16px] line-clamp-2 min-h-[2.8em]">{description}</p>
+
+                      {/* Vizuální nápověda, že celá karta vede na detail šablony (klik zachytí obalující Link výše) */}
+                      <div className="inline-flex items-center gap-[6px] style-label text-secondary/70 mb-[16px]">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
+                          <line x1="12" y1="12" x2="12" y2="16" />
+                        </svg>
+                        Informace o šabloně
+                      </div>
 
                       <div className="mt-auto flex flex-col items-center gap-[12px] relative z-30 pointer-events-auto">
                         <div>
@@ -252,7 +285,11 @@ export default function EditorPage() {
 
         {/* === KROK 2: EDITOR NÁVRHU === */}
         {currentStep === 2 && (
-          <StampEditor onComplete={handleEditorComplete} templateId={selectedTemplateId} />
+          <StampEditor
+            onComplete={handleEditorComplete}
+            templateId={selectedTemplateId}
+            templateName={selectedTemplate ? nameOf(selectedTemplate, productInfo) : undefined}
+          />
         )}
 
         {/* === KROK 3: ÚSPĚCH A PŘESUN DO KOŠÍKU === */}
