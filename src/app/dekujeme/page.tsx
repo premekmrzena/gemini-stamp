@@ -37,7 +37,7 @@ function ThankYouContent() {
             Objednávka byla úspěšně odeslána!
           </h1>
           <p className="style-perex text-secondary font-medium">
-            Děkujeme za váš nákup na <span className="font-bold underline">Creative Stamp</span>.
+            Děkujeme za váš nákup na <span className="font-bold underline">My Creative Stamp</span>.
             Detaily objednávky s přehledem položek jsme vám právě odeslali na e-mail.
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function ThankYouPage() {
       </Suspense>
 
       <footer className="py-8 text-center border-t border-black300/10">
-        <p className="style-body text-black300 text-sm">© 2026 Creative Stamp – sběratelské známky s příběhem.</p>
+        <p className="style-body text-black300 text-sm">© 2026 My Creative Stamp – sběratelské známky s příběhem.</p>
       </footer>
     </div>
   );

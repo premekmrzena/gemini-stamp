@@ -39,7 +39,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
           marginBottom: '24px',
           textAlign: 'center'
         }}>
-          Creative Stamp
+          My Creative Stamp
         </h1>
 
         <div style={{ 
@@ -140,7 +140,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
           textAlign: 'center',
           lineHeight: '1.5'
         }}>
-          <p style={{ margin: '0 0 10px 0' }}>Creative Stamp • Jindřišská 126/15, Praha 1</p>
+          <p style={{ margin: '0 0 10px 0' }}>My Creative Stamp • Jindřišská 126/15, Praha 1</p>
           <p style={{ margin: '0' }}>Tento e-mail je potvrzením o přijetí vaší objednávky v našem systému.</p>
         </div>
       </div>

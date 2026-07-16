@@ -1,7 +1,7 @@
 @AGENTS.md
 @AGENTS.md
 
-# Projekt: Gemini Stamp Eshop
+# Projekt: My Creative Stamp Eshop
 
 ## Stack
 - Next.js 14+ (App Router, TypeScript)

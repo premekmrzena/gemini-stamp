@@ -10,7 +10,7 @@ export default function Footer() {
           <Link href="/">
             <Image
               src="/images/creative-stamp_logo.svg"
-              alt="Creative Stamp Logo"
+              alt="My Creative Stamp Logo"
               width={250}
               height={69}
               className="h-[40px] w-auto md:h-[52px] lg:h-[62px]"

@@ -14,7 +14,7 @@ export default function CheckoutHeader({ right, center }: CheckoutHeaderProps) {
         <Link href="/" className="flex-shrink-0 flex items-center h-full">
           <Image
             src="/images/creative-stamp_logo.svg"
-            alt="Creative Stamp Logo"
+            alt="My Creative Stamp Logo"
             width={250}
             height={69}
             priority

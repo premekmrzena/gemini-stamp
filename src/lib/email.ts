@@ -24,9 +24,9 @@ export async function sendOrderConfirmation({
   );
 
   return resend.emails.send({
-    from: 'Creative Stamp <onboarding@resend.dev>',
+    from: 'My Creative Stamp <onboarding@resend.dev>',
     to: [email],
-    subject: `Objednávka č. ${orderId} přijata – Creative Stamp`,
+    subject: `Objednávka č. ${orderId} přijata – My Creative Stamp`,
     html: emailHtml,
   });
 }
@@ -49,9 +49,9 @@ export async function sendShippingNotification({
   );
 
   return resend.emails.send({
-    from: 'Creative Stamp <onboarding@resend.dev>',
+    from: 'My Creative Stamp <onboarding@resend.dev>',
     to: [email],
-    subject: `Objednávka č. ${orderId} byla odeslána – Creative Stamp`,
+    subject: `Objednávka č. ${orderId} byla odeslána – My Creative Stamp`,
     html: emailHtml,
   });
 }

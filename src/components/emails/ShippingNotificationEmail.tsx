@@ -37,7 +37,7 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
           marginBottom: '24px',
           textAlign: 'center'
         }}>
-          Creative Stamp
+          My Creative Stamp
         </h1>
 
         <div style={{
@@ -78,7 +78,7 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
           textAlign: 'center',
           lineHeight: '1.5'
         }}>
-          <p style={{ margin: '0 0 10px 0' }}>Creative Stamp • Jindřišská 126/15, Praha 1</p>
+          <p style={{ margin: '0 0 10px 0' }}>My Creative Stamp • Jindřišská 126/15, Praha 1</p>
           <p style={{ margin: '0' }}>Tento e-mail je automatickým oznámením o odeslání objednávky.</p>
         </div>
       </div>

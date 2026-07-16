@@ -401,7 +401,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-black text-secondary flex items-center justify-center p-4">
         <div className="bg-black400 w-full max-w-md p-8 rounded-[16px] border border-black300/30 shadow-2xl space-y-6 animate-[fadeIn_0.2s_ease-out]">
           <div className="text-center">
-            <h1 className="style-h2 text-secondary">Creative Stamp</h1>
+            <h1 className="style-h2 text-secondary">My Creative Stamp</h1>
             <p className="style-body text-black300 mt-1">Vstup do administrace e-shopu</p>
           </div>
           
@@ -415,7 +415,7 @@ export default function AdminDashboard() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@creativestamp.cz"
+                  placeholder="admin@mycreativestamp.com"
                   className="w-full bg-black border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                 />
               </div>
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="style-h1 text-secondary">E-shop Dashboard</h1>
-            <p className="style-body text-black300">Správa objednávek Creative Stamp</p>
+            <p className="style-body text-black300">Správa objednávek My Creative Stamp</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-4">
