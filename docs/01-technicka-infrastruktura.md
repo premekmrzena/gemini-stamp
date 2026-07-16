@@ -14,6 +14,7 @@
 - **Vercel** – hosting produkce, buildy přes `next build`
 - **GitHub** – `premekmrzena/gemini-stamp`, branch `main` je produkční větev (push na `main` = nový deploy na Vercelu)
 - Žádný `vercel.json` v repu – konfigurace je výchozí/přes Vercel dashboard
+- **Finální doména `mycreativestamp.com`** – aktivní od 2026-07-16, napojená na Vercel. Web je zatím schovaný za pre-launch gate, viz [sekce 8](08-pre-launch-gate.md).
 
 ## Vývojové prostředí – GitHub Codespaces
 - `.devcontainer/devcontainer.json` (od 2026-07-12) – image `mcr.microsoft.com/devcontainers/universal:2` (stejný jako výchozí Codespace image předtím, teď jen explicitně zapsaný), `postCreateCommand` po každém vytvoření/rebuildu Codespace nainstaluje Claude Code CLI (`curl -fsSL https://claude.ai/install.sh | bash`) a spustí `npm install`. Dřív se po rebuildu Codespace musel Claude Code instalovat ručně.
@@ -31,7 +32,7 @@
   2. `POST /api/create-payment-intent` – server načte `total_price` objednávky z DB (opět nedůvěřuje klientovi) a vytvoří Stripe PaymentIntent (`automatic_payment_methods: enabled`)
   3. Klient dokončí platbu přes Stripe Elements (`clientSecret`)
   4. Stripe zavolá `POST /api/stripe-webhook` na event `payment_intent.succeeded` → server ověří podpis a nastaví status objednávky na `Zaplaceno`
-- **Webhook v Stripe Dashboardu zatím není zaregistrovaný** – záměrně, protože projekt běží na testovacím Stripe účtu/dočasné doméně. Před produkčním spuštěním nutno: zaregistrovat endpoint `https://FINALNI-DOMENA/api/stripe-webhook`, vybrat event `payment_intent.succeeded`, doplnit `STRIPE_WEBHOOK_SECRET`.
+- **Webhook v Stripe Dashboardu zatím není zaregistrovaný** – záměrně, projekt zatím běží na testovacím Stripe účtu. Doména je už finální (`mycreativestamp.com`, viz výše), takže před produkčním spuštěním stačí: zaregistrovat endpoint `https://mycreativestamp.com/api/stripe-webhook`, vybrat event `payment_intent.succeeded`, doplnit `STRIPE_WEBHOOK_SECRET`. `/api/stripe-webhook` je záměrně vyjmutý z pre-launch gate (viz [sekce 8](08-pre-launch-gate.md)), takže registraci lze provést i teď.
 
 ## Úložiště souborů – Vercel Blob
 - `POST /api/upload-stamp` – jediný upload endpoint pro celou appku (produktové fotky v adminu i zákaznické razítka z editoru), nahrává do Vercel Blob, `access: 'public'`. Je to veřejná route (volá ji i nepřihlášený zákazník v editoru), takže parametr `folder` je validovaný proti pevnému seznamu, ne libovolný vstup z klienta.

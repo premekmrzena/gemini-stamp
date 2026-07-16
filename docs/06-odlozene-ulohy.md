@@ -6,7 +6,7 @@
 
 | Co chybí | Proč je to odložené | Co bude potřeba, až na to přijde čas |
 |---|---|---|
-| **Stripe webhook nezaregistrovaný** v Stripe Dashboardu | Projekt běží na testovacím Stripe účtu / dočasné doméně, webhook potřebuje finální URL | V Stripe Dashboardu (Developers → Webhooks) zaregistrovat `https://FINALNI-DOMENA/api/stripe-webhook`, event `payment_intent.succeeded`, doplnit `STRIPE_WEBHOOK_SECRET` do env. Detail v [sekci 1](01-technicka-infrastruktura.md#platby--stripe). |
+| **Stripe webhook nezaregistrovaný** v Stripe Dashboardu | Projekt zatím běží na testovacím Stripe účtu. Doména je už finální (`mycreativestamp.com`), takže registraci lze provést kdykoli | V Stripe Dashboardu (Developers → Webhooks) zaregistrovat `https://mycreativestamp.com/api/stripe-webhook`, event `payment_intent.succeeded`, doplnit `STRIPE_WEBHOOK_SECRET` do env. Detail v [sekci 1](01-technicka-infrastruktura.md#platby--stripe). |
 | **Resend e-maily ze sandbox domény** `onboarding@resend.dev` | Vědomě odloženo 2026-06-16 — vlastní doména se bude řešit později | Zverifikovat doménu v Resendu, změnit `from` adresu na obou místech v `src/lib/email.ts` (`sendOrderConfirmation`, `sendShippingNotification`). Dokud se to nezmění, sandbox pravděpodobně pošle jen na ověřenou adresu vlastníka účtu, ne libovolnému zákazníkovi. Detail v [sekci 1](01-technicka-infrastruktura.md#e-maily--resend). |
 
 ## Fakturace
