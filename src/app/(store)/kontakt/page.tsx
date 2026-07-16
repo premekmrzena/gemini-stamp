@@ -1,92 +1,143 @@
+import Link from 'next/link';
+import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
+const contactRows = [
+  {
+    title: 'E-mail',
+    text: 'info@mycreativestamp.com',
+    href: 'mailto:info@mycreativestamp.com',
+  },
+  {
+    title: 'Odběrné místo',
+    text: 'Jindřišská 126/15, 110 00 Praha 1',
+  },
+  {
+    title: 'Sídlo',
+    text: 'My Creative Stamp s.r.o., Václavské náměstí 1, 110 00 Praha 1',
+  },
+  {
+    title: 'IČ / DIČ',
+    text: '12345678 / CZ12345678',
+  },
+  {
+    title: 'Číslo účtu',
+    text: '123456789/0100',
+  },
+];
+
+const officeHours = [
+  {
+    title: 'Pondělí – pátek',
+    price: '9:00 – 17:00',
+    text: 'Na e-maily odpovídáme průběžně během dne.',
+  },
+  {
+    title: 'Sobota – neděle',
+    price: 'Zavřeno',
+    text: 'O víkendu zákaznickou podporu nezajišťujeme.',
+  },
+];
+
 export const metadata = {
-  title: 'Kontakt | Gemini Stamp',
+  title: 'Kontakt',
   description: 'Kontaktujte nás — rádi zodpovíme vaše dotazy ohledně Kreativního archu.',
+  alternates: { canonical: '/kontakt' },
 };
+
+function Row({
+  title,
+  price,
+  text,
+  href,
+}: {
+  title: string;
+  price?: string;
+  text: string;
+  href?: string;
+}) {
+  const inner = (
+    <div className="flex-1">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+        <h3 className={`style-h4 ${href ? 'group-hover:text-primary transition-colors' : ''}`}>{title}</h3>
+        {price && <span className="style-body-bold text-primary">{price}</span>}
+      </div>
+      <p className="style-body text-secondary/60 mt-1">{text}</p>
+    </div>
+  );
+
+  const rowClasses = 'flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-8 py-6 border-b border-white/10 last:border-b-0';
+
+  if (href) {
+    return (
+      <Link href={href} className={`group block ${rowClasses}`}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={rowClasses}>{inner}</div>;
+}
 
 export default function KontaktPage() {
   return (
-    <main className="bg-[#0F172A] text-secondary w-full min-h-screen">
+    <main className="bg-[#0F172A] text-secondary w-full">
       <Breadcrumbs items={[{ label: 'Kontakt' }]} />
-      <div className="layout-container py-[48px] md:py-[72px] lg:py-[96px]">
 
-        <div className="max-w-[720px]">
-          <p className="style-label text-primary uppercase tracking-widest mb-4">Jsme tu pro vás</p>
-          <h1 className="style-h1 mb-5">Kontakt</h1>
-          <p className="style-perex text-secondary/60 mb-14">
-            Máte dotaz k objednávce, reklamaci nebo jen chcete vědět víc o Kreativním archu?
-            Napište nám — odpovíme zpravidla do jednoho pracovního dne.
+      {/* ——— HERO ——— */}
+      <section className="layout-container py-8 md:py-12 text-center">
+        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">Obraťte se na nás!</h1>
+        <p className="style-perex text-secondary/70 max-w-[580px] mx-auto">
+          Máte dotaz k objednávce, reklamaci nebo jen chcete vědět víc o Kreativním archu?
+          Napište nám — odpovíme zpravidla do jednoho pracovního dne.
+        </p>
+      </section>
+
+      {/* ——— KONTAKTNÍ ÚDAJE ——— */}
+      <section className="border-t border-white/5 bg-[#0B1120]">
+        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
+          <h2 className="style-h2 text-center mb-4">Kontaktní údaje</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Napište nám e-mailem, nebo si zjistěte fakturační údaje.
           </p>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-
-          <div className="p-6 rounded-[4px] border border-white/5 bg-[#0B1120]">
-            <div className="w-10 h-10 rounded-[4px] bg-primary/10 text-primary flex items-center justify-center mb-4">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-            </div>
-            <h2 className="style-h4 mb-1">E-mail</h2>
-            <a
-              href="mailto:info@gemini-stamp.cz"
-              className="style-body text-primary hover:text-primary-hover transition-colors"
-            >
-              info@gemini-stamp.cz
-            </a>
-          </div>
-
-          <div className="p-6 rounded-[4px] border border-white/5 bg-[#0B1120]">
-            <div className="w-10 h-10 rounded-[4px] bg-primary/10 text-primary flex items-center justify-center mb-4">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-            </div>
-            <h2 className="style-h4 mb-1">Sídlo</h2>
-            <p className="style-body text-secondary/60">
-              Gemini Stamp s.r.o.<br />
-              Václavské náměstí 1<br />
-              110 00 Praha 1
-            </p>
-          </div>
-
-          <div className="p-6 rounded-[4px] border border-white/5 bg-[#0B1120]">
-            <div className="w-10 h-10 rounded-[4px] bg-primary/10 text-primary flex items-center justify-center mb-4">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            </div>
-            <h2 className="style-h4 mb-1">IČO</h2>
-            <p className="style-body text-secondary/60">
-              12345678<br />
-              DIČ: CZ12345678
-            </p>
-          </div>
-
-        </div>
-
-        <div className="max-w-[640px] p-6 md:p-8 rounded-[4px] border border-white/5 bg-[#0B1120]">
-          <h2 className="style-h3 mb-1">Provozní doba zákaznické podpory</h2>
-          <p className="style-body text-secondary/50 mb-6">Na e-maily odpovídáme v pracovní dny.</p>
-          <div className="flex flex-col gap-3">
-            {[
-              { day: 'Pondělí – pátek', hours: '9:00 – 17:00' },
-              { day: 'Sobota – neděle', hours: 'Zavřeno' },
-            ].map(({ day, hours }) => (
-              <div key={day} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
-                <span className="style-body text-secondary/70">{day}</span>
-                <span className="style-body-bold text-secondary">{hours}</span>
-              </div>
+          <div className="max-w-[640px] mx-auto">
+            {contactRows.map((row) => (
+              <Row key={row.title} title={row.title} text={row.text} href={row.href} />
             ))}
           </div>
         </div>
+      </section>
 
-      </div>
+      {/* ——— PROVOZNÍ DOBA ——— */}
+      <section className="border-t border-white/5">
+        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
+          <h2 className="style-h2 text-center mb-4">Provozní doba zákaznické podpory</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Na e-maily odpovídáme v pracovní dny.
+          </p>
+
+          <div className="max-w-[640px] mx-auto">
+            {officeHours.map((item) => (
+              <Row key={item.title} title={item.title} price={item.price} text={item.text} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ——— CTA ——— */}
+      <section className="border-t border-white/5 bg-[#0B1120]">
+        <div className="layout-container py-[56px] md:py-[80px] text-center">
+          <h2 className="style-h2 mb-4">Potřebujete poradit?</h2>
+          <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
+            Napište nám na e-mail a ozveme se zpravidla do jednoho pracovního dne.
+          </p>
+          <Link href="mailto:info@mycreativestamp.com">
+            <Button arrow="right">Napsat e-mail</Button>
+          </Link>
+        </div>
+      </section>
+
     </main>
   );
 }
