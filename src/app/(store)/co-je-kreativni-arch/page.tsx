@@ -29,22 +29,22 @@ const processSteps = [
 const stampCategories = [
   {
     title: 'Česká a evropská historie',
-    text: 'Panovníci, události, milníky. Poštovní známky jsou jedinečnými doklady doby, která formovala naši civilizaci.',
+    text: 'Panovníci, události, milníky. Poštovní známky jsou jedinečnými doklady doby, která formovala západní civilizaci.',
     image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Chram-sv-Vita_dashed_647-Fa6wuxNzh36u296m1dzJHkcTAKCf8h.png',
   },
   {
     title: 'Světoznámí umělci',
-    text: 'Monet, Picasso, Alfons Mucha. Jejich díla přetavená do miniaturních obrazů na poštovních známkách.',
+    text: 'Kupka, Alfons Mucha, Filla. Umělecká díla přetavená do miniaturních obrazů na poštovních známkách.',
     image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Ceske-goticke-malby-drak_dashed_1080-Gs7QjWmCkmoVKx6M6ZwRTHwbRW3r70.png',
   },
   {
     title: 'Památky a architektura',
-    text: 'Praha, Český Krumlov, Telč. Ikony architektury a přírody zachycené na sběratelských exemplářích.',
+    text: 'Praha, Český Krumlov, Telč, Karlův most. Ikony architektury zachycené na sběratelských exemplářích.',
     image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Prazske-motivy-E_dashed_1080-TQSwRokk2dTrARh8YAMVIQopCsffnk.png',
   },
   {
     title: 'Světové kulturní dědictví',
-    text: 'Národní parky, tradiční řemesla, folklor. Bohatství, které stojí za to uchovat a předávat dál.',
+    text: 'Hudba, poezie, divadlo, tradiční řemesla, folklor. Bohatství, které stojí za to uchovat a předávat dalším generacím dál.',
     image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Shakespeare-Elf_dashed_1080-jO3aeKfJG19uRHCQPxfjWH5Fl7W1lc.png',
   },
 ];
@@ -78,11 +78,11 @@ export default function CoJeKreativniArch() {
       {/* ——— HERO ——— */}
       <section className="layout-container py-8 md:py-12 text-center">
         <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">
-          Kreativní arch, dotek umění spojený s vašimi vzpomínkami
+          Co je Kreativní arch?
         </h1>
         <p className="style-perex text-secondary/70 max-w-[580px] mx-auto mb-10">
-          Stylový arch s vybranými poštovními známkami s českou a evropskou historií, světovými umělci nebo
-          památkami, doplněný o vaše vlastní fotografie a text. Jedinečný dárek i sběratelský poklad.
+          Jedinečný dárek i sběratelský poklad. Vybrané poštovní známky se světovými umělci, českou a evropskou historií nebo
+          památkami, doplněný o vaše vlastní fotografie a text. 
         </p>
         <Link href="/vytvorit-arch">
           <Button arrow="right">Vybrat šablonu a začít tvořit</Button>
@@ -92,9 +92,9 @@ export default function CoJeKreativniArch() {
       {/* ——— JAK TO FUNGUJE ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Základní kroky, jak si vytořit vlastní Kreativní arch</h2>
+          <h2 className="style-h2 text-center mb-4">Jak si vytořit vlastní Kreativní arch?</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Prvním krokem je výběr jedné z připravených šablon v našem on-line editoru. Po dokončení práce naleznete váš arch v nákupním košíku a můžete si zvolit způsob doručení a platby.
+            Prvním krokem je výběr šablony v našem on-line editoru. Když vytvoříte vlastní arch, v nákupním košíku si zvolíte způsob doručení a platby.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -114,10 +114,10 @@ export default function CoJeKreativniArch() {
       {/* ——— UMĚNÍ VE ZNÁMKÁCH ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Každá známka nese kousek historie</h2>
+          <h2 className="style-h2 text-center mb-4">Každá známka si nese kousek historie</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
             Poštovní známky jsou miniaturní okna do světa kultury, vědy a umění. Na Kreativním archu
-            se setkáš s díly, která přežila staletí — a nyní ožijí vedle tvých vlastních fotek.
+            se setkáte s díly, která přežila staletí — a nyní ožijí vedle vašich vlastních fotek.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -135,18 +135,17 @@ export default function CoJeKreativniArch() {
       {/* ——— PRO TURISTY ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Přijedeš, vyfotíš, odneseš si kus Česka</h2>
+          <h2 className="style-h2 text-center mb-4">Přijedete, vyfotíte, odnesete si kus Česka</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Kreativní arch je ideální suvenýr pro turisty, kteří chtějí domů přivézt víc než magnetku.
-            Nahraj fotky přímo z výletu a my je spojíme s ikonickými českými nebo evropskými
-            poštovními známkami do archu, který skutečně vypráví tvůj příběh.
+            Kreativní arch je ideální památka pro turisty, kteří chtějí domů přivézt víc než magnetku.
+            Nahrajte fotky přímo z výletu a my je spojíme s ikonickými poštovními známkami do archu, který vypráví i váš příběh.
           </p>
 
           <div className="grid grid-cols-1 gap-4 max-w-[640px] mx-auto">
             {[
-              { num: '01', text: 'Vyfotíš Pražský hrad — my ho obklopíme známkami s českou historií.' },
-              { num: '02', text: 'Navštívíš galerii s Muchou — my přidáme jeho díla ze sbírek na známkách.' },
-              { num: '03', text: 'Projdeš Krkonošemi — my zkomponujeme arch s přírodními motivy.' },
+              { num: '01', text: 'Vyfotíte Pražský hrad — my ho doplníme známkami s českou historií.' },
+              { num: '02', text: 'Navštívíte galerii s Muchou — my přidáme jeho díla ze sbírek na známkách.' },
+              { num: '03', text: 'Okouzlí vás Český Krumlov? — máme připravené památky z Krumlova a okolí.' },
             ].map((item) => (
               <div key={item.num} className="flex gap-4 items-start p-5 rounded-[4px] border border-white/5 bg-[#0B1120]">
                 <span className="style-h2 text-primary/40 font-semibold shrink-0 leading-none">{item.num}</span>
@@ -162,7 +161,7 @@ export default function CoJeKreativniArch() {
         <div className="layout-container py-[56px] md:py-[80px] text-center">
           <h2 className="style-h2 mb-4">Připraven vytvořit svůj arch?</h2>
           <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
-            Vybereš šablonu, nahraješ fotky, my se postaráme o tisk a doručení.
+            Vyberte šablonu, nahrajte fotky a my se postaráme o tisk a doručení.
           </p>
           <Link href="/vytvorit-arch">
             <Button arrow="right">Vybrat šablonu a začít tvořit</Button>

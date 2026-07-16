@@ -51,23 +51,23 @@ const shippingOptions = [
 const paymentOptions = [
   {
     title: 'Online platba kartou',
-    text: 'Rychlá a bezpečná platba přes Stripe, objednávku potvrdíme okamžitě.',
+    text: 'Rychlá a bezpečná platba přes oblíbenou platební bránu Stripe, objednávku i platbu potvrdíme okamžitě.',
   },
   {
     title: 'Bankovní převod',
-    text: 'Platební pokyny pošleme e-mailem hned po dokončení objednávky.',
+    text: 'Platební pokyny pošleme e-mailem hned po dokončení objednávky. Objednávku realizujeme po připsání platby na náš účet.',
   },
 ];
 
 const deliveryTimes = [
   {
     title: 'Standardní objednávka',
-    price: '3–7 pracovních dnů',
+    price: '1–2 pracovních dnů',
     text: 'Od potvrzení objednávky do expedice.',
   },
   {
     title: 'Kreativní arch na míru',
-    price: '5–10 pracovních dnů',
+    price: '1–5 pracovních dnů',
     text: 'Delší lhůta je daná tiskem a kompletací archu s vašimi fotografiemi.',
   },
 ];
@@ -194,9 +194,9 @@ export default function JakNakupovatPage() {
       {/* ——— DOBA VÝROBY ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Jak dlouho to trvá</h2>
+          <h2 className="style-h2 text-center mb-4">Jak dlouho to trvá?</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Dodací lhůta se liší podle toho, jestli objednáváte skladem, nebo na míru.
+            Dodací lhůta se liší podle toho, jestli objednáváte produkty skladem, nebo vytváříte Kreativní arch.
           </p>
 
           <div className="max-w-[640px] mx-auto">
@@ -212,7 +212,7 @@ export default function JakNakupovatPage() {
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
           <h2 className="style-h2 text-center mb-4">Jak zaplatit</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Vyberte si platbu, která vám vyhovuje.
+            Vyberte si způsob platby, který vám vyhovuje. Platbu kartou potvrdíme okamžitě.
           </p>
 
           <div className="max-w-[640px] mx-auto">
