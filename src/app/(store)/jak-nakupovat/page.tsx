@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -7,21 +8,25 @@ const categories = [
     href: '/kategorie/znamky',
     title: 'Poštovní známky',
     text: 'Sběratelské i klasické známky s českou a evropskou historií, uměním nebo přírodou.',
+    image: '/images/jak-nakupovat_znamky.jpg',
   },
   {
     href: '/vytvorit-arch',
     title: 'Kreativní archy',
     text: 'Arch ze skutečných poštovních známek doplněný o vaše vlastní fotografie a text.',
+    image: '/images/jak-nakupovat_kreativni-archy.jpg',
   },
   {
     href: '/kategorie/fdc',
     title: 'First Day Cover (FDC)',
     text: 'Obálky prvního dne vydání se známkou a razítkem k datu, kdy známka poprvé vyšla.',
+    image: '/images/jak-nakupovat_FDC.jpg',
   },
   {
     href: '/kategorie/plakety',
     title: 'Dárkové plakety',
     text: 'Reprezentativní plakety k darování nebo jako doplněk sběratelské kolekce.',
+    image: '/images/jak-nakupovat_plakety.jpg',
   },
 ];
 
@@ -79,7 +84,7 @@ function Row({
   text,
   href,
 }: {
-  index: string;
+  index?: string;
   title: string;
   price?: string;
   text: string;
@@ -87,7 +92,7 @@ function Row({
 }) {
   const inner = (
     <>
-      <span className="style-label text-primary/40 sm:w-8 sm:pt-1 shrink-0">{index}</span>
+      {index && <span className="style-label text-primary/40 sm:w-8 sm:pt-1 shrink-0">{index}</span>}
       <div className="flex-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4">
           <h3 className={`style-h4 ${href ? 'group-hover:text-primary transition-colors' : ''}`}>{title}</h3>
@@ -111,18 +116,18 @@ function Row({
   return <div className={rowClasses}>{inner}</div>;
 }
 
-function ImagePlaceholder({
-  label,
+function CategoryImage({
+  src,
+  alt,
   className = 'w-full',
-  sticky = true,
 }: {
-  label: string;
+  src: string;
+  alt: string;
   className?: string;
-  sticky?: boolean;
 }) {
   return (
-    <div className={`${className} min-w-0 min-h-0 aspect-[4/3] rounded-[4px] border border-dashed border-white/15 bg-white/[0.02] flex items-center justify-center ${sticky ? 'lg:sticky lg:top-24' : ''}`}>
-      <span className="style-label text-secondary/30 uppercase tracking-widest text-center px-4">{label}</span>
+    <div className={`${className} relative min-w-0 min-h-0 aspect-[4/3] rounded-[4px] overflow-hidden`}>
+      <Image src={src} alt={alt} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw" className="object-cover" />
     </div>
   );
 }
@@ -155,7 +160,7 @@ export default function JakNakupovatPage() {
                   {i + 1}
                 </div>
                 <h3 className="style-h3 mb-4 group-hover:text-primary transition-colors">{cat.title}</h3>
-                <ImagePlaceholder label={`Obrázek — ${cat.title}`} className="w-[80%] mb-4" sticky={false} />
+                <CategoryImage src={cat.image} alt={cat.title} className="w-[80%] mb-4" />
                 <p className="style-body text-secondary/60">{cat.text}</p>
               </Link>
             ))}
@@ -172,78 +177,54 @@ export default function JakNakupovatPage() {
 
       {/* ——— DOPRAVA A OSOBNÍ ODBĚR ——— */}
       <section className="border-t border-white/5">
-        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px] max-w-[1080px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-            <div className="lg:order-1">
-              <ImagePlaceholder label="Obrázek — doprava a odběr" />
-            </div>
+        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
+          <h2 className="style-h2 text-center mb-4">Doprava a osobní odběr</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Vyberte si způsob doručení, který vám vyhovuje.
+          </p>
 
-            <div className="lg:order-2">
-              <h2 className="style-h2 mb-3">Doprava a osobní odběr</h2>
-              <p className="style-body text-secondary/50 mb-10 md:mb-12">
-                Vyberte si způsob doručení, který vám vyhovuje.
-              </p>
-
-              <div>
-                {shippingOptions.map((opt, i) => (
-                  <Row key={opt.title} index={`0${i + 1}`} title={opt.title} price={opt.price} text={opt.text} />
-                ))}
-              </div>
-            </div>
+          <div className="max-w-[640px] mx-auto">
+            {shippingOptions.map((opt) => (
+              <Row key={opt.title} title={opt.title} price={opt.price} text={opt.text} />
+            ))}
           </div>
         </div>
       </section>
 
       {/* ——— DOBA VÝROBY ——— */}
-      <section className="border-t border-white/5 bg-black500">
-        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px] max-w-[1080px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-            <div className="lg:order-2">
-              <ImagePlaceholder label="Obrázek — doba výroby" />
-            </div>
+      <section className="border-t border-white/5 bg-[#0B1120]">
+        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
+          <h2 className="style-h2 text-center mb-4">Jak dlouho to trvá</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Dodací lhůta se liší podle toho, jestli objednáváte skladem, nebo na míru.
+          </p>
 
-            <div className="lg:order-1">
-              <h2 className="style-h2 mb-3">Jak dlouho to trvá</h2>
-              <p className="style-body text-secondary/50 mb-10 md:mb-12">
-                Dodací lhůta se liší podle toho, jestli objednáváte skladem, nebo na míru.
-              </p>
-
-              <div>
-                {deliveryTimes.map((item, i) => (
-                  <Row key={item.title} index={`0${i + 1}`} title={item.title} price={item.price} text={item.text} />
-                ))}
-              </div>
-            </div>
+          <div className="max-w-[640px] mx-auto">
+            {deliveryTimes.map((item) => (
+              <Row key={item.title} title={item.title} price={item.price} text={item.text} />
+            ))}
           </div>
         </div>
       </section>
 
       {/* ——— PLATBA ——— */}
       <section className="border-t border-white/5">
-        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px] max-w-[1080px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-            <div className="lg:order-1">
-              <ImagePlaceholder label="Obrázek — platba" />
-            </div>
+        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
+          <h2 className="style-h2 text-center mb-4">Jak zaplatit</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Vyberte si platbu, která vám vyhovuje.
+          </p>
 
-            <div className="lg:order-2">
-              <h2 className="style-h2 mb-3">Jak zaplatit</h2>
-              <p className="style-body text-secondary/50 mb-10 md:mb-12">
-                Vyberte si platbu, která vám vyhovuje.
-              </p>
-
-              <div>
-                {paymentOptions.map((opt, i) => (
-                  <Row key={opt.title} index={`0${i + 1}`} title={opt.title} text={opt.text} />
-                ))}
-              </div>
-            </div>
+          <div className="max-w-[640px] mx-auto">
+            {paymentOptions.map((opt) => (
+              <Row key={opt.title} title={opt.title} text={opt.text} />
+            ))}
           </div>
         </div>
       </section>
 
       {/* ——— CTA ——— */}
-      <section className="border-t border-white/5 bg-black500">
+      <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[56px] md:py-[80px] text-center">
           <h2 className="style-h2 mb-4">Máte všechny informace?</h2>
           <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
