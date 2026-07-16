@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('error', '1');
   }
 
-  const response = NextResponse.redirect(redirectUrl);
+  // 303 = "See Other": prohlížeč po POSTu vždy zopakuje GET na cílové URL.
+  // Výchozí 307 by metodu zachoval (POST na "/"), což by tam skončilo 405.
+  const response = NextResponse.redirect(redirectUrl, 303);
 
   if (isValid) {
     response.cookies.set('site_access', password, {
