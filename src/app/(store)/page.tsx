@@ -4,6 +4,12 @@ import ReviewStrip from '@/components/ReviewStrip';
 import ProductList from '@/components/ProductList';
 import TrustBadges from '@/components/TrustBadges';
 import { supabase } from '@/lib/supabase'; // Import našeho připojení k databázi
+
+// Homepage title/description dědí z výchozí hodnoty v app/layout.tsx (title.default).
+export const metadata = {
+  alternates: { canonical: '/' },
+};
+
 export const revalidate = 60;
 
 // Přidali jsme klíčové slovo 'async', abychom mohli čekat (await) na data z databáze

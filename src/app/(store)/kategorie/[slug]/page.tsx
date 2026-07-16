@@ -8,6 +8,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import TrustBadges from '@/components/TrustBadges';
 import { getEffectivePrice } from '@/lib/pricing';
 import { ProductTopic } from '@/types/database';
+import { CATEGORY_CONTENT, CATEGORY_GROUPS } from '@/lib/categoryContent';
 
 type SortableProduct = { name: string; price: number; sale_price: number | null; sold_count: number | null };
 
@@ -41,36 +42,12 @@ export default function CategoryPage() {
   const [sortKey, setSortKey] = useState<SortKey>('doporucene');
   const [topicFilter, setTopicFilter] = useState<TopicFilterKey>('vse');
 
-  const categoryContent: Record<string, { title: string; description: string }> = {
-    'znamky': {
-      title: 'Poštovní známky',
-      description: 'Každá známka je hodnotnou ceninou, sběratelským unikátem a mistrovským uměleckým dílem, které vypráví ty nejsilnější příběhy starého kontinentu. Nahlédněte do světa české známkové tvorby, která je celosvětově uznávaným fenoménem.',
-    },
-    'znamkove-archy': {
-      title: 'Známkové archy',
-      description: 'Zde doplň svůj vlastní text pro kategorii Známkové archy.',
-    },
-    'fdc': {
-      title: 'First Day Cover (FDC)',
-      description: 'First Day Cover (FDC) je obálka, pohlednice nebo dopisnice s nově vydanou poštovní známkou, která je orazítkována první den jejího oficiálního vydání. Pro filatelisty jde o sběratelsky velmi ceněný a vyhledávaný artikl, který slouží jako historický dokument.',
-    },
-    'plakety': {
-      title: 'Dárkové plakety',
-      description: 'Dárkové plakety zvýrazňují samotnou známku a dopřávají ji prostor vyniknout. Samotnou destičku nabízíme ve stříbrném nebo mosazném provedení. Můžete si vybrat s gravírovanými vzory a různými okraji.',
-    }
-  };
-
-  const current = categoryContent[slug] || {
+  const current = CATEGORY_CONTENT[slug] || {
     title: slug,
     description: 'Popis kategorie se připravuje...',
   };
 
-  // Známky a Známkové archy se na eshopu vypisují společně na obou slugech.
-  const categoryGroups: Record<string, string[]> = {
-    'znamky': ['znamky', 'znamkove-archy'],
-    'znamkove-archy': ['znamky', 'znamkove-archy'],
-  };
-  const categoriesToFetch = categoryGroups[slug] || [slug];
+  const categoriesToFetch = CATEGORY_GROUPS[slug] || [slug];
   const showTopicFilter = slug === 'znamky' || slug === 'znamkove-archy';
 
   // Kreativní archy nemají vlastní stránku kategorie – nahrazeno editorem na /vytvorit-arch.

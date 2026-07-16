@@ -1,6 +1,9 @@
+import { cache } from 'react';
+import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { SITE_URL } from '@/lib/site';
 
 const categoryLabels: Record<string, string> = {
   'znamky': 'Poštovní známky',
@@ -13,6 +16,43 @@ const categoryLabels: Record<string, string> = {
 // Vypne cachování pro 100% aktuálnost dat
 export const revalidate = 0;
 
+// cache() sdílí jeden dotaz mezi generateMetadata a stránkou samotnou.
+const getProduct = cache(async (productId: string) => {
+  const { data } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', productId)
+    .single();
+  return data;
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProduct(id);
+
+  if (!product) {
+    return { title: 'Produkt nenalezen' };
+  }
+
+  const description = product.short_description || `${product.name} – sběratelský produkt My Creative Stamp.`;
+
+  return {
+    title: product.name,
+    description,
+    alternates: { canonical: `/produkt/${id}` },
+    openGraph: {
+      title: product.name,
+      description,
+      url: `/produkt/${id}`,
+      images: [{ url: product.image_url }],
+    },
+  };
+}
+
 export default async function ProductPage({
   params,
 }: {
@@ -23,13 +63,9 @@ export default async function ProductPage({
   const productId = resolvedParams.id;
 
   // 1. Stáhneme detail hlavního produktu
-  const { data: product, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', productId)
-    .single();
+  const product = await getProduct(productId);
 
-  if (error || !product) {
+  if (!product) {
     return (
       <div className="w-full min-h-[50vh] flex flex-col items-center justify-center bg-[#0F172A] text-[#FDFBF7]">
         <h2 className="style-h2 mb-4">Produkt nenalezen</h2>
@@ -74,8 +110,30 @@ export default async function ProductPage({
   // Kreativní archy nemají vlastní stránku kategorie – vstupním bodem je editor.
   const categoryHref = product.category === 'kreativni-archy' ? '/vytvorit-arch' : `/kategorie/${product.category}`;
 
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.short_description || undefined,
+    image: product.image_url,
+    sku: product.catalog_number || product.id,
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE_URL}/produkt/${product.id}`,
+      priceCurrency: 'CZK',
+      price: product.sale_price ?? product.price,
+      availability: product.stock_quantity > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <Breadcrumbs
         items={[
           { label: categoryLabel, href: categoryHref },

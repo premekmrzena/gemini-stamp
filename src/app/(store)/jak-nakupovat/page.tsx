@@ -73,8 +73,9 @@ const deliveryTimes = [
 ];
 
 export const metadata = {
-  title: 'Jak nakupovat | Gemini Stamp',
+  title: 'Jak nakupovat',
   description: 'Co si u nás můžete koupit, jaké jsou možnosti dopravy, osobního odběru, platby a jak dlouho trvá výroba.',
+  alternates: { canonical: '/jak-nakupovat' },
 };
 
 function Row({

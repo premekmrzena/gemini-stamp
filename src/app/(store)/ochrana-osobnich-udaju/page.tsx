@@ -1,14 +1,15 @@
 import Breadcrumbs from '@/components/Breadcrumbs';
 
 export const metadata = {
-  title: 'Ochrana osobních údajů | Gemini Stamp',
+  title: 'Ochrana osobních údajů',
   description: 'Zásady ochrany osobních údajů a informace o zpracování dat dle GDPR.',
+  alternates: { canonical: '/ochrana-osobnich-udaju' },
 };
 
 const sections = [
   {
     title: '1. Správce osobních údajů',
-    content: `Správcem vašich osobních údajů je společnost Gemini Stamp s.r.o., IČO: 12345678, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „správce"). Kontaktní e-mail: info@gemini-stamp.cz.`,
+    content: `Správcem vašich osobních údajů je společnost My Creative Stamp s.r.o., IČO: 12345678, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „správce"). Kontaktní e-mail: info@mycreativestamp.com.`,
   },
   {
     title: '2. Jaké údaje zpracováváme',
@@ -46,7 +47,7 @@ Všichni zpracovatelé jsou vázáni smluvní ochranou dat v souladu s GDPR.`,
     title: '6. Vaše práva',
     content: `Máte právo na přístup ke svým osobním údajům, jejich opravu, výmaz („právo být zapomenut"), omezení zpracování a přenositelnost. Máte rovněž právo vznést námitku proti zpracování a právo podat stížnost u Úřadu pro ochranu osobních údajů (www.uoou.cz).
 
-Žádost o uplatnění práv zasílejte e-mailem na info@gemini-stamp.cz. Odpovíme do 30 dnů.`,
+Žádost o uplatnění práv zasílejte e-mailem na info@mycreativestamp.com. Odpovíme do 30 dnů.`,
   },
   {
     title: '7. Cookies',
@@ -64,10 +65,9 @@ export default function OchranaOsobnichUdajuPage() {
   return (
     <main className="bg-[#0F172A] text-secondary w-full min-h-screen">
       <Breadcrumbs items={[{ label: 'Ochrana osobních údajů' }]} />
-      <div className="layout-container py-[48px] md:py-[72px] lg:py-[96px]">
+      <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
 
         <div className="max-w-[760px]">
-          <p className="style-label text-primary uppercase tracking-widest mb-4">Právní dokumenty</p>
           <h1 className="style-h1 mb-3">Ochrana osobních údajů</h1>
           <p className="style-body text-secondary/40 mb-14">Platné od 1. 1. 2025 · GDPR</p>
 

@@ -22,7 +22,7 @@ const processSteps = [
   {
     id: 4,
     title: 'Odeslání na adresu',
-    text: 'Hotový arch pečlivě zabalíme a doručíme přímo k vám domů. Nebo si ho vyzvednete osobně v Praze..',
+    text: 'Hotový arch pečlivě zabalíme a doručíme přímo k vám domů. Nebo si ho vyzvednete osobně v Praze.',
   },
 ];
 
@@ -66,8 +66,9 @@ function CategoryImage({
 }
 
 export const metadata = {
-  title: 'Co je Kreativní arch? | Gemini Stamp',
+  title: 'Co je Kreativní arch?',
   description: 'Unikátní sběratelský produkt spojující krásu poštovních známek s vašimi vlastními fotografiemi a vzpomínkami.',
+  alternates: { canonical: '/co-je-kreativni-arch' },
 };
 
 export default function CoJeKreativniArch() {

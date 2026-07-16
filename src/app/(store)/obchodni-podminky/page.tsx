@@ -1,16 +1,17 @@
 import Breadcrumbs from '@/components/Breadcrumbs';
 
 export const metadata = {
-  title: 'Obchodní podmínky | Gemini Stamp',
-  description: 'Obchodní podmínky internetového obchodu Gemini Stamp.',
+  title: 'Obchodní podmínky',
+  description: 'Obchodní podmínky internetového obchodu My Creative Stamp.',
+  alternates: { canonical: '/obchodni-podminky' },
 };
 
 const sections = [
   {
     title: '1. Provozovatel a základní údaje',
-    content: `Provozovatelem internetového obchodu na adrese gemini-stamp.cz je společnost Gemini Stamp s.r.o., IČO: 12345678, DIČ: CZ12345678, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „prodávající").
+    content: `Provozovatelem internetového obchodu na adrese mycreativestamp.com je společnost My Creative Stamp s.r.o., IČO: 12345678, DIČ: CZ12345678, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „prodávající").
 
-Kontaktní e-mail: info@gemini-stamp.cz`,
+Kontaktní e-mail: info@mycreativestamp.com`,
   },
   {
     title: '2. Objednávka a uzavření smlouvy',
@@ -34,7 +35,7 @@ Doprava je zpoplatněna dle aktuálního ceníku zobrazovaného při výběru do
     title: '5. Odstoupení od smlouvy',
     content: `Kupující — spotřebitel má právo odstoupit od smlouvy bez udání důvodu ve lhůtě 14 dnů od převzetí zboží, s výjimkou zboží vyrobeného na míru (personalizované produkty, jako je Kreativní arch s vlastními fotografiemi), u nichž právo na odstoupení nevzniká dle § 1837 písm. d) občanského zákoníku.
 
-Odstoupení zasílejte e-mailem na info@gemini-stamp.cz. Zboží vraťte nepoškozené na vlastní náklady.`,
+Odstoupení zasílejte e-mailem na info@mycreativestamp.com. Zboží vraťte nepoškozené na vlastní náklady.`,
   },
   {
     title: '6. Reklamace a odpovědnost za vady',
@@ -58,10 +59,9 @@ export default function ObchodniPodminkyPage() {
   return (
     <main className="bg-[#0F172A] text-secondary w-full min-h-screen">
       <Breadcrumbs items={[{ label: 'Obchodní podmínky' }]} />
-      <div className="layout-container py-[48px] md:py-[72px] lg:py-[96px]">
+      <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
 
         <div className="max-w-[760px]">
-          <p className="style-label text-primary uppercase tracking-widest mb-4">Právní dokumenty</p>
           <h1 className="style-h1 mb-3">Obchodní podmínky</h1>
           <p className="style-body text-secondary/40 mb-14">Platné od 1. 1. 2025</p>
 
