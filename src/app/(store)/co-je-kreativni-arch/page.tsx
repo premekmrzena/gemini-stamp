@@ -122,7 +122,7 @@ export default function CoJeKreativniArch() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {stampCategories.map((cat, i) => (
-              <div key={i} className="flex flex-col items-center text-center p-6 rounded-[4px] border border-white/5 bg-[#0B1120]">
+              <div key={i} className="flex flex-col items-center text-center p-6 rounded-[4px] border border-white/15 bg-[#0B1120]">
                 <h3 className="style-h3 mb-4">{cat.title}</h3>
                 <CategoryImage src={cat.image} alt={cat.title} className="w-[80%] mb-4" />
                 <p className="style-body text-secondary/60">{cat.text}</p>
