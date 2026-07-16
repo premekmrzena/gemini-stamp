@@ -5,23 +5,23 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 const processSteps = [
   {
     id: 1,
-    title: 'Nahraj své fotky',
-    text: 'Přidej fotografie z mobilu nebo počítače. Klidně ty, které jsi vyfotil dnes.',
+    title: 'Nahrajte své fotky',
+    text: 'Přidejte svoje fotografie z mobilu nebo počítače. Klidně ty, které jste vyfotili právě dnes.',
   },
   {
     id: 2,
-    title: 'Napiš vlastní text',
-    text: 'Doplň datum, jméno, vzkaz nebo cokoliv, co arch učiní skutečně tvým.',
+    title: 'Napište vlastní text',
+    text: 'Doplňte datum, jméno, vzkaz nebo cokoliv, co arch učiní skutečně originálním.',
   },
   {
     id: 3,
-    title: 'Vytiskneme pro tebe',
-    text: 'Tvůj návrh profesionálně vytiskneme na kvalitní papír se skutečnými poštovními známkami.',
+    title: 'Tisk a výroba',
+    text: 'Vaše fotky dotiskneme k šabloně a doplníme skutečnými poštovními známkami.',
   },
   {
     id: 4,
-    title: 'Zašleme na adresu',
-    text: 'Hotový arch zabalíme a doručíme přímo k tobě domů v bezpečném obalu.',
+    title: 'Odeslání na adresu',
+    text: 'Hotový arch pečlivě zabalíme a doručíme přímo k vám domů. Nebo si ho vyzvednete osobně v Praze..',
   },
 ];
 
@@ -78,14 +78,13 @@ export default function CoJeKreativniArch() {
       <Breadcrumbs items={[{ label: 'Co je Kreativní arch?' }]} />
 
       {/* ——— HERO ——— */}
-      <section className="layout-container py-[48px] md:py-[72px] lg:py-[96px] text-center">
-        <p className="style-label text-primary uppercase tracking-widest mb-4">Sběratelský unikát</p>
+      <section className="layout-container py-8 md:py-12 text-center">
         <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">
-          Kreativní arch — kde skvělé umění potkává tvoje vzpomínky
+          Kreativní arch, dotek umění spojený s vašimi vzpomínkami
         </h1>
         <p className="style-perex text-secondary/70 max-w-[580px] mx-auto mb-10">
-          Arch ze skutečných poštovních známek s českou a evropskou historií, světovými umělci nebo
-          památkami — doplněný o tvoje vlastní fotografie. Jedinečný dárek i sběratelský poklad.
+          Stylový arch s vybranými poštovními známkami s českou a evropskou historií, světovými umělci nebo
+          památkami, doplněný o vaše vlastní fotografie a text. Jedinečný dárek i sběratelský poklad.
         </p>
         <Link href="/vytvorit-arch">
           <Button arrow="right">Vybrat šablonu a začít tvořit</Button>
@@ -93,17 +92,17 @@ export default function CoJeKreativniArch() {
       </section>
 
       {/* ——— JAK TO FUNGUJE ——— */}
-      <section className="border-t border-white/5">
+      <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-3">Jak to funguje?</h2>
-          <p className="style-body text-secondary/50 text-center mb-12 md:mb-16">
-            Hotový arch ve 4 jednoduchých krocích.
+          <h2 className="style-h2 text-center mb-4">Základní kroky, jak si vytořit vlastní Kreativní arch</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Prvním krokem je výběr jedné z připravených šablon v našem on-line editoru. Po dokončení práce naleznete váš arch v nákupním košíku a můžete si zvolit způsob doručení a platby.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {processSteps.map((step) => (
               <div key={step.id} className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[28px] mb-4 shrink-0">
+                <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] mb-3 shrink-0">
                   {step.id}
                 </div>
                 <h3 className="style-h3 mb-2">{step.title}</h3>

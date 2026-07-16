@@ -111,9 +111,17 @@ function Row({
   return <div className={rowClasses}>{inner}</div>;
 }
 
-function ImagePlaceholder({ label }: { label: string }) {
+function ImagePlaceholder({
+  label,
+  className = 'w-full',
+  sticky = true,
+}: {
+  label: string;
+  className?: string;
+  sticky?: boolean;
+}) {
   return (
-    <div className="w-full aspect-[4/3] rounded-[4px] border border-dashed border-white/15 bg-white/[0.02] flex items-center justify-center lg:sticky lg:top-24">
+    <div className={`${className} min-w-0 min-h-0 aspect-[4/3] rounded-[4px] border border-dashed border-white/15 bg-white/[0.02] flex items-center justify-center ${sticky ? 'lg:sticky lg:top-24' : ''}`}>
       <span className="style-label text-secondary/30 uppercase tracking-widest text-center px-4">{label}</span>
     </div>
   );
@@ -125,42 +133,40 @@ export default function JakNakupovatPage() {
       <Breadcrumbs items={[{ label: 'Jak nakupovat' }]} />
 
       {/* ——— HERO ——— */}
-      <section className="layout-container py-[48px] md:py-[72px] lg:py-[96px] text-center">
-        <p className="style-label text-primary uppercase tracking-widest mb-4">Váš průvodce nákupem</p>
-        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">Jak u nás nakupovat</h1>
+      <section className="layout-container py-8 md:py-12 text-center">
+        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">Jak u nás můžete nakupovat?</h1>
         <p className="style-perex text-secondary/70 max-w-[580px] mx-auto">
-          Co si můžete koupit, jak probíhá doprava a platba a jak dlouho trvá doručení — všechno na jednom místě.
+          Co si u nás můžete koupit a jak probíhá výroba, doprava a platba? Zde najdete všechny potřebné informace na jednom místě.
         </p>
       </section>
 
       {/* ——— CO SI MŮŽETE KOUPIT ——— */}
-      <section className="border-t border-white/5 bg-black500">
-        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px] max-w-[1080px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-            <div className="lg:order-2">
-              <ImagePlaceholder label="Obrázek — produktové kategorie" />
-            </div>
+      <section className="border-t border-white/5 bg-[#0B1120]">
+        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
+          <h2 className="style-h2 text-center mb-4">Co si u nás můžete koupit</h2>
+          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
+            Čtyři kategorie produktů pro sběratele i milovníky originálních dárků.
+          </p>
 
-            <div className="lg:order-1">
-              <h2 className="style-h2 mb-3">Co si u nás můžete koupit</h2>
-              <p className="style-body text-secondary/50 mb-10 md:mb-12">
-                Čtyři kategorie produktů pro sběratele i milovníky originálních dárků.
-              </p>
-
-              <div>
-                {categories.map((cat, i) => (
-                  <Row key={cat.href} index={`0${i + 1}`} title={cat.title} text={cat.text} href={cat.href} />
-                ))}
-              </div>
-
-              <p className="style-body text-secondary/60 mt-8">
-                Chcete arch s vlastními fotkami?{' '}
-                <Link href="/co-je-kreativni-arch" className="style-body-bold text-primary hover:underline">
-                  Zjistěte, jak Kreativní arch funguje →
-                </Link>
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            {categories.map((cat, i) => (
+              <Link key={cat.href} href={cat.href} className="group flex flex-col items-center text-center">
+                <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] mb-3 shrink-0">
+                  {i + 1}
+                </div>
+                <h3 className="style-h3 mb-4 group-hover:text-primary transition-colors">{cat.title}</h3>
+                <ImagePlaceholder label={`Obrázek — ${cat.title}`} className="w-[80%] mb-4" sticky={false} />
+                <p className="style-body text-secondary/60">{cat.text}</p>
+              </Link>
+            ))}
           </div>
+
+          <p className="style-body text-secondary/60 text-center mt-10 md:mt-12">
+            Chcete arch s vlastními fotkami?{' '}
+            <Link href="/co-je-kreativni-arch" className="style-body-bold text-primary hover:underline">
+              Zjistěte, jak Kreativní arch funguje →
+            </Link>
+          </p>
         </div>
       </section>
 
