@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import StampCategoriesSection from '@/components/StampCategoriesSection';
 
 const processSteps = [
   {
@@ -25,45 +25,6 @@ const processSteps = [
     text: 'Hotový arch pečlivě zabalíme a doručíme přímo k vám domů. Nebo si ho vyzvednete osobně v Praze.',
   },
 ];
-
-const stampCategories = [
-  {
-    title: 'Česká a evropská historie',
-    text: 'Panovníci, události, milníky. Poštovní známky jsou jedinečnými doklady doby, která formovala západní civilizaci.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Chram-sv-Vita_dashed_647-Fa6wuxNzh36u296m1dzJHkcTAKCf8h.png',
-  },
-  {
-    title: 'Světoznámí umělci',
-    text: 'Kupka, Alfons Mucha, Filla. Umělecká díla přetavená do miniaturních obrazů na poštovních známkách.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Ceske-goticke-malby-drak_dashed_1080-Gs7QjWmCkmoVKx6M6ZwRTHwbRW3r70.png',
-  },
-  {
-    title: 'Památky a architektura',
-    text: 'Praha, Český Krumlov, Telč, Karlův most. Ikony architektury zachycené na sběratelských exemplářích.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Prazske-motivy-E_dashed_1080-TQSwRokk2dTrARh8YAMVIQopCsffnk.png',
-  },
-  {
-    title: 'Světové kulturní dědictví',
-    text: 'Hudba, poezie, divadlo, tradiční řemesla, folklor. Bohatství, které stojí za to uchovat a předávat dalším generacím dál.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Shakespeare-Elf_dashed_1080-jO3aeKfJG19uRHCQPxfjWH5Fl7W1lc.png',
-  },
-];
-
-function CategoryImage({
-  src,
-  alt,
-  className = 'w-full',
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-}) {
-  return (
-    <div className={`${className} relative min-w-0 min-h-0 aspect-[4/3] rounded-[4px] overflow-hidden`}>
-      <Image src={src} alt={alt} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw" className="object-contain" />
-    </div>
-  );
-}
 
 export const metadata = {
   title: 'Co je Kreativní arch?',
@@ -113,24 +74,8 @@ export default function CoJeKreativniArch() {
       </section>
 
       {/* ——— UMĚNÍ VE ZNÁMKÁCH ——— */}
-      <section className="border-t border-white/5">
-        <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Každá známka si nese kousek historie</h2>
-          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Poštovní známky jsou miniaturní okna do světa kultury, vědy a umění. Na Kreativním archu
-            se setkáte s díly, která přežila staletí — a nyní ožijí vedle vašich vlastních fotek.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {stampCategories.map((cat, i) => (
-              <div key={i} className="flex flex-col items-center text-center p-6 rounded-[4px] border border-white/15 bg-[#0B1120]">
-                <h3 className="style-h3 mb-4">{cat.title}</h3>
-                <CategoryImage src={cat.image} alt={cat.title} className="w-[80%] mb-4" />
-                <p className="style-body text-secondary/60">{cat.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+      <section className="border-t border-white/5 py-[48px] md:py-[64px] lg:py-[80px]">
+        <StampCategoriesSection />
       </section>
 
       {/* ——— PRO TURISTY ——— */}

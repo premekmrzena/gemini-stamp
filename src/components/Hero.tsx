@@ -138,7 +138,7 @@ export default function Hero() {
                 className="absolute -left-[70px] bottom-3 pointer-events-none md:w-[70px] md:-left-[84px] md:bottom-[14px] lg:w-[80px] lg:-left-[95px] lg:bottom-[14px]"
               />
               <Link href="/vytvorit-arch">
-                <Button>Vybrat šablonu a začít tvořit</Button>
+                <Button>Vytvořit Kreativní arch</Button>
               </Link>
             </div>
             <Link
