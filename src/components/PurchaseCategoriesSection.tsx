@@ -53,7 +53,10 @@ export default function PurchaseCategoriesSection() {
     <div className="layout-container">
       <h2 className="style-h2 text-secondary text-center mb-4">Co si u nás můžete koupit</h2>
       <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-8">
-        Čtyři kategorie produktů pro sběratele i milovníky originálních dárků.
+        Čtyři kategorie produktů pro sběratele i milovníky originálních dárků. Chcete arch s vlastními fotkami?{' '}
+        <Link href="/co-je-kreativni-arch" className="style-body-bold text-primary hover:underline">
+          Zjistěte, jak Kreativní arch funguje →
+        </Link>
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -81,13 +84,6 @@ export default function PurchaseCategoriesSection() {
           </Link>
         ))}
       </div>
-
-      <p className="style-body text-secondary/60 text-center mt-10 md:mt-12">
-        Chcete arch s vlastními fotkami?{' '}
-        <Link href="/co-je-kreativni-arch" className="style-body-bold text-primary hover:underline">
-          Zjistěte, jak Kreativní arch funguje →
-        </Link>
-      </p>
     </div>
   );
 }

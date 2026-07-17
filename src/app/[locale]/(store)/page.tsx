@@ -19,12 +19,14 @@ export default function Home() {
       <Hero />
       <ShopInfoStrip />
       <StampCategoriesSection />
-      {/* ProductList na HP dočasně skrytý (probíhá rozhodování o rozvržení pásů) */}
-      <PurchaseCategoriesSection />
-      <ReviewStrip />
-      <div className="layout-container">
+      <div className="layout-container -mt-[24px] md:-mt-[36px] lg:-mt-[40px]">
         <TrustBadges />
       </div>
+      {/* ProductList na HP dočasně skrytý (probíhá rozhodování o rozvržení pásů) */}
+      <div className="bg-black500 w-full py-[32px] md:py-[54px] lg:py-[64px]">
+        <PurchaseCategoriesSection />
+      </div>
+      <ReviewStrip />
     </main>
   );
 }

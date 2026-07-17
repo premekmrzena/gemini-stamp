@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { X } from 'lucide-react';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
+import Button from '@/components/Button';
 
 type Review = {
   id: number;
@@ -86,6 +88,16 @@ export default function ReviewStrip() {
               </div>
             </button>
           ))}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
+          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden shrink-0">
+            <Image src="/images/recenze01.png" alt="Usměvavá zákaznice" fill className="object-cover" />
+          </div>
+          <p className="style-h3 text-secondary">Nejčastější otázky a odpovědi (FAQ)</p>
+          <Link href="/faq">
+            <Button variant="outlined" arrow="right">Přečíst</Button>
+          </Link>
         </div>
       </div>
 

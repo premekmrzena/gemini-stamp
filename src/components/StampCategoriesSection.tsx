@@ -3,23 +3,23 @@ import Image from 'next/image';
 const stampCategories = [
   {
     title: 'Česká a evropská historie',
-    text: 'Panovníci, události, milníky. Poštovní známky jsou jedinečnými doklady doby, která formovala západní civilizaci.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Chram-sv-Vita_dashed_647-Fa6wuxNzh36u296m1dzJHkcTAKCf8h.png',
+    text: 'Panovníci, události, milníky které formovaly západní civilizaci.',
+    image: '/images/kreativni-archy_komponenta01.png',
   },
   {
     title: 'Světoznámí umělci',
-    text: 'Kupka, Alfons Mucha, Filla. Umělecká díla přetavená do miniaturních obrazů na poštovních známkách.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Ceske-goticke-malby-drak_dashed_1080-Gs7QjWmCkmoVKx6M6ZwRTHwbRW3r70.png',
+    text: 'Alfons Mucha, Kupka, Filla a jejich umělecká díla.',
+    image: '/images/kreativni-archy_komponenta02.png',
   },
   {
     title: 'Památky a architektura',
-    text: 'Praha, Český Krumlov, Telč, Karlův most. Ikony architektury zachycené na sběratelských exemplářích.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Karluv-most_dashed_1080-nMJ8qo9SCdtYZ6KCAqhpREHEwbYYWR.png',
+    text: 'Praha, Český Krumlov, Telč, Karlův most. Ikony české architektury.',
+    image: '/images/kreativni-archy_komponenta03.png',
   },
   {
     title: 'Světové kulturní dědictví',
-    text: 'Hudba, poezie, divadlo, tradiční řemesla, folklor. Bohatství, které stojí za to uchovat a předávat dalším generacím dál.',
-    image: 'https://ryp0pkqxrbus98k2.public.blob.vercel-storage.com/products/znamky/stamp_Shakespeare-Elf_dashed_1080-jO3aeKfJG19uRHCQPxfjWH5Fl7W1lc.png',
+    text: 'Hudba, poezie, divadlo, bohatství, které duchovně formovalo Evropu.',
+    image: '/images/kreativni-archy_komponenta04.png',
   },
 ];
 

@@ -22,6 +22,8 @@ export default function Footer() {
           <nav className="flex flex-wrap justify-center md:justify-end items-center gap-4 md:gap-0 text-[14px] lg:text-[15px] font-medium tracking-[-0.02em] leading-none text-black200">
             <Link href="/jak-nakupovat" className="md:pr-4 hover:text-primary-hover transition">Jak nakupovat</Link>
             <span className="hidden md:block w-px h-4 bg-secondary/30" />
+            <Link href="/faq" className="md:px-4 hover:text-primary-hover transition">FaQ</Link>
+            <span className="hidden md:block w-px h-4 bg-secondary/30" />
             <Link href="/kontakt" className="md:px-4 hover:text-primary-hover transition">Kontakt</Link>
             <span className="hidden md:block w-px h-4 bg-secondary/30" />
             <Link href="/obchodni-podminky" className="md:px-4 hover:text-primary-hover transition">Obchodní podmínky</Link>
