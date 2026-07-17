@@ -4,6 +4,14 @@ export type ProductTopic = 'umeni' | 'pamatky' | 'znamky' | 'archy';
 
 export type DiscountType = 'percentage' | 'fixed';
 
+export type CurrencyCode = 'KRW' | 'JPY' | 'CNY' | 'TWD';
+
+export type ExchangeRate = {
+  currency_code: CurrencyCode;
+  rate_to_eur: number | null;
+  updated_at: string;
+};
+
 export type DiscountCode = {
   id: string;
   code: string;
@@ -24,6 +32,23 @@ export type Product = {
   detailed_description: string | null;
   price: number;
   sale_price: number | null;
+  price_eur: number | null;
+  sale_price_eur: number | null;
+  name_en: string | null;
+  short_description_en: string | null;
+  detailed_description_en: string | null;
+  name_ko: string | null;
+  short_description_ko: string | null;
+  detailed_description_ko: string | null;
+  name_ja: string | null;
+  short_description_ja: string | null;
+  detailed_description_ja: string | null;
+  name_zh_hans: string | null;
+  short_description_zh_hans: string | null;
+  detailed_description_zh_hans: string | null;
+  name_zh_hant: string | null;
+  short_description_zh_hant: string | null;
+  detailed_description_zh_hant: string | null;
   weight_grams: number;
   image_url: string;
   gallery_images: string[] | null;

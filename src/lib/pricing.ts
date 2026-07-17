@@ -1,5 +1,14 @@
 import { DiscountType } from '@/types/database';
 
+// Přepočte cenu v EUR do cílové měny podle ručně nastaveného kurzu
+// (exchange_rates.rate_to_eur). Kurz může být zatím nenastavený (null),
+// dokud ho admin nevyplní v záložce "Kurzy měn" - v tom případě cenu
+// v dané měně nejde zobrazit.
+export function convertFromEur(amountEur: number, rateToEur: number | null): number | null {
+  if (rateToEur == null) return null;
+  return Math.round(amountEur * rateToEur * 100) / 100;
+}
+
 // Spočítá výši slevy v Kč pro daný mezisoučet. Nikdy nevrátí víc, než je
 // mezisoučet (fixní sleva vyšší než košík se ořízne, ne do záporu).
 export function computeDiscountAmount(

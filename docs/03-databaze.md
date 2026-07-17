@@ -1,6 +1,6 @@
 # 3. Databáze (Supabase)
 
-> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11, doplněno o `products.sold_count` k 2026-07-12, doplněno o `products.product_topic` k 2026-07-14, doplněno o `products.sort_order` k 2026-07-15. Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
+> Skutečné schéma vytažené z Supabase (OpenAPI introspekce přes `service_role` klíč) k 2026-06-16, doplněno o `products.sale_price` k 2026-07-01, doplněno o `discount_codes` a `orders.discount_code`/`discount_amount` k 2026-07-08, doplněno o formátovaný `detailed_description` k 2026-07-11, doplněno o `products.sold_count` k 2026-07-12, doplněno o `products.product_topic` k 2026-07-14, doplněno o `products.sort_order` k 2026-07-15, doplněno o mezinárodní sloupce `products` a tabulku `exchange_rates` k 2026-07-17 (viz [sekce 9](09-jazykove-mutace.md)). Liší se od `src/types/database.ts` v bodech popsaných níže – ty už jsou opravené v kódu.
 
 ## `products`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -31,8 +31,24 @@
 | show_on_homepage | boolean | ne (nullable) | `false` |
 | sold_count | integer, od 2026-07-12, počet prodaných kusů pro řazení „Nejprodávanější“ (viz [sekce 4](04-popis-eshopu.md#1-homepage)) | ano | `0` |
 | sort_order | integer, od 2026-07-15 (`docs/sql/012_products_sort_order.sql`), obecné ruční pořadí ve výpisech (homepage i kategorie) – když je vyplněné, má přednost před `tag_top`/`tag_new`/`created_at`; nižší číslo = výš. Nezávislé na `tag_top`, který řadí jen mezi sebou TOP produkty 1–6 | ne (nullable) | – |
+| price_eur | numeric, od 2026-07-17 (`docs/sql/013_products_intl_columns.sql`), základní mezinárodní cena v EUR – EN ji zobrazuje přímo, KO/JA/ZH-Hans/ZH-Hant se z ní za běhu přepočítávají podle `exchange_rates` (viz [sekce 9](09-jazykove-mutace.md)), nic se neukládá zpět do `products`. Nezávislé na `price` (CZ cena) | ne (nullable) | – |
+| sale_price_eur | numeric, od 2026-07-17, mezinárodní obdoba `sale_price` | ne (nullable) | – |
+| name_en / name_ko / name_ja / name_zh_hans / name_zh_hant | text, od 2026-07-17 (`docs/sql/013_products_intl_columns.sql`), překlad `name` – sloupce s jazykovou příponou, ne samostatná překladová tabulka (cílová sada jazyků je uzavřená a známá dopředu, viz [sekce 9](09-jazykove-mutace.md)). CZ `name` zůstává referenční, nepřejmenováno | ne (nullable) | – |
+| short_description_en / _ko / _ja / _zh_hans / _zh_hant | text, od 2026-07-17, překlad `short_description`, stejný vzor jako `name_*` | ne (nullable) | – |
+| detailed_description_en / _ko / _ja / _zh_hans / _zh_hant | text, od 2026-07-17, překlad `detailed_description`, stejný vzor jako `name_*` | ne (nullable) | – |
 
 RLS: `anon` může jen číst (veřejný výpis produktů na eshopu), `authenticated` (přihlášený admin) má od 2026-07-10 explicitně plný CRUD (`docs/sql/007_products_rls_authenticated_crud.sql`) – předtím chyběla politika pro `INSERT`/`DELETE`, což se projevilo chybou „new row violates row-level security policy“ při zakládání nového produktu v adminu.
+
+## `exchange_rates`
+Zavedeno 2026-07-17 (`docs/sql/014_exchange_rates.sql`), viz [sekce 9](09-jazykove-mutace.md). Kurzy pro přepočet `products.price_eur`/`sale_price_eur` do měny dané mezinárodní mutace – ručně editované v adminu (záložka "Kurzy měn"), žádné napojení na kurzovní API. Přepočet ceny se počítá za běhu v `src/lib/pricing.ts`, do `products` se nic nezapisuje.
+
+| Sloupec | Typ | Povinné při insertu | Default |
+|---|---|---|---|
+| currency_code | text (PK), `CHECK` na `KRW`/`JPY`/`CNY`/`TWD` | ano | – |
+| rate_to_eur | numeric, `NULL` dokud admin nezadá reálnou hodnotu – appka musí NULL ošetřit (cenu v dané měně neukazovat) | ne (nullable) | – |
+| updated_at | timestamptz | ano | `now()` |
+
+Seednuto 4 řádky (`KRW`, `JPY`, `CNY`, `TWD`) s `rate_to_eur = null`. RLS: `anon` smí jen `SELECT` (kurz není citlivá hodnota, potřeba pro přepočet ceny na veřejném eshopu), `authenticated` (admin) má plný CRUD.
 
 ## `orders`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -104,3 +120,6 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/009_products_sold_count.sql` – provedeno 2026-07-12, doplňuje `products.sold_count` (integer, default `0`) a `SECURITY DEFINER` RPC funkci `increment_product_sold_count(p_product_id, p_qty)` (grant pro `anon`/`authenticated`, protože `/api/create-order` běží pod anon klíčem a `products` nemá pro anon `UPDATE` policy). Volá se fire-and-forget po úspěšném vytvoření objednávky, pro každou položku typu `product` i `custom` (u vlastních archů se dohledá `product_id` přes `custom_stamps.products`). Slouží k řazení „Nejprodávanější“ v kategoriích a na `/vytvorit-arch`, viz [sekce 4](04-popis-eshopu.md).
 - `docs/sql/010_products_topic.sql` – provedeno 2026-07-14, zavádí enum `product_topic` (`umeni`, `pamatky`, `znamky`, `archy`) a sloupec `products.product_topic` (nullable) pro tematický filtr v kategorii Známky, viz [sekce 4](04-popis-eshopu.md) a [sekce 5](05-administrace.md).
 - `docs/sql/011_products_topic_array.sql` – provedeno 2026-07-14, mění `products.product_topic` ze scalar enumu na pole `product_topic[]`, aby jeden produkt mohl patřit do víc témat zároveň (např. Umění i Známky).
+- `docs/sql/012_products_sort_order.sql` – provedeno 2026-07-15, doplňuje `products.sort_order` (integer, nullable) pro obecné ruční pořadí ve výpisech.
+- `docs/sql/013_products_intl_columns.sql` – provedeno 2026-07-17, doplňuje 15 překladových sloupců (`name`/`short_description`/`detailed_description` × `_en`/`_ko`/`_ja`/`_zh_hans`/`_zh_hant`) a `price_eur`/`sale_price_eur` na `products`, viz [sekce 9](09-jazykove-mutace.md).
+- `docs/sql/014_exchange_rates.sql` – provedeno 2026-07-17, zavádí tabulku `exchange_rates` (kurzy EUR → KRW/JPY/CNY/TWD, ručně editované v adminu), RLS (anon jen čtení, authenticated plný CRUD), 4 seed řádky s `rate_to_eur = null`.

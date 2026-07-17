@@ -21,6 +21,20 @@ export const TOPIC_LABELS: Record<ProductTopic, string> = {
   'archy': 'Archy',
 };
 
+// Mezinárodní mutace obsahu - CZ je referenční jazyk a edituje se přímo
+// v sekcích výše, tyhle jazyky se překládají v tabech (viz "PŘEKLADY" níže).
+// Uzavřená známá sada (docs/09-jazykove-mutace.md), sloupce s příponou v DB.
+const TRANSLATION_LOCALES = [
+  { key: 'en', label: 'English' },
+  { key: 'ko', label: '한국어' },
+  { key: 'ja', label: '日本語' },
+  { key: 'zh_hans', label: '简体中文' },
+  { key: 'zh_hant', label: '繁體中文' },
+] as const;
+
+type TranslationLocaleKey = typeof TRANSLATION_LOCALES[number]['key'];
+type TranslatableField = 'name' | 'short_description' | 'detailed_description';
+
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
 
 const EMPTY_FORM: ProductFormData = {
@@ -29,6 +43,23 @@ const EMPTY_FORM: ProductFormData = {
   detailed_description: '',
   price: 0,
   sale_price: null,
+  price_eur: null,
+  sale_price_eur: null,
+  name_en: null,
+  short_description_en: null,
+  detailed_description_en: null,
+  name_ko: null,
+  short_description_ko: null,
+  detailed_description_ko: null,
+  name_ja: null,
+  short_description_ja: null,
+  detailed_description_ja: null,
+  name_zh_hans: null,
+  short_description_zh_hans: null,
+  detailed_description_zh_hans: null,
+  name_zh_hant: null,
+  short_description_zh_hant: null,
+  detailed_description_zh_hant: null,
   weight_grams: 0,
   image_url: '',
   gallery_images: [],
@@ -75,10 +106,19 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeLocale, setActiveLocale] = useState<TranslationLocaleKey>('en');
   const backdropHandlers = useBackdropClose(onClose);
 
   function set<K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function getTranslation(field: TranslatableField, locale: TranslationLocaleKey): string {
+    return (form[`${field}_${locale}` as keyof ProductFormData] as string | null) ?? '';
+  }
+
+  function setTranslation(field: TranslatableField, locale: TranslationLocaleKey, value: string) {
+    setForm((f) => ({ ...f, [`${field}_${locale}`]: value }));
   }
 
   async function handleImageUpload(file: File) {
@@ -227,6 +267,30 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
               />
             </div>
             <div>
+              <label className={labelClass}>Cena (EUR)</label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="mezinárodní cena"
+                className={inputClass}
+                value={form.price_eur ?? ''}
+                onChange={(e) => set('price_eur', e.target.value === '' ? null : Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Zlevněná cena (EUR)</label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="bez slevy"
+                className={inputClass}
+                value={form.sale_price_eur ?? ''}
+                onChange={(e) => set('sale_price_eur', e.target.value === '' ? null : Number(e.target.value))}
+              />
+            </div>
+            <div>
               <label className={labelClass}>Sklad (ks)</label>
               <input type="number" min={0} className={inputClass} value={form.stock_quantity} onChange={(e) => set('stock_quantity', Number(e.target.value))} />
             </div>
@@ -295,6 +359,78 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
               <p className="style-label text-black300 mt-1">
                 Povolené HTML tagy: &lt;h3&gt;, &lt;h4&gt;, &lt;strong&gt;, &lt;ul&gt;/&lt;ol&gt;/&lt;li&gt;, &lt;p&gt;, &lt;br&gt;. Ostatní tagy se při zobrazení odstraní.
               </p>
+            </div>
+          </div>
+
+          {/* PŘEKLADY */}
+          <div className="space-y-4 pt-4 border-t border-black300/30">
+            <div>
+              <label className={labelClass}>Překlady obsahu</label>
+              <p className="style-body text-black300/70 mb-3">
+                CZ text vlevo je jen reference (needitovatelný zde, edituje se v sekcích výše). Cena je společná pro
+                všechny mezinárodní mutace – viz pole „Cena (EUR)“ výše, nepřekládá se per jazyk.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {TRANSLATION_LOCALES.map(({ key, label }) => (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => setActiveLocale(key)}
+                    className={`style-body px-3 h-[32px] rounded-full border transition-all cursor-pointer ${
+                      activeLocale === key
+                        ? 'bg-primary border-primary text-black'
+                        : 'border-black300/30 text-secondary hover:bg-black300/10'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Název (CZ)</label>
+                <input className={`${inputClass} opacity-60 cursor-not-allowed`} value={form.name} readOnly tabIndex={-1} />
+              </div>
+              <div>
+                <label className={labelClass}>Název ({TRANSLATION_LOCALES.find((l) => l.key === activeLocale)?.label})</label>
+                <input
+                  className={inputClass}
+                  value={getTranslation('name', activeLocale)}
+                  onChange={(e) => setTranslation('name', activeLocale, e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Krátký popis (CZ)</label>
+                <textarea className={`${textareaClass} opacity-60 cursor-not-allowed`} value={form.short_description ?? ''} readOnly tabIndex={-1} />
+              </div>
+              <div>
+                <label className={labelClass}>Krátký popis ({TRANSLATION_LOCALES.find((l) => l.key === activeLocale)?.label})</label>
+                <textarea
+                  className={textareaClass}
+                  value={getTranslation('short_description', activeLocale)}
+                  onChange={(e) => setTranslation('short_description', activeLocale, e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Detailní popis (CZ)</label>
+                <textarea className={`${textareaClass} opacity-60 cursor-not-allowed`} value={form.detailed_description ?? ''} readOnly tabIndex={-1} />
+              </div>
+              <div>
+                <label className={labelClass}>Detailní popis ({TRANSLATION_LOCALES.find((l) => l.key === activeLocale)?.label})</label>
+                <textarea
+                  className={textareaClass}
+                  value={getTranslation('detailed_description', activeLocale)}
+                  onChange={(e) => setTranslation('detailed_description', activeLocale, e.target.value)}
+                />
+              </div>
             </div>
           </div>
 

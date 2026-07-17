@@ -54,8 +54,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // lang je natvrdo "en": tenhle kořenový layout leží nad [locale] segmentem
+  // (sdílí ho i /admin, /api, /rekonstrukce), takže nemá k dispozici
+  // params.locale (parametry se v Next.js kumulují odshora dolů, ne naopak)
+  // a číst mutaci přes next-intl API by tenhle sdílený layout vynutilo
+  // dynamické renderování úplně všeho. Skutečný jazyk stránky nastavuje
+  // app/[locale]/layout.tsx přes NextIntlClientProvider.
   return (
-    <html lang="cs">
+    <html lang="en">
       <body className={`${poppins.className} flex flex-col min-h-screen bg-[#0F172A]`}>
         <script
           type="application/ld+json"

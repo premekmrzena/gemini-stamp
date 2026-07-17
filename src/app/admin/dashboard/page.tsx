@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ORDER_STATUSES } from '@/lib/constants';
-import { OrderStatus, Product, ProductCategory, DiscountCode } from '@/types/database';
+import { OrderStatus, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate } from '@/types/database';
 import { ProductFormModal, CATEGORY_LABELS } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
@@ -11,11 +11,18 @@ import { getEffectivePrice } from '@/lib/pricing';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins
 } from 'lucide-react';
 import JSZip from 'jszip';
 
 const LOW_STOCK_THRESHOLD = 5;
+
+const CURRENCY_LABELS: Record<CurrencyCode, string> = {
+  KRW: 'Korejský won (KRW)',
+  JPY: 'Japonský jen (JPY)',
+  CNY: 'Čínský jüan (CNY)',
+  TWD: 'Tchajwanský dolar (TWD)',
+};
 
 const PRODUCT_SORT_OPTIONS = {
   created_desc: { label: 'Nejnovější', compare: (a: Product, b: Product) => +new Date(b.created_at) - +new Date(a.created_at) },
@@ -62,7 +69,7 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // --- STAVY PRO DASHBOARD ---
-  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty' | 'slevy'>('objednavky');
+  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty' | 'slevy' | 'kurzy'>('objednavky');
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,6 +98,12 @@ export default function AdminDashboard() {
   const [discountCodesLoading, setDiscountCodesLoading] = useState(false);
   const [discountFormTarget, setDiscountFormTarget] = useState<DiscountCode | 'new' | null>(null);
 
+  // --- STAVY PRO KURZY MĚN ---
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
+  const [exchangeRatesLoading, setExchangeRatesLoading] = useState(false);
+  const [rateInputs, setRateInputs] = useState<Record<string, string>>({});
+  const [savingRate, setSavingRate] = useState<CurrencyCode | null>(null);
+
   // --- STAVY PRO TISKOVÁ DATA ARCHŮ ---
   const [customStampsData, setCustomStampsData] = useState<Record<string, string>>({});
   const [bulkDownloading, setBulkDownloading] = useState(false);
@@ -108,6 +121,7 @@ export default function AdminDashboard() {
         fetchOrders();
         fetchProducts();
         fetchDiscountCodes();
+        fetchExchangeRates();
       }
     }
     checkUser();
@@ -118,6 +132,7 @@ export default function AdminDashboard() {
         fetchOrders();
         fetchProducts();
         fetchDiscountCodes();
+        fetchExchangeRates();
       } else {
         setOrders([]);
         setFilteredOrders([]);
@@ -159,6 +174,41 @@ export default function AdminDashboard() {
       const exists = prev.some((d) => d.id === saved.id);
       return exists ? prev.map((d) => (d.id === saved.id ? saved : d)) : [saved, ...prev];
     });
+  }
+
+  async function fetchExchangeRates() {
+    setExchangeRatesLoading(true);
+    const { data, error } = await supabase
+      .from('exchange_rates')
+      .select('*')
+      .order('currency_code');
+    if (!error && data) {
+      setExchangeRates(data);
+      setRateInputs(Object.fromEntries(data.map((r) => [r.currency_code, r.rate_to_eur != null ? String(r.rate_to_eur) : ''])));
+    }
+    setExchangeRatesLoading(false);
+  }
+
+  async function saveExchangeRate(currencyCode: CurrencyCode) {
+    const raw = (rateInputs[currencyCode] ?? '').trim();
+    const rate = raw === '' ? null : Number(raw);
+    if (rate !== null && (Number.isNaN(rate) || rate <= 0)) {
+      alert('Zadej platné kladné číslo, nebo pole nech prázdné.');
+      return;
+    }
+    setSavingRate(currencyCode);
+    const { data, error } = await supabase
+      .from('exchange_rates')
+      .update({ rate_to_eur: rate, updated_at: new Date().toISOString() })
+      .eq('currency_code', currencyCode)
+      .select()
+      .single();
+    setSavingRate(null);
+    if (error) {
+      alert(`Uložení kurzu selhalo: ${error.message}`);
+      return;
+    }
+    setExchangeRates((prev) => prev.map((r) => (r.currency_code === currencyCode ? data : r)));
   }
 
   async function toggleHomepage(productId: string, current: boolean) {
@@ -517,6 +567,12 @@ export default function AdminDashboard() {
           >
             <Tag size={16} /> Slevové kódy
           </button>
+          <button
+            onClick={() => setActiveTab('kurzy')}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'kurzy' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+          >
+            <Coins size={16} /> Kurzy měn
+          </button>
         </div>
 
         {/* PRODUKTY */}
@@ -752,6 +808,64 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+            </div>
+          </div>
+        )}
+
+        {/* KURZY MĚN */}
+        {activeTab === 'kurzy' && (
+          <div className="space-y-4">
+            <p className="style-body text-black300/70 max-w-2xl">
+              Kurz EUR → cílová měna pro přepočet mezinárodní ceny produktů (pole „Cena (EUR)“ v produktu). Bez
+              napojení na kurzovní API – aktualizuj ručně podle potřeby, orientačně jednou za měsíc.
+            </p>
+            <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+              {exchangeRatesLoading ? (
+                <div className="p-10 text-center text-black300 style-body">Načítám kurzy...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-black/50 text-black300 style-product-tag">
+                      <tr>
+                        <th className="p-4 font-normal">Měna</th>
+                        <th className="p-4 font-normal">Kurz (1 EUR =)</th>
+                        <th className="p-4 font-normal">Naposledy upraveno</th>
+                        <th className="p-4 font-normal text-right">Akce</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black300/20">
+                      {exchangeRates.map((rate) => (
+                        <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
+                          <td className="p-4 style-body-bold text-secondary">{CURRENCY_LABELS[rate.currency_code]}</td>
+                          <td className="p-4">
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.0001"
+                              placeholder="nenastaveno"
+                              className="bg-black border border-black300/50 rounded-[8px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
+                              value={rateInputs[rate.currency_code] ?? ''}
+                              onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
+                            />
+                          </td>
+                          <td className="p-4 style-body text-black300">
+                            {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => saveExchangeRate(rate.currency_code)}
+                              disabled={savingRate === rate.currency_code}
+                              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[8px] transition-all style-body cursor-pointer"
+                            >
+                              {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
