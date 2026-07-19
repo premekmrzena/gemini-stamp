@@ -103,14 +103,19 @@ export default function Hero() {
             ))}
           </div>
 
-          <div className="order-1 lg:order-2 w-full max-w-[700px] lg:max-w-[525px] shrink relative">
+          <Link
+            href="/vytvorit-arch"
+            className="order-1 lg:order-2 block w-full max-w-[700px] lg:max-w-[525px] shrink relative"
+          >
             {renderSlider('desktop')}
-          </div>
+          </Link>
         </div>
 
         {/* Mobile */}
         <div className="md:hidden w-full flex flex-col items-center mt-6 mb-8">
-          {renderSlider('mobile', 'max-w-[500px]')}
+          <Link href="/vytvorit-arch" className="block w-full max-w-[500px]">
+            {renderSlider('mobile', 'max-w-[500px]')}
+          </Link>
         </div>
 
         <div className="hidden flex flex-row items-start justify-center w-full mb-8 gap-2">

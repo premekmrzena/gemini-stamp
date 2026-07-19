@@ -23,7 +23,7 @@ export default function Home() {
         <TrustBadges />
       </div>
       {/* ProductList na HP dočasně skrytý (probíhá rozhodování o rozvržení pásů) */}
-      <div className="bg-black500 w-full py-[32px] md:py-[54px] lg:py-[64px]">
+      <div className="bg-black500/50 w-full py-[32px] md:py-[54px] lg:py-[64px]">
         <PurchaseCategoriesSection />
       </div>
       <ReviewStrip />

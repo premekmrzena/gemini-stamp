@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import Link from 'next/link';
+import { Paintbrush } from 'lucide-react';
 
 const stampCategories = [
   {
@@ -56,7 +58,14 @@ export default function StampCategoriesSection() {
           <div key={i} className="flex flex-col items-center text-center p-6 rounded-[4px] border border-white/15 bg-[#0B1120]">
             <h3 className="style-h3 text-secondary mb-4">{cat.title}</h3>
             <CategoryImage src={cat.image} alt={cat.title} className="w-[80%] mb-4" />
-            <p className="style-body text-secondary/60">{cat.text}</p>
+            <p className="style-body text-secondary/60 mb-4">{cat.text}</p>
+            <Link
+              href="/vytvorit-arch"
+              className="group/btn style-body font-bold flex items-center justify-center gap-2 p-2 mt-auto text-[#FF6B35] hover:text-[#FF7F51] cursor-pointer"
+            >
+              <Paintbrush size={18} className="group-hover/btn:scale-110 transition-transform" />
+              Prozkoumat šablony
+            </Link>
           </div>
         ))}
       </div>

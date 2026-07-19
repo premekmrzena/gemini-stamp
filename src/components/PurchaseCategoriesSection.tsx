@@ -64,14 +64,16 @@ export default function PurchaseCategoriesSection() {
           <Link
             key={cat.href}
             href={cat.href}
-            className={`group flex flex-col items-center text-center p-4 rounded-[4px] border ${
-              cat.featured ? 'border-primary/50 bg-[#0B1120]' : 'border-transparent'
+            className={`group flex flex-col items-center text-center px-4 py-6 rounded-[4px] border active:bg-black500 active:scale-[0.98] active:z-10 md:hover:bg-black500 md:hover:scale-[1.02] md:hover:z-10 transition-all duration-300 ${
+              cat.featured ? 'border-primary/50 bg-[#0B1120]' : 'border-black300/30'
             }`}
           >
-            <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] mb-3 shrink-0">
-              {i + 1}
+            <div className="flex flex-row items-center gap-2 mb-4 md:flex-col md:gap-0">
+              <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] shrink-0 md:mb-3">
+                {i + 1}
+              </div>
+              <h3 className="style-h3 text-secondary group-hover:text-primary transition-colors">{cat.title}</h3>
             </div>
-            <h3 className="style-h3 text-secondary mb-4 group-hover:text-primary transition-colors">{cat.title}</h3>
             <div className="relative w-[80%] mb-4">
               <CategoryImage src={cat.image} alt={cat.title} className="w-full" />
               {cat.featured && (
