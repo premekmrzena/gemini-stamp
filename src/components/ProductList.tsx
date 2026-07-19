@@ -20,7 +20,7 @@ export default function ProductList({ products, title }: ProductListProps) {
         {title && (
           <h2 className="style-h2 text-secondary text-center mb-6 select-none">{title}</h2>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

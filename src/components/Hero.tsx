@@ -94,7 +94,7 @@ export default function Hero() {
           <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-6 md:gap-4 lg:gap-8 w-full lg:w-auto lg:max-w-[320px] shrink-0">
             {steps.map((step) => (
               <div key={step.id} className="flex flex-col items-center text-center flex-1 lg:flex-none">
-                <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] mb-3 shrink-0">
+                <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-success text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] mb-3 shrink-0">
                   {step.id}
                 </div>
                 <h3 className="style-h4 mb-1">{step.title}</h3>
@@ -121,7 +121,7 @@ export default function Hero() {
         <div className="hidden flex flex-row items-start justify-center w-full mb-8 gap-2">
           {steps.map((step) => (
             <div key={`mobile-${step.id}`} className="flex flex-col items-center text-center flex-1 min-w-0 gap-2 px-1">
-              <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[18px] shrink-0">
+              <div className="w-8 h-8 rounded-full bg-success text-black flex items-center justify-center font-semibold text-[18px] shrink-0">
                 {step.id}
               </div>
               <p className="text-[11px] sm:text-[13px] font-medium leading-[1.5] text-secondary">

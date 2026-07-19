@@ -69,7 +69,7 @@ export default function PurchaseCategoriesSection() {
             }`}
           >
             <div className="flex flex-row items-center gap-2 mb-4 md:flex-col md:gap-0">
-              <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-primary text-black flex items-center justify-center font-semibold text-[22px] lg:text-[24px] shrink-0 md:mb-3">
+              <div className="w-9 h-9 lg:w-[34px] lg:h-[34px] rounded-full bg-success text-[#0B1120] flex items-center justify-center font-semibold text-[22px] lg:text-[24px] shrink-0 md:mb-3">
                 {i + 1}
               </div>
               <h3 className="style-h3 text-secondary group-hover:text-primary transition-colors">{cat.title}</h3>

@@ -56,7 +56,7 @@ export default function ShopInfoStrip() {
               href="/jak-nakupovat"
               className="flex items-center gap-3 bg-black500 rounded px-4 py-3 hover:bg-black400 transition-colors"
             >
-              <div className="shrink-0 text-primary">
+              <div className="shrink-0 text-success">
                 {item.icon}
               </div>
               <div className="flex flex-col min-w-0">
