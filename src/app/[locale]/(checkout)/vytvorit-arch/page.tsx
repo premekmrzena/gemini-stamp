@@ -51,6 +51,7 @@ export default function EditorPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
   const [productInfo, setProductInfo] = useState<Record<string, TemplateInfo>>({});
+  const [productInfoLoaded, setProductInfoLoaded] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('doporucene');
 
   const { addToCart } = useCart();
@@ -75,19 +76,21 @@ export default function EditorPage() {
         .select('id, name, short_description, price, sale_price, sold_count, is_active')
         .in('id', TEMPLATES.map((t) => t.productId));
 
-      if (error || !data) return;
+      if (error || !data) { setProductInfoLoaded(true); return; }
 
       const byId: Record<string, TemplateInfo> = {};
       for (const row of data) {
         byId[row.id] = { name: row.name, short_description: row.short_description, price: row.price, sale_price: row.sale_price, sold_count: row.sold_count, is_active: row.is_active };
       }
       setProductInfo(byId);
+      setProductInfoLoaded(true);
     }
     fetchProductInfo();
   }, []);
 
   // Neaktivní produkt (vypnuto v adminu) se ve výběru šablon skrývá, stejně jako všude jinde v e-shopu.
-  // Než se data ze Supabase načtou, šablona zůstává vidět (žádné bliknutí skrytí/zobrazení).
+  // Dokud se stav is_active nedotáhne ze Supabase, šablona se v gridu vůbec nevykresluje (viz productInfoLoaded
+  // níže) – jinak by neaktivní šablona krátce problikla a pak zase zmizela.
   const visibleTemplates = useMemo(
     () => TEMPLATES.filter((t) => productInfo[t.productId]?.is_active !== false),
     [productInfo]
@@ -188,6 +191,9 @@ export default function EditorPage() {
                 ))}
               </select>
             </div>
+            {!productInfoLoaded ? (
+              <div className="w-full py-20 flex items-center justify-center style-body text-secondary/70">Načítáme šablony...</div>
+            ) : (
             <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
               {sortedTemplates.map((tpl) => {
                 // Slot typu "text" vždy nese i fotku (zákazník do něj vkládá foto i vlastní text zároveň) – počítá se tedy taky.
@@ -278,6 +284,7 @@ export default function EditorPage() {
                 );
               })}
             </div>
+            )}
           </div>
           <Footer />
           </>
