@@ -20,7 +20,7 @@ const stampCategories = [
   },
   {
     title: 'Světové kulturní dědictví',
-    text: 'Hudba, poezie, divadlo, bohatství, které duchovně formovalo Evropu.',
+    text: 'Hudba, poezie, divadlo. Bohatství, které duchovně formovalo Evropu.',
     image: '/images/kreativni-archy_komponenta04.png',
   },
 ];

@@ -51,11 +51,11 @@ function CategoryImage({
 export default function PurchaseCategoriesSection() {
   return (
     <div className="layout-container">
-      <h2 className="style-h2 text-secondary text-center mb-4">Co si u nás můžete koupit</h2>
+      <h2 className="style-h2 text-secondary text-center mb-4">Co si u nás můžete koupit?</h2>
       <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-8">
-        Čtyři kategorie produktů pro sběratele i milovníky originálních dárků. Chcete arch s vlastními fotkami?{' '}
+        Čtyři kategorie produktů pro milovníky originálních dárků i sběratele. Doporučujeme arch s vlastními fotkami.{' '}
         <Link href="/co-je-kreativni-arch" className="style-body-bold text-primary hover:underline">
-          Zjistěte, jak Kreativní arch funguje →
+          → Zjistěte, jak vytvořit vlastní Kreativní arch
         </Link>
       </p>
 

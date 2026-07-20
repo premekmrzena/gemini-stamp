@@ -12,9 +12,9 @@ const sliderImages = [
 ];
 
 const steps = [
-  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber šablonu', text: 'Z historie, umění nebo známé památky.' },
+  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber šablonu', text: 'Historie, umění nebo známé památky.' },
   { id: 2, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
-  { id: 3, title: 'Napiš vlastní text', mobileTitle: 'Napiš text', text: 'Na kreativní arch si můžete dopsat vlastní vzkaz.' },
+  { id: 3, title: 'Napiš vlastní text', mobileTitle: 'Napiš text', text: 'Na Kreativní arch si můžete dopsat vlastní vzkaz.' },
 ];
 
 export default function Hero() {

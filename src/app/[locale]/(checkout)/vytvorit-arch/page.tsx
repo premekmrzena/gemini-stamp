@@ -177,11 +177,11 @@ export default function EditorPage() {
 
           <div className="layout-container pb-8 md:pb-[64px]">
             <div className="flex flex-wrap items-center justify-center md:justify-between gap-3 mb-4">
-              <TrustBadges />
+              <TrustBadges hideReviewBadgeOnMobile />
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
-                className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                className="hidden md:block bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
               >
                 {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
                   <option key={value} value={value}>{label}</option>
@@ -237,7 +237,7 @@ export default function EditorPage() {
                         </span>
                       </div>
 
-                      <p className="style-body text-secondary/70 mb-[16px] line-clamp-2 min-h-[2.8em]">{description}</p>
+                      <p className="style-body text-secondary/70 mb-[16px] line-clamp-4 min-h-[5.6em]">{description}</p>
 
                       {/* Vizuální nápověda, že celá karta vede na detail šablony (klik zachytí obalující Link výše) */}
                       <div className="inline-flex items-center gap-[6px] style-label text-secondary/70 mb-[16px]">
