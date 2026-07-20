@@ -43,6 +43,9 @@ const CheckoutPage = () => {
   const totalOrderPrice = cartTotalAfterDiscount + shippingCost + paymentCost;
   const isMezinarodni = selectedShipping === 'mezinarodni';
 
+  // Hydration guard (počká na klientský mount) - nejde nahradit lazy initializerem,
+  // ten by běžel i při SSR a dal by jiný výsledek než na klientovi.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setIsMounted(true); }, []);
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [currentStep]);
 

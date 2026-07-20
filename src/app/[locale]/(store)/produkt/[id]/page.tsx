@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { SITE_URL } from '@/lib/site';
+import { Product } from '@/types/database';
+
+type RelatedProduct = Pick<Product, 'id' | 'name' | 'price' | 'sale_price' | 'image_url'>;
 
 const categoryLabels: Record<string, string> = {
   'znamky': 'Poštovní známky',
@@ -75,7 +78,7 @@ export default async function ProductPage({
   }
 
   // 2. LOGIKA PRO SOUVISEJÍCÍ PRODUKTY (ARRAY VERSION)
-  let relatedProducts: any[] = [];
+  let relatedProducts: RelatedProduct[] = [];
 
   // Kontrola, zda máme v poli related_stamp_id nějaká ID
   const hasRelatedIds = product.related_stamp_id && 

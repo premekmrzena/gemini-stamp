@@ -1,10 +1,11 @@
 import * as React from 'react';
+import { CartItemSnapshot } from '@/types/database';
 
 interface OrderEmailProps {
   orderId: string;
   customerName: string;
   totalPrice: number;
-  cartItems: any[]; // Pole objektů z košíku
+  cartItems: CartItemSnapshot[];
 }
 
 export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({

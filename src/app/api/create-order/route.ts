@@ -5,6 +5,14 @@ import { sendOrderConfirmation } from '@/lib/email';
 import { CartItemSnapshot } from '@/types/database';
 import { getEffectivePrice, computeDiscountAmount } from '@/lib/pricing';
 
+type JoinedStampProduct = {
+  id: string;
+  name: string;
+  price: number;
+  sale_price: number | null;
+  weight_grams: number;
+};
+
 type CreateOrderBody = {
   cartItems: CartItemSnapshot[];
   shippingMethodId: string;
@@ -60,20 +68,20 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: `Vlastní razítko ${item.id} nenalezeno` }, { status: 400 });
         }
 
-        const product = Array.isArray(stamp.products) ? stamp.products[0] : stamp.products;
+        const product = (Array.isArray(stamp.products) ? stamp.products[0] : stamp.products) as JoinedStampProduct | null;
         if (!product) {
           return NextResponse.json({ error: 'Produkt pro vlastní razítko nenalezen' }, { status: 400 });
         }
 
-        const effectivePrice = getEffectivePrice((product as any).price, (product as any).sale_price);
+        const effectivePrice = getEffectivePrice(product.price, product.sale_price);
         computedSubtotal += effectivePrice * item.quantity;
-        totalWeightGrams += ((product as any).weight_grams || 0) * item.quantity;
+        totalWeightGrams += (product.weight_grams || 0) * item.quantity;
         validatedItems.push({
           ...item,
           price: effectivePrice,
-          weight_grams: (product as any).weight_grams,
+          weight_grams: product.weight_grams,
         });
-        soldIncrements.push({ productId: (product as any).id, qty: item.quantity });
+        soldIncrements.push({ productId: product.id, qty: item.quantity });
       } else {
         return NextResponse.json({ error: 'Neznámý typ položky v košíku' }, { status: 400 });
       }

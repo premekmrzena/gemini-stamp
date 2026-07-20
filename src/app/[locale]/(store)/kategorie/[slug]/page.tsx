@@ -7,7 +7,7 @@ import ProductList from '@/components/ProductList';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TrustBadges from '@/components/TrustBadges';
 import { getEffectivePrice } from '@/lib/pricing';
-import { ProductTopic } from '@/types/database';
+import { Product, ProductTopic } from '@/types/database';
 import { CATEGORY_CONTENT, CATEGORY_GROUPS } from '@/lib/categoryContent';
 
 type SortableProduct = { name: string; price: number; sale_price: number | null; sold_count: number | null };
@@ -37,7 +37,7 @@ export default function CategoryPage() {
   const router = useRouter();
   const slug = typeof params?.slug === 'string' ? params.slug : '';
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('doporucene');
   const [topicFilter, setTopicFilter] = useState<TopicFilterKey>('vse');
@@ -47,7 +47,7 @@ export default function CategoryPage() {
     description: 'Popis kategorie se připravuje...',
   };
 
-  const categoriesToFetch = CATEGORY_GROUPS[slug] || [slug];
+  const categoriesToFetch = useMemo(() => CATEGORY_GROUPS[slug] || [slug], [slug]);
   const showTopicFilter = slug === 'znamky' || slug === 'znamkove-archy';
 
   // Kreativní archy nemají vlastní stránku kategorie – nahrazeno editorem na /vytvorit-arch.
@@ -72,7 +72,7 @@ export default function CategoryPage() {
       setLoading(false);
     }
     fetchCategoryProducts();
-  }, [slug]);
+  }, [slug, categoriesToFetch]);
 
   const filteredProducts = useMemo(() => {
     if (topicFilter === 'vse') return products;

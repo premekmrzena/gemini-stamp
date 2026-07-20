@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import GoogleAnalytics from '@/components/GoogleAnalytics';
+import GoogleAnalytics from './GoogleAnalytics';
 import AnalyticsPageview from '@/components/AnalyticsPageview';
 import CookieConsent from '@/components/CookieConsent';
 

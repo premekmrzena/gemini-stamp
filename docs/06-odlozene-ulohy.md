@@ -30,11 +30,11 @@
 |---|---|
 | **Tiskové archy se tiskárně nepředávají automaticky** | Hromadný ZIP export v dashboardu existuje (viz [sekce 5](05-administrace.md#2-záložka-objednávky)), ale soubor admin pošle tiskárně manuálně — žádná automatizace/integrace. |
 
-## Kódová kvalita
+## Marketing a analytika
 
 | Co chybí | Poznámka |
 |---|---|
-| **22 ESLint chyb/varování** napříč appkou (stav 2026-07-16) | Hlavně `@typescript-eslint/no-explicit-any` (15×, převážně `src/app/admin/dashboard/page.tsx` – produkty/objednávky ze Supabase natypované jako `any`), dále `react-hooks/set-state-in-effect` (3×, `admin/dashboard/page.tsx` + `src/app/dekujeme/page.tsx` – `setState` volané přímo v těle `useEffect`), `react-hooks/immutability` (3×, `admin/dashboard/page.tsx` – přístup k proměnné před deklarací) a 1× `react-hooks/exhaustive-deps`. Nic z toho nerozbíjí appku, je to jen technický dluh. Zjistit `npx eslint <soubory>` a projít je postupně. |
+| **GA4 `beforeInteractive` script možná ve špatném layoutu** | `GoogleAnalytics.tsx` (Consent Mode v2 default) běží v `src/app/[locale]/layout.tsx`, ne v kořenovém `app/layout.tsx`. Next.js dokumentace říká, že `beforeInteractive` má spolehlivě fungovat jen v kořenovém layoutu. Prakticky nevadí, dokud je skoro celý web pod `[locale]`, ale přesun do kořene by zase přinesl GA i na `/admin`/`/rekonstrukce`. Rozhodnout vědomě, až bude čas. |
 
 ## Jak s touto sekcí pracovat
 Když se na některou z těchto úloh dostane řada, smazat řádek odsud a popsat hotové řešení v příslušné číslované sekci (01–05), případně založit novou sekci. Tahle stránka má zůstat krátká — jen seznam, ne návod.

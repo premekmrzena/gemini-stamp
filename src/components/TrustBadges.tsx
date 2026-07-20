@@ -16,6 +16,9 @@ export default function TrustBadges({ hideReviewBadgeOnMobile = false }: { hideR
   const [visitorCount, setVisitorCount] = useState(MIN_VISITORS);
 
   useEffect(() => {
+    // Náhodná hodnota musí přijít až tady (ne z lazy initializeru useState), jinak by se
+    // spočítala i při SSR a lišila se od klientské -> hydration mismatch (viz komentář výše).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisitorCount(randomVisitorCount());
     const interval = setInterval(() => {
       setVisitorCount(randomVisitorCount());

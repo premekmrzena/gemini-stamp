@@ -3,13 +3,14 @@ import { render } from '@react-email/render';
 import { resend } from '@/lib/resend';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { ShippingNotificationEmail } from '@/components/emails/ShippingNotificationEmail';
+import { CartItemSnapshot } from '@/types/database';
 
 type SendOrderConfirmationParams = {
   email: string;
   orderId: string;
   customerName: string;
   totalPrice: number;
-  cartItems: unknown[];
+  cartItems: CartItemSnapshot[];
 };
 
 export async function sendOrderConfirmation({

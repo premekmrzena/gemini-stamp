@@ -95,6 +95,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const savedCart = localStorage.getItem('razitka-cart');
     if (savedCart) {
       try {
+        // localStorage není dostupné při SSR, takže tohle musí zůstat v efektu (post-mount) -
+        // lazy initializer ve useState by běžel i na serveru a způsobil hydration mismatch.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCartItems(JSON.parse(savedCart));
       } catch {
         localStorage.removeItem('razitka-cart');

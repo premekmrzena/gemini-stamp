@@ -58,10 +58,13 @@ export default function EditorPage() {
 
   // Příchod z karty/detailu produktu ("Začít tvořit") – rovnou do editoru dané šablony
   useEffect(() => {
+    // window.location.search je dostupné jen na klientovi (nejde přesunout do
+    // render/lazy initializeru, to by při SSR spadlo).
     const productId = new URLSearchParams(window.location.search).get('productId');
     if (!productId) return;
     const template = TEMPLATES.find((t) => t.productId === productId);
     if (template) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTemplateId(template.id);
       setCurrentStep(2);
     }

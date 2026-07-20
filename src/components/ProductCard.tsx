@@ -10,7 +10,7 @@ import { ProductCategory } from '@/types/database';
 export type ProductType = {
   id: string;
   name: string;
-  short_description: string;
+  short_description: string | null;
   price: number;
   sale_price: number | null;
   image_url: string;

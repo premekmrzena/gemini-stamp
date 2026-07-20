@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -10,14 +10,10 @@ import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 function ThankYouContent() {
   const { clearCart } = useCart();
   const searchParams = useSearchParams();
-  const [displayId, setDisplayId] = useState<string | null>(null);
+  const orderId = searchParams.get('orderId');
+  const displayId = orderId ? orderId.slice(-8).toUpperCase() : null;
 
   useEffect(() => {
-    const orderId = searchParams.get('orderId');
-    if (orderId) {
-      setDisplayId(orderId.slice(-8).toUpperCase());
-    }
-
     const timer = setTimeout(() => {
       clearCart();
       if (typeof window !== 'undefined') {

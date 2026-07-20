@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { ORDER_STATUSES } from '@/lib/constants';
-import { OrderStatus, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate } from '@/types/database';
+import { OrderStatus, Order, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate } from '@/types/database';
 import { ProductFormModal, CATEGORY_LABELS } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
@@ -16,6 +17,8 @@ import {
 import JSZip from 'jszip';
 
 const LOW_STOCK_THRESHOLD = 5;
+
+type PrintUrlRow = { id: string; print_url: string };
 
 const CURRENCY_LABELS: Record<CurrencyCode, string> = {
   KRW: 'Korejský won (KRW)',
@@ -61,7 +64,7 @@ function getNextStatus(order: { status?: OrderStatus; shipping_method?: string }
 
 export default function AdminDashboard() {
   // --- STAVY PRO AUTENTIZACI ---
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,10 +73,9 @@ export default function AdminDashboard() {
 
   // --- STAVY PRO DASHBOARD ---
   const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty' | 'slevy' | 'kurzy'>('objednavky');
-  const [orders, setOrders] = useState<any[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dateFilter, setDateFilter] = useState('');
   const orderModalBackdrop = useBackdropClose(() => setSelectedOrder(null));
 
@@ -111,6 +113,52 @@ export default function AdminDashboard() {
   // --- STAV PRO SLEDOVACÍ ČÍSLO ZÁSILKY ---
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
   const [savingTracking, setSavingTracking] = useState(false);
+  const [prevSelectedOrderId, setPrevSelectedOrderId] = useState<string | null>(null);
+
+  async function fetchOrders() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) console.error('Chyba při načítání:', error);
+    else setOrders(data || []);
+    setLoading(false);
+  }
+
+  async function fetchProducts() {
+    setProductsLoading(true);
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error) setProducts(data || []);
+    setProductsLoading(false);
+  }
+
+  async function fetchDiscountCodes() {
+    setDiscountCodesLoading(true);
+    const { data, error } = await supabase
+      .from('discount_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error) setDiscountCodes(data || []);
+    setDiscountCodesLoading(false);
+  }
+
+  async function fetchExchangeRates() {
+    setExchangeRatesLoading(true);
+    const { data, error } = await supabase
+      .from('exchange_rates')
+      .select('*')
+      .order('currency_code');
+    if (!error && data) {
+      setExchangeRates(data);
+      setRateInputs(Object.fromEntries(data.map((r) => [r.currency_code, r.rate_to_eur != null ? String(r.rate_to_eur) : ''])));
+    }
+    setExchangeRatesLoading(false);
+  }
 
   useEffect(() => {
     async function checkUser() {
@@ -135,22 +183,11 @@ export default function AdminDashboard() {
         fetchExchangeRates();
       } else {
         setOrders([]);
-        setFilteredOrders([]);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  async function fetchProducts() {
-    setProductsLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (!error) setProducts(data || []);
-    setProductsLoading(false);
-  }
 
   function handleProductSaved(saved: Product) {
     setProducts((prev) => {
@@ -159,34 +196,11 @@ export default function AdminDashboard() {
     });
   }
 
-  async function fetchDiscountCodes() {
-    setDiscountCodesLoading(true);
-    const { data, error } = await supabase
-      .from('discount_codes')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (!error) setDiscountCodes(data || []);
-    setDiscountCodesLoading(false);
-  }
-
   function handleDiscountCodeSaved(saved: DiscountCode) {
     setDiscountCodes((prev) => {
       const exists = prev.some((d) => d.id === saved.id);
       return exists ? prev.map((d) => (d.id === saved.id ? saved : d)) : [saved, ...prev];
     });
-  }
-
-  async function fetchExchangeRates() {
-    setExchangeRatesLoading(true);
-    const { data, error } = await supabase
-      .from('exchange_rates')
-      .select('*')
-      .order('currency_code');
-    if (!error && data) {
-      setExchangeRates(data);
-      setRateInputs(Object.fromEntries(data.map((r) => [r.currency_code, r.rate_to_eur != null ? String(r.rate_to_eur) : ''])));
-    }
-    setExchangeRatesLoading(false);
   }
 
   async function saveExchangeRate(currencyCode: CurrencyCode) {
@@ -255,29 +269,11 @@ export default function AdminDashboard() {
     setProducts((prev) => prev.filter((p) => p.id !== product.id));
   }
 
-  async function fetchOrders() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) console.error('Chyba při načítání:', error);
-    else {
-      setOrders(data || []);
-      setFilteredOrders(data || []);
-    }
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    let result = orders;
-    if (dateFilter) {
-      result = orders.filter(order => 
-        new Date(order.created_at).toLocaleDateString('en-CA') === dateFilter
-      );
-    }
-    setFilteredOrders(result);
+  const filteredOrders = useMemo(() => {
+    if (!dateFilter) return orders;
+    return orders.filter((order) =>
+      new Date(order.created_at).toLocaleDateString('en-CA') === dateFilter
+    );
   }, [dateFilter, orders]);
 
   useEffect(() => {
@@ -288,8 +284,8 @@ export default function AdminDashboard() {
       }
 
       const customStampIds = selectedOrder.cart_items
-        .filter((item: any) => item.name.toLowerCase().includes('vlastní'))
-        .map((item: any) => item.id);
+        .filter((item) => item.name.toLowerCase().includes('vlastní'))
+        .map((item) => item.id);
 
       if (customStampIds.length === 0) {
         setCustomStampsData({});
@@ -307,7 +303,8 @@ export default function AdminDashboard() {
       }
 
       if (data) {
-        const urlMapping = data.reduce((acc: Record<string, string>, curr: any) => {
+        const printUrlRows = data as PrintUrlRow[];
+        const urlMapping = printUrlRows.reduce((acc: Record<string, string>, curr) => {
           acc[curr.id] = curr.print_url;
           return acc;
         }, {});
@@ -318,9 +315,12 @@ export default function AdminDashboard() {
     loadCustomStampsPrintUrls();
   }, [selectedOrder]);
 
-  useEffect(() => {
+  // "Adjustování" stavu při změně vybrané objednávky - dělá se přímo v renderu
+  // (ne v efektu), viz https://react.dev/learn/you-might-not-need-an-effect
+  if ((selectedOrder?.id ?? null) !== prevSelectedOrderId) {
+    setPrevSelectedOrderId(selectedOrder?.id ?? null);
     setTrackingNumberInput(selectedOrder?.tracking_number || '');
-  }, [selectedOrder?.id]);
+  }
 
   async function handleLogin(e: React.SubmitEvent) {
     e.preventDefault();
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
       alert('Chyba při aktualizaci stavu');
     } else {
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
+      setSelectedOrder((prev) => prev ? { ...prev, status: newStatus } : null);
     }
   }
 
@@ -373,7 +373,7 @@ export default function AdminDashboard() {
     }
 
     setOrders(orders.map((o) => (o.id === selectedOrder.id ? { ...o, tracking_number: trimmed } : o)));
-    setSelectedOrder((prev: any) => (prev ? { ...prev, tracking_number: trimmed } : null));
+    setSelectedOrder((prev) => (prev ? { ...prev, tracking_number: trimmed } : null));
 
     try {
       const res = await fetch('/api/send-shipping-notification', {
@@ -398,8 +398,8 @@ export default function AdminDashboard() {
   async function handleBulkPrintDownload() {
     const itemsToDownload = filteredOrders.flatMap((order) =>
       (order.cart_items || [])
-        .filter((item: any) => item.name.toLowerCase().includes('vlastní'))
-        .map((item: any, idx: number) => ({ orderShort: order.id.slice(-6).toUpperCase(), itemId: item.id, itemIndex: idx + 1 }))
+        .filter((item) => item.name.toLowerCase().includes('vlastní'))
+        .map((item, idx) => ({ orderShort: order.id.slice(-6).toUpperCase(), itemId: item.id, itemIndex: idx + 1 }))
     );
 
     if (itemsToDownload.length === 0) {
@@ -415,7 +415,7 @@ export default function AdminDashboard() {
         .in('id', itemsToDownload.map((i) => i.itemId));
       if (error || !data) throw error || new Error('Žádná data');
 
-      const urlById = new Map(data.map((d: any) => [d.id, d.print_url]));
+      const urlById = new Map((data as PrintUrlRow[]).map((d) => [d.id, d.print_url]));
       const zip = new JSZip();
 
       for (const item of itemsToDownload) {
@@ -1055,7 +1055,7 @@ export default function AdminDashboard() {
                   <ShoppingBag size={14} className="text-primary" /> Položky objednávky
                 </h3>
                 <div className="bg-black rounded-[12px] border border-black300/20 overflow-hidden">
-                  {selectedOrder.cart_items?.map((item: any, i: number) => {
+                  {selectedOrder.cart_items?.map((item, i) => {
                     const isCustomStamp = item.name.toLowerCase().includes('vlastní');
                     const printUrl = customStampsData[item.id];
 

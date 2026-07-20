@@ -9,8 +9,16 @@ import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getSalePrice } from '@/lib/pricing';
 import { sanitizeDescriptionHtml } from '@/lib/sanitize';
+import { Product } from '@/types/database';
 
-export default function ProductDetailClient({ product, relatedProducts }: any) {
+type RelatedProduct = Pick<Product, 'id' | 'name' | 'price' | 'sale_price' | 'image_url'>;
+
+type ProductDetailClientProps = {
+  product: Product;
+  relatedProducts: RelatedProduct[];
+};
+
+export default function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
   const salePrice = getSalePrice(product.price, product.sale_price);
   const isCreativeArch = product.category === 'kreativni-archy';
   const router = useRouter();
@@ -24,13 +32,16 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
   const { addToCart } = useCart();
 
   useEffect(() => {
+    // window.innerWidth je dostupné jen na klientovi - nejde přesunout do lazy
+    // initializeru, to by při SSR spadlo (a lišilo by se od desktopového SSR výstupu).
     if (window.innerWidth < 1024) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsParamsOpen(false);
       setIsDescOpen(false);
     }
   }, []);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
     return new Date(dateString).toLocaleDateString('cs-CZ');
   };
@@ -234,7 +245,7 @@ export default function ProductDetailClient({ product, relatedProducts }: any) {
           <div className="border-t border-black300/30 pt-16">
             <h2 className="style-h2 text-center mb-12 select-none">Mohlo by vás také zajímat</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
-              {relatedProducts.map((relProd: any) => {
+              {relatedProducts.map((relProd) => {
                 const relSalePrice = getSalePrice(relProd.price, relProd.sale_price);
                 return (
                 <div

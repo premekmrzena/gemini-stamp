@@ -13,11 +13,10 @@ import { editorFontClassNames } from './editorFonts';
 type MiniMapProps = {
   template: Template;
   activeSlotId: string | null;
-  mainText: string;
   photos: Record<string, PhotoState>;
 };
 
-function MobileMiniMap({ template, activeSlotId, mainText, photos }: MiniMapProps) {
+function MobileMiniMap({ template, activeSlotId, photos }: MiniMapProps) {
   const minX = Math.min(...template.slots.map((s) => s.x));
   const minY = Math.min(...template.slots.map((s) => s.y));
   const maxX = Math.max(...template.slots.map((s) => s.x + s.width));
@@ -127,10 +126,18 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
 
   useEffect(() => {
     if (window.innerWidth >= 768) return;
-    if (isPreviewStep || showThankYou) { setActiveSlotId(null); return; }
+    // activeSlotId je zároveň nezávisle nastavovaný přímým kliknutím (handleSlotClick),
+    // není to čistě odvozená hodnota z mobileStep - synchronizace při navigaci kroky
+    // proto zůstává v efektu.
+    if (isPreviewStep || showThankYou) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveSlotId(null);
+      return;
+    }
     if (currentMobileSlot) { setActiveSlotId(currentMobileSlot.id); targetSlotIdRef.current = currentMobileSlot.id; }
   }, [mobileStep, currentMobileSlot, isPreviewStep, showThankYou]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setShowTextPanel(false); }, [mobileStep]);
 
   const safeRatio = viewRatio || 1;
@@ -285,7 +292,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                 {/* Photo layer */}
                 {photos[slot.id] ? (
                   <div className="absolute inset-0 w-full h-full overflow-hidden" onMouseDown={(e) => handleMouseDown('photo', slot.id, e)}>
-                    <img src={photos[slot.id].url} className="w-full h-full object-contain origin-center pointer-events-none"
+                    <img src={photos[slot.id].url} alt="" className="w-full h-full object-contain origin-center pointer-events-none"
                       style={{ transform: `translate(${photos[slot.id].x / safeRatio}px, ${photos[slot.id].y / safeRatio}px) scale(${photos[slot.id].scale})` }}
                     />
                     <button onClick={(e) => handleDeletePhoto(slot.id, e)} className="absolute top-2 right-2 w-8 h-8 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-md hover:bg-tag-posledni-kusy">✕</button>
@@ -409,7 +416,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
         ) : (
           <>
             <div className="w-full flex items-center gap-[16px] pt-[32px] pb-[32px] px-6 shrink-0 z-40">
-              <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} mainText={mainText} photos={photos} />
+              <MobileMiniMap template={activeTemplate} activeSlotId={activeSlotId} photos={photos} />
               <div className="flex flex-col gap-[8px]">
                 <h2 className="style-h3 text-secondary">
                   {templateName ?? activeTemplate.name}
@@ -439,7 +446,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                     {/* Photo with drag/resize — all slot types */}
                     {photos[currentMobileSlot!.id] && (
                       <div className="absolute inset-0 w-full h-full overflow-hidden touch-none" onTouchStart={(e) => handleTouchStart('photo', currentMobileSlot!.id, e)}>
-                        <img src={photos[currentMobileSlot!.id].url} className="absolute inset-0 w-full h-full object-contain origin-center pointer-events-none"
+                        <img src={photos[currentMobileSlot!.id].url} alt="" className="absolute inset-0 w-full h-full object-contain origin-center pointer-events-none"
                           style={{ transform: `translate(${photos[currentMobileSlot!.id].x / safeRatio}px, ${photos[currentMobileSlot!.id].y / safeRatio}px) scale(${photos[currentMobileSlot!.id].scale})` }}
                         />
                         <button onClick={(e) => handleDeletePhoto(currentMobileSlot!.id, e)} className="absolute top-3 right-3 w-10 h-10 bg-tag-posledni-kusy/90 text-secondary font-bold rounded-full style-body flex items-center justify-center z-30 shadow-lg">✕</button>
