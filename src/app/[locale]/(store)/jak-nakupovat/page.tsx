@@ -25,12 +25,52 @@ const paymentOptions = [
   {
     title: 'Online platba kartou',
     text: 'Rychlá a bezpečná platba přes oblíbenou platební bránu Stripe, objednávku i platbu potvrdíme okamžitě.',
+    logos: true,
   },
   {
     title: 'Bankovní převod',
     text: 'Platební pokyny pošleme e-mailem hned po dokončení objednávky. Objednávku realizujeme po připsání platby na náš účet.',
   },
 ];
+
+function PayBadge({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[6px] border border-black300/30 text-black300 style-label font-semibold">
+      {icon}
+      {children}
+    </span>
+  );
+}
+
+function ApplePayBadge() {
+  return (
+    <PayBadge
+      icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.5 5.8c1.6-1.9 1.4-3.9 1.4-3.9s-1.9.1-3.3 1.7c-1.3 1.4-1.5 3.3-1.5 3.3s1.9.1 3.4-1.1z" />
+          <path d="M17.6 12.5c0-2.9 2.4-4.3 2.5-4.4-1.4-2-3.5-2.3-4.2-2.3-1.8-.2-3.5 1-4.4 1-.9 0-2.3-1-3.8-1-2 0-3.8 1.1-4.8 2.9-2.1 3.6-.5 8.9 1.5 11.8 1 1.4 2.1 3 3.6 2.9 1.5-.1 2-.9 3.7-.9 1.7 0 2.2.9 3.7.9 1.5 0 2.5-1.4 3.5-2.8.9-1.3 1.5-2.7 1.6-2.8-1.7-.7-3.5-3.6-3.9-6.3z" />
+        </svg>
+      }
+    >
+      Pay
+    </PayBadge>
+  );
+}
+
+function GooglePayBadge() {
+  return (
+    <PayBadge
+      icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 12a8 8 0 1 1-2.9-6.2" />
+          <path d="M20 12h-7" />
+        </svg>
+      }
+    >
+      Pay
+    </PayBadge>
+  );
+}
 
 const deliveryTimes = [
   {
@@ -57,12 +97,14 @@ function Row({
   price,
   text,
   href,
+  children,
 }: {
   index?: string;
   title: string;
   price?: string;
   text: string;
   href?: string;
+  children?: React.ReactNode;
 }) {
   const inner = (
     <>
@@ -73,6 +115,7 @@ function Row({
           {price && <span className="style-body-bold text-primary">{price}</span>}
         </div>
         <p className="style-body text-secondary/60 mt-1">{text}</p>
+        {children}
       </div>
     </>
   );
@@ -111,10 +154,7 @@ export default function JakNakupovatPage() {
       {/* ——— DOPRAVA A OSOBNÍ ODBĚR ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Doprava a osobní odběr</h2>
-          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Vyberte si způsob doručení, který vám vyhovuje.
-          </p>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">Doprava a osobní odběr</h2>
 
           <div className="max-w-[640px] mx-auto">
             {shippingOptions.map((opt) => (
@@ -127,10 +167,7 @@ export default function JakNakupovatPage() {
       {/* ——— DOBA VÝROBY ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Jak dlouho to trvá?</h2>
-          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Dodací lhůta se liší podle toho, jestli objednáváte produkty skladem, nebo vytváříte Kreativní arch.
-          </p>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">Jak dlouho to trvá?</h2>
 
           <div className="max-w-[640px] mx-auto">
             {deliveryTimes.map((item) => (
@@ -143,14 +180,18 @@ export default function JakNakupovatPage() {
       {/* ——— PLATBA ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Jak zaplatit</h2>
-          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Vyberte si způsob platby, který vám vyhovuje. Platbu kartou potvrdíme okamžitě.
-          </p>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">Jak zaplatit?</h2>
 
           <div className="max-w-[640px] mx-auto">
             {paymentOptions.map((opt) => (
-              <Row key={opt.title} title={opt.title} text={opt.text} />
+              <Row key={opt.title} title={opt.title} text={opt.text}>
+                {opt.logos && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <ApplePayBadge />
+                    <GooglePayBadge />
+                  </div>
+                )}
+              </Row>
             ))}
           </div>
         </div>

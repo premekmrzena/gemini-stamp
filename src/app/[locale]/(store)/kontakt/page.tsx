@@ -4,25 +4,29 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 
 const contactRows = [
   {
-    title: 'E-mail',
-    text: 'info@mycreativestamp.com',
-    href: 'mailto:info@mycreativestamp.com',
-  },
-  {
     title: 'Odběrné místo',
     text: 'Jindřišská 126/15, 110 00 Praha 1',
+    map: true,
+    icon: 'home',
   },
   {
-    title: 'Sídlo',
-    text: 'My Creative Stamp s.r.o., Václavské náměstí 1, 110 00 Praha 1',
+    title: 'Kontaktní údaje',
+    lines: [
+      { label: 'E-mail', value: 'info@mycreativestamp.com', href: 'mailto:info@mycreativestamp.com' },
+      { label: 'Web', value: 'mycreativestamp.com', href: '/' },
+      { label: 'Telefon', value: '+420 123 456 789', href: 'tel:+420123456789' },
+    ],
+    icon: 'mail',
   },
   {
-    title: 'IČ / DIČ',
-    text: '12345678 / CZ12345678',
+    title: 'Fakturační údaje',
+    text: 'DVKS s.r.o., Nad Studánkou 393, 251 01 Světice, IČ: 14248328',
+    icon: 'invoice',
   },
   {
-    title: 'Číslo účtu',
-    text: '123456789/0100',
+    title: 'Bankovní spojení',
+    text: 'Číslo účtu: 3686330015/3030\nBanka: Air Bank, a.s.\nIBAN: CZ04 3030 0000 0036 8633 0015\nSWIFT/BIC: AIRACZPP',
+    icon: 'bank',
   },
 ];
 
@@ -45,24 +49,81 @@ export const metadata = {
   alternates: { canonical: '/kontakt' },
 };
 
+const contactIcons: Record<string, React.ReactNode> = {
+  home: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  mail: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  ),
+  invoice: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  ),
+  bank: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="22" x2="21" y2="22" />
+      <line x1="6" y1="18" x2="6" y2="11" />
+      <line x1="10" y1="18" x2="10" y2="11" />
+      <line x1="14" y1="18" x2="14" y2="11" />
+      <line x1="18" y1="18" x2="18" y2="11" />
+      <polygon points="12 2 20 7 4 7" />
+    </svg>
+  ),
+};
+
 function Row({
   title,
   price,
   text,
   href,
+  lines,
+  icon,
+  children,
 }: {
   title: string;
   price?: string;
-  text: string;
+  text?: string;
   href?: string;
+  lines?: { label: string; value: string; href?: string }[];
+  icon?: string;
+  children?: React.ReactNode;
 }) {
   const inner = (
     <div className="flex-1">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4">
         <h3 className={`style-h4 ${href ? 'group-hover:text-primary transition-colors' : ''}`}>{title}</h3>
         {price && <span className="style-body-bold text-primary">{price}</span>}
+        {icon && <span className="text-primary shrink-0 flex items-center leading-none p-0">{contactIcons[icon]}</span>}
       </div>
-      <p className="style-body text-secondary/60 mt-1">{text}</p>
+      {text && <p className="style-body text-secondary/60 mt-1 whitespace-pre-line">{text}</p>}
+      {lines && (
+        <div className="style-body text-secondary/60 mt-1 flex flex-col gap-0.5">
+          {lines.map((line) => (
+            <div key={line.label}>
+              {line.label}:{' '}
+              {line.href ? (
+                <a href={line.href} className="hover:text-primary hover:underline transition-colors">
+                  {line.value}
+                </a>
+              ) : (
+                line.value
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {children}
     </div>
   );
 
@@ -77,6 +138,38 @@ function Row({
   }
 
   return <div className={rowClasses}>{inner}</div>;
+}
+
+// Skutečný náhled mapy přes Google Maps embed (bez API klíče, klasické /maps?...&output=embed).
+// Iframe je sám o sobě interaktivní (drag/zoom), proto odkaz na Google Maps vede jen přes lištu pod ním.
+function MapPreview({ address }: { address: string }) {
+  const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+  return (
+    <div className="w-full max-w-[360px] mt-3 rounded-[8px] overflow-hidden border border-black300/30 bg-black400">
+      <iframe
+        src={embedUrl}
+        className="w-full h-[160px] grayscale-[0.3] contrast-[1.1]"
+        style={{ border: 0 }}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        title={`Mapa: ${address}`}
+      />
+      <a
+        href={mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group/map flex items-center justify-between gap-2 bg-black/70 px-3 py-2 hover:bg-black/90 transition-colors"
+      >
+        <span className="style-label text-secondary/80">Otevřít v Google Maps</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary/80 shrink-0 group-hover/map:translate-x-0.5 transition-transform">
+          <path d="M7 17 17 7" />
+          <path d="M7 7h10v10" />
+        </svg>
+      </a>
+    </div>
+  );
 }
 
 export default function KontaktPage() {
@@ -96,14 +189,11 @@ export default function KontaktPage() {
       {/* ——— KONTAKTNÍ ÚDAJE ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Kontaktní údaje</h2>
-          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Napište nám e-mailem, nebo si zjistěte fakturační údaje.
-          </p>
-
           <div className="max-w-[640px] mx-auto">
             {contactRows.map((row) => (
-              <Row key={row.title} title={row.title} text={row.text} href={row.href} />
+              <Row key={row.title} title={row.title} text={row.text} lines={row.lines} icon={row.icon}>
+                {row.map && row.text && <MapPreview address={row.text} />}
+              </Row>
             ))}
           </div>
         </div>
@@ -112,10 +202,7 @@ export default function KontaktPage() {
       {/* ——— PROVOZNÍ DOBA ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Provozní doba zákaznické podpory</h2>
-          <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Na e-maily odpovídáme v pracovní dny.
-          </p>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">Provozní doba zákaznické podpory</h2>
 
           <div className="max-w-[640px] mx-auto">
             {officeHours.map((item) => (

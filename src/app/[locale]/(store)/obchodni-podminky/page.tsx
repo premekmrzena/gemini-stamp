@@ -9,7 +9,7 @@ export const metadata = {
 const sections = [
   {
     title: '1. Provozovatel a základní údaje',
-    content: `Provozovatelem internetového obchodu na adrese mycreativestamp.com je společnost My Creative Stamp s.r.o., IČO: 12345678, DIČ: CZ12345678, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „prodávající").
+    content: `Provozovatelem internetového obchodu na adrese mycreativestamp.com je společnost My Creative Stamp s.r.o., IČO: 14248328, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „prodávající").
 
 Kontaktní e-mail: info@mycreativestamp.com`,
   },

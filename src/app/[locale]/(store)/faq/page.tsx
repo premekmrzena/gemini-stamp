@@ -11,7 +11,7 @@ const faqs = [
   {
     question: 'Jaké platební metody přijímáte?',
     answer:
-      'Platit můžete online kartou přes platební bránu Stripe (platba i objednávka se potvrdí okamžitě), nebo bankovním převodem — platební pokyny pošleme e-mailem hned po dokončení objednávky.',
+      'Platit můžete online kartou přes platební bránu (platba i objednávka se potvrdí okamžitě), nebo bankovním převodem — platební pokyny pošleme e-mailem hned po dokončení objednávky.',
   },
   {
     question: 'Můžu si objednávku vyzvednout osobně?',

@@ -9,7 +9,7 @@ export const metadata = {
 const sections = [
   {
     title: '1. Správce osobních údajů',
-    content: `Správcem vašich osobních údajů je společnost My Creative Stamp s.r.o., IČO: 12345678, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „správce"). Kontaktní e-mail: info@mycreativestamp.com.`,
+    content: `Správcem vašich osobních údajů je společnost My Creative Stamp s.r.o., IČO: 14248328, se sídlem Václavské náměstí 1, 110 00 Praha 1 (dále jen „správce"). Kontaktní e-mail: info@mycreativestamp.com.`,
   },
   {
     title: '2. Jaké údaje zpracováváme',

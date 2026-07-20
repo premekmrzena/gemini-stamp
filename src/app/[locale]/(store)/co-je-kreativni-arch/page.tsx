@@ -56,7 +56,7 @@ export default function CoJeKreativniArch() {
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
           <h2 className="style-h2 text-center mb-4">Jak si vytořit vlastní Kreativní arch?</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Prvním krokem je výběr šablony v našem on-line editoru. Když vytvoříte vlastní arch, v nákupním košíku si zvolíte způsob doručení a platby.
+            Nejprve si vyberte šablonu a pak můžete v našem on-line editoru začít tvořit.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -84,7 +84,7 @@ export default function CoJeKreativniArch() {
           <h2 className="style-h2 text-center mb-4">Přijedete, vyfotíte, odnesete si kus Česka</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
             Kreativní arch je ideální památka pro turisty, kteří chtějí domů přivézt víc než magnetku.
-            Nahrajte fotky přímo z výletu a my je spojíme s ikonickými poštovními známkami do archu, který vypráví i váš příběh.
+            Nahrajte fotky přímo z výletu a vyprávějte svůj vlastní příběh.
           </p>
 
           <div className="grid grid-cols-1 gap-4 max-w-[640px] mx-auto">
@@ -105,7 +105,7 @@ export default function CoJeKreativniArch() {
       {/* ——— CTA ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[56px] md:py-[80px] text-center">
-          <h2 className="style-h2 mb-4">Připraven vytvořit svůj arch?</h2>
+          <h2 className="style-h2 mb-4">Připraveni vytvořit svůj arch?</h2>
           <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
             Vyberte šablonu, nahrajte fotky a my se postaráme o tisk a doručení.
           </p>
