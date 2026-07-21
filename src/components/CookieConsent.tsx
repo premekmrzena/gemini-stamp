@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { gtagConsentUpdate } from '@/lib/gtag';
 
 const STORAGE_KEY = 'mcs_cookie_consent';
@@ -19,6 +20,7 @@ function readConsent(): Consent | null {
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
+  const t = useTranslations('cookieConsent');
 
   useEffect(() => {
     const existing = readConsent();
@@ -47,14 +49,14 @@ export default function CookieConsent() {
       <div className="max-w-[900px] mx-auto bg-secondary border border-transparent rounded-[4px] shadow-xl p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <p className="style-body text-black flex-1">
-            Souhlas s cookies, pro zajištění základního chodu e-shopu, editoru archů a porozumění návštěvnosti.{' '}
+            {t('text')}{' '}
             <Link href="/ochrana-osobnich-udaju" className="text-primary hover:underline">
-              Více informací
+              {t('moreInfo')}
             </Link>
           </p>
           <div className="flex flex-wrap gap-2 shrink-0">
-            <button className={neutralButton} onClick={() => apply({ analytics: false })}>Odmítnout</button>
-            <button className={primaryButton} onClick={() => apply({ analytics: true })}>Přijmout vše</button>
+            <button className={neutralButton} onClick={() => apply({ analytics: false })}>{t('reject')}</button>
+            <button className={primaryButton} onClick={() => apply({ analytics: true })}>{t('accept')}</button>
           </div>
         </div>
       </div>

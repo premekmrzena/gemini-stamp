@@ -1,7 +1,9 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 export default function Footer() {
+  const t = useTranslations('footer');
   return (
     <footer className="w-full mt-auto bg-black500 text-secondary border-t border-black300/30">
       <div className="layout-container py-[40px] flex flex-col md:flex-row items-center md:items-start justify-between gap-8 md:gap-0">
@@ -20,15 +22,15 @@ export default function Footer() {
 
         <div className="flex flex-col items-center md:items-end gap-[24px]">
           <nav className="flex flex-wrap justify-center md:justify-end items-center gap-4 md:gap-0 text-[14px] lg:text-[15px] font-medium tracking-[-0.02em] leading-none text-black200">
-            <Link href="/jak-nakupovat" className="md:pr-4 hover:text-primary-hover transition">Jak nakupovat</Link>
+            <Link href="/jak-nakupovat" className="md:pr-4 hover:text-primary-hover transition">{t('howToBuy')}</Link>
             <span className="hidden md:block w-px h-4 bg-secondary/30" />
-            <Link href="/faq" className="md:px-4 hover:text-primary-hover transition">FaQ</Link>
+            <Link href="/faq" className="md:px-4 hover:text-primary-hover transition">{t('faq')}</Link>
             <span className="hidden md:block w-px h-4 bg-secondary/30" />
-            <Link href="/kontakt" className="md:px-4 hover:text-primary-hover transition">Kontakt</Link>
+            <Link href="/kontakt" className="md:px-4 hover:text-primary-hover transition">{t('contact')}</Link>
             <span className="hidden md:block w-px h-4 bg-secondary/30" />
-            <Link href="/obchodni-podminky" className="md:px-4 hover:text-primary-hover transition">Obchodní podmínky</Link>
+            <Link href="/obchodni-podminky" className="md:px-4 hover:text-primary-hover transition">{t('terms')}</Link>
             <span className="hidden md:block w-px h-4 bg-secondary/30" />
-            <Link href="/ochrana-osobnich-udaju" className="md:pl-4 hover:text-primary-hover transition text-center">Ochrana osobních údajů</Link>
+            <Link href="/ochrana-osobnich-udaju" className="md:pl-4 hover:text-primary-hover transition text-center">{t('privacy')}</Link>
           </nav>
 
           <div className="flex items-center gap-6">

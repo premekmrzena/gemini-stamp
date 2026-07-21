@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { X } from 'lucide-react';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 import Button from '@/components/Button';
@@ -16,57 +17,31 @@ type Review = {
   photo: string;
 };
 
-const reviews: Review[] = [
-  {
-    id: 1,
-    name: 'Yuki Tanaka',
-    country: 'Japonsko',
-    text: 'Krásná vzpomínka na Českou republiku!',
-    fullText: 'Krásná vzpomínka na Českou republiku! Po návratu z Prahy jsem si nechala vytvořit arch z vlastních fotek z cesty a spojení s tradiční ruční rytinou českých známek je naprosto kouzelné. Balení dorazilo pečlivě zabalené a bez jediného poškození. Tohle si budu opatrovat celý život.',
-    photo: '/images/recenze01.png',
-  },
-  {
-    id: 2,
-    name: 'Min-jun Lee',
-    country: 'Korea',
-    text: 'Unikátní suvenýr, dokonalé zpracování.',
-    fullText: 'Unikátní suvenýr, dokonalé zpracování. Hledal jsem dárek, který nebude jen další magnetkou z obchodu se suvenýry, a tohle to bylo přesně ono. Tisk je ostrý až do nejmenšího detailu, papír příjemný na dotek a editor na webu byl jednoduchý i pro mě, i když jsem nikdy nic podobného nedělal. Určitě doporučím přátelům.',
-    photo: '/images/recenze02.png',
-  },
-  {
-    id: 3,
-    name: 'Zhang Wei',
-    country: 'Čína',
-    text: 'Přivezla jsem domů jako dárek — všichni nadšení!',
-    fullText: 'Přivezla jsem domů jako dárek — všichni nadšení! Objednala jsem hned několik kusů pro celou rodinu po návratu z Prahy, každý s jinými fotkami. Bála jsem se, že objednávka ze zahraničí bude komplikovaná, ale celý proces proběhl hladce a rychle. Teď mají všichni doma kousek naší společné cesty.',
-    photo: '/images/recenze03.png',
-  },
-  {
-    id: 4,
-    name: 'Aiko Suzuki',
-    country: 'Japonsko',
-    text: 'Kvalita tisku výborná, doručení rychlé.',
-    fullText: 'Kvalita tisku výborná, doručení rychlé. Objednávala jsem až do Japonska a přesto zásilka dorazila v pořádku a v rozumném čase. Barvy jsou živé, detaily ostré a balení dostatečně pevné na to, aby arch cestu přežil bez jediného ohnutí rohu.',
-    photo: '/images/recenze04.png',
-  },
-  {
-    id: 5,
-    name: 'Hyun-soo Kim',
-    country: 'Korea',
-    text: 'Objednal pro celou rodinu, všichni nadšení.',
-    fullText: 'Objednal pro celou rodinu, všichni nadšení. Před naším rodinným srazem jsem každému připravil vlastní arch s fotkami z výletu do Prahy. Byl to naprostý hit večera — každý dostal jedinečnou vzpomínku a nikdo nečekal, jak profesionálně to bude vypadat.',
-    photo: '/images/recenze05.png',
-  },
-];
+const REVIEW_META = [
+  { id: 1, key: 'review1', name: 'Yuki Tanaka', photo: '/images/recenze01.png' },
+  { id: 2, key: 'review2', name: 'Min-jun Lee', photo: '/images/recenze02.png' },
+  { id: 3, key: 'review3', name: 'Zhang Wei', photo: '/images/recenze03.png' },
+  { id: 4, key: 'review4', name: 'Aiko Suzuki', photo: '/images/recenze04.png' },
+  { id: 5, key: 'review5', name: 'Hyun-soo Kim', photo: '/images/recenze05.png' },
+] as const;
 
 export default function ReviewStrip() {
+  const t = useTranslations('home.reviewStrip');
+  const reviews: Review[] = REVIEW_META.map((meta) => ({
+    id: meta.id,
+    name: meta.name,
+    photo: meta.photo,
+    country: t(`reviews.${meta.key}.country`),
+    text: t(`reviews.${meta.key}.text`),
+    fullText: t(`reviews.${meta.key}.fullText`),
+  }));
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const modalBackdrop = useBackdropClose(() => setSelectedReview(null));
 
   return (
     <section className="w-full">
       <div className="layout-container">
-        <h2 className="style-h2 text-secondary text-center mb-6 select-none">Recenze spokojených zákazníků</h2>
+        <h2 className="style-h2 text-secondary text-center mb-6 select-none">{t('title')}</h2>
         <div className="flex gap-3 overflow-x-auto lg:overflow-hidden snap-x snap-mandatory scrollbar-hide">
           {reviews.map((r) => (
             <button
@@ -92,11 +67,11 @@ export default function ReviewStrip() {
 
         <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
           <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden shrink-0">
-            <Image src="/images/recenze01.png" alt="Usměvavá zákaznice" fill className="object-cover" />
+            <Image src="/images/recenze01.png" alt={t('smilingCustomerAlt')} fill className="object-cover" />
           </div>
-          <p className="style-h3 text-secondary">Nejčastější otázky a odpovědi (FAQ)</p>
+          <p className="style-h3 text-secondary">{t('faqTitle')}</p>
           <Link href="/faq">
-            <Button variant="outlined" arrow="right">Přečíst</Button>
+            <Button variant="outlined" arrow="right">{t('readMore')}</Button>
           </Link>
         </div>
       </div>

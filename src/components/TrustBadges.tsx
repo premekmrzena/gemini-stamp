@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 const MIN_VISITORS = 5;
 const MAX_VISITORS = 12;
@@ -11,6 +12,8 @@ function randomVisitorCount() {
 }
 
 export default function TrustBadges({ hideReviewBadgeOnMobile = false }: { hideReviewBadgeOnMobile?: boolean }) {
+  const t = useTranslations('home.trustBadges');
+  const format = useFormatter();
   // Začíná na MIN_VISITORS, aby se první vykreslení shodovalo se serverem (žádný hydration mismatch),
   // náhodná hodnota se nastaví až po mountu na klientovi.
   const [visitorCount, setVisitorCount] = useState(MIN_VISITORS);
@@ -33,11 +36,11 @@ export default function TrustBadges({ hideReviewBadgeOnMobile = false }: { hideR
         className="bg-black/70 backdrop-blur-sm text-secondary text-[11px] px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 hover:border-white/30 transition-colors"
       >
         <span className="h-2 w-2 rounded-full bg-success animate-pulse-dot shrink-0"></span>
-        {visitorCount} návštěvníků právě vytváří kreativní arch
+        {t('liveVisitors', { count: visitorCount })}
       </Link>
       <div className={`${hideReviewBadgeOnMobile ? 'hidden md:block' : ''} bg-black/70 backdrop-blur-sm text-secondary text-[11px] px-3 py-1.5 rounded-full border border-white/10`}>
         <span className="text-[var(--color-tag-novinka)] mr-1">★★★★★</span>
-        Již 1&nbsp;247+ spokojených zákazníků
+        {t('happyCustomers', { count: format.number(1247) })}
       </div>
     </div>
   );

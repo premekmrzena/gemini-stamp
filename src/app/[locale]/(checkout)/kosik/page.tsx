@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import StripePaymentForm from '@/components/StripePaymentForm';
@@ -24,6 +25,7 @@ const EMPTY_FORM = {
 };
 
 const CheckoutPage = () => {
+  const t = useTranslations('checkout');
   const { cartItems, cartTotal, cartTotalAfterDiscount, discountAmount, appliedDiscount, removeFromCart, updateQuantity } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -70,8 +72,8 @@ const CheckoutPage = () => {
       <div className="w-full min-h-screen flex flex-col bg-black">
         <div className="sticky top-0 z-40 w-full"><CheckoutHeader /></div>
         <div className="flex-grow flex flex-col items-center justify-center py-[100px] px-4 gap-6 text-center">
-          <h1 className="style-h2 text-secondary">Váš košík je prázdný</h1>
-          <Link href="/" className="mt-4"><Button>Zpět k nákupu</Button></Link>
+          <h1 className="style-h2 text-secondary">{t('cart.empty')}</h1>
+          <Link href="/" className="mt-4"><Button>{t('cart.backToShop')}</Button></Link>
         </div>
       </div>
     );
@@ -129,7 +131,7 @@ const CheckoutPage = () => {
       <footer className="fixed bottom-0 left-0 w-full z-50 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center shadow-lg">
         <div className="layout-container flex justify-between items-center">
           <Button onClick={currentStep === 1 ? undefined : () => setCurrentStep((p) => p - 1)} variant="outlined" arrow="left">
-            {currentStep === 1 ? <Link href="/">Zpět</Link> : 'Zpět'}
+            {currentStep === 1 ? <Link href="/">{t('footer.back')}</Link> : t('footer.back')}
           </Button>
           <div className="flex flex-col items-end">
             {orderError && <p className="text-red-500 text-sm mb-2">{orderError}</p>}
@@ -138,7 +140,7 @@ const CheckoutPage = () => {
               disabled={isSubmitting}
               arrow="right"
             >
-              {isSubmitting ? 'Odesílám...' : currentStep === 3 ? (selectedPayment === 'karta' ? 'Zaplatit' : 'Dokončit') : 'Další krok'}
+              {isSubmitting ? t('footer.submitting') : currentStep === 3 ? (selectedPayment === 'karta' ? t('footer.pay') : t('footer.finish')) : t('footer.nextStep')}
             </Button>
           </div>
         </div>
@@ -148,7 +150,7 @@ const CheckoutPage = () => {
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-black400 w-full max-w-[500px] rounded-[16px] overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b border-black300/30 bg-[#252C3C]">
-              <h3 className="style-h3 text-secondary">Platba kartou</h3>
+              <h3 className="style-h3 text-secondary">{t('paymentModal.title')}</h3>
               <button onClick={() => setIsPaymentModalOpen(false)} className="text-white text-2xl">×</button>
             </div>
             <div className="p-6 bg-white">
@@ -167,7 +169,7 @@ const CheckoutPage = () => {
           <div className="relative max-w-5xl max-h-[85vh] aspect-[1440/1080] w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <img
               src={previewArchImage}
-              alt="Náhled vašeho archu známek"
+              alt={t('archPreviewAlt')}
               className="max-w-full max-h-full object-contain shadow-2xl rounded-lg pointer-events-none select-none border border-white/10"
             />
             <div className="absolute inset-0 bg-transparent" onContextMenu={(e) => e.preventDefault()} />

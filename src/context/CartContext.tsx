@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import CartToast from '@/components/CartToast';
 import { supabase } from '@/lib/supabase';
 import { computeDiscountAmount } from '@/lib/pricing';
 import { DiscountType } from '@/types/database';
@@ -174,7 +173,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      <CartToast />
     </CartContext.Provider>
   );
 }

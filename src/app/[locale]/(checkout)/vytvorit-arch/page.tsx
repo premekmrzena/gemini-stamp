@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
@@ -26,13 +27,14 @@ function descriptionOf(tpl: Template, infos: Record<string, TemplateInfo>): stri
   return infos[tpl.productId]?.short_description || tpl.description;
 }
 
+// Popisky (label) žijí v messages/*.json pod checkout.createArch.sortOptions (klíč = stejný jako tady) - tady zůstává jen řadicí logika.
 const SORT_OPTIONS = {
-  doporucene: { label: 'Doporučené', compare: null },
-  price_asc: { label: 'Cena: od nejnižší', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(a, infos) - priceOf(b, infos) },
-  price_desc: { label: 'Cena: od nejvyšší', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(b, infos) - priceOf(a, infos) },
-  name_asc: { label: 'Název: A–Z', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => nameOf(a, infos).localeCompare(nameOf(b, infos), 'cs') },
-  bestseller: { label: 'Nejprodávanější', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => (infos[b.productId]?.sold_count ?? 0) - (infos[a.productId]?.sold_count ?? 0) },
-} as const satisfies Record<string, { label: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>) => number) | null }>;
+  doporucene: { labelKey: 'recommended', compare: null },
+  price_asc: { labelKey: 'priceAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(a, infos) - priceOf(b, infos) },
+  price_desc: { labelKey: 'priceDesc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(b, infos) - priceOf(a, infos) },
+  name_asc: { labelKey: 'nameAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => nameOf(a, infos).localeCompare(nameOf(b, infos), 'cs') },
+  bestseller: { labelKey: 'bestseller', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => (infos[b.productId]?.sold_count ?? 0) - (infos[a.productId]?.sold_count ?? 0) },
+} as const satisfies Record<string, { labelKey: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>) => number) | null }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
@@ -41,12 +43,18 @@ function priceOf(tpl: Template, infos: Record<string, TemplateInfo>): number {
   return info ? getEffectivePrice(info.price, info.sale_price) : Infinity;
 }
 
+function LoadingStudio() {
+  const t = useTranslations('checkout.createArch');
+  return <div className="flex-1 flex items-center justify-center bg-black text-secondary style-body-bold">{t('loadingStudio')}</div>;
+}
+
 const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
   ssr: false,
-  loading: () => <div className="flex-1 flex items-center justify-center bg-black text-secondary style-body-bold">Načítám studio...</div>
+  loading: () => <LoadingStudio />
 });
 
 export default function EditorPage() {
+  const t = useTranslations('checkout.createArch');
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
@@ -62,7 +70,7 @@ export default function EditorPage() {
     // render/lazy initializeru, to by při SSR spadlo).
     const productId = new URLSearchParams(window.location.search).get('productId');
     if (!productId) return;
-    const template = TEMPLATES.find((t) => t.productId === productId);
+    const template = TEMPLATES.find((tpl) => tpl.productId === productId);
     if (template) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTemplateId(template.id);
@@ -77,7 +85,7 @@ export default function EditorPage() {
       const { data, error } = await supabase
         .from('products')
         .select('id, name, short_description, price, sale_price, sold_count, is_active')
-        .in('id', TEMPLATES.map((t) => t.productId));
+        .in('id', TEMPLATES.map((tpl) => tpl.productId));
 
       if (error || !data) { setProductInfoLoaded(true); return; }
 
@@ -95,7 +103,7 @@ export default function EditorPage() {
   // Dokud se stav is_active nedotáhne ze Supabase, šablona se v gridu vůbec nevykresluje (viz productInfoLoaded
   // níže) – jinak by neaktivní šablona krátce problikla a pak zase zmizela.
   const visibleTemplates = useMemo(
-    () => TEMPLATES.filter((t) => productInfo[t.productId]?.is_active !== false),
+    () => TEMPLATES.filter((tpl) => productInfo[tpl.productId]?.is_active !== false),
     [productInfo]
   );
 
@@ -104,7 +112,7 @@ export default function EditorPage() {
     return compare ? [...visibleTemplates].sort((a, b) => compare(a, b, productInfo)) : visibleTemplates;
   }, [sortKey, productInfo, visibleTemplates]);
 
-  const selectedTemplate = TEMPLATES.find((t) => t.id === selectedTemplateId);
+  const selectedTemplate = TEMPLATES.find((tpl) => tpl.id === selectedTemplateId);
 
   const handleSelectTemplate = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -136,7 +144,7 @@ export default function EditorPage() {
 
           addToCart({
             id: data.id,
-            name: `Vlastní návrh: ${productInfo.name}`,
+            name: `${t('customDesignPrefix')}${productInfo.name}`,
             price: productInfo.price,
             image_url: data.preview_url,
             quantity: 1,
@@ -168,15 +176,15 @@ export default function EditorPage() {
           <>
           <section className="py-8 md:py-12">
             <div className="layout-container flex flex-col items-center text-center animate-fadeIn">
-              <h1 className="style-h1 text-secondary mb-6 lowercase first-letter:uppercase leading-tight">Vyberte si šablonu</h1>
-              <p className="style-body text-secondary/70 max-w-[43rem]">Vytvořte si během několika okamžiků nádhernou památku nebo jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty. Vytvořte umělecké dílo, jehož hlavním motivem budete vy sami.</p>
+              <h1 className="style-h1 text-secondary mb-6 lowercase first-letter:uppercase leading-tight">{t('chooseTemplate')}</h1>
+              <p className="style-body text-secondary/70 max-w-[43rem]">{t('introText')}</p>
               <Link href="/co-je-kreativni-arch" className="inline-flex items-center gap-[6px] style-body text-primary hover:text-primary-hover transition-colors mt-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
                   <line x1="12" y1="12" x2="12" y2="16" />
                 </svg>
-                Co je Kreativní arch?
+                {t('whatIsLink')}
               </Link>
             </div>
           </section>
@@ -189,13 +197,13 @@ export default function EditorPage() {
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
                 className="hidden md:block bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
               >
-                {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
-                  <option key={value} value={value}>{label}</option>
+                {Object.entries(SORT_OPTIONS).map(([value, { labelKey }]) => (
+                  <option key={value} value={value}>{t(`sortOptions.${labelKey}`)}</option>
                 ))}
               </select>
             </div>
             {!productInfoLoaded ? (
-              <div className="w-full py-20 flex items-center justify-center style-body text-secondary/70">Načítáme šablony...</div>
+              <div className="w-full py-20 flex items-center justify-center style-body text-secondary/70">{t('loadingTemplates')}</div>
             ) : (
             <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[24px]">
               {sortedTemplates.map((tpl) => {
@@ -216,7 +224,7 @@ export default function EditorPage() {
                     <Link
                       href={`/produkt/${tpl.productId}`}
                       className="absolute inset-0 z-20 rounded-[4px] cursor-pointer"
-                      aria-label={`Detail šablony ${name}`}
+                      aria-label={t('templateDetailAria', { name })}
                     />
 
                     {/* Náhled šablony */}
@@ -242,7 +250,7 @@ export default function EditorPage() {
                           <polyline points="21 15 16 10 5 21" />
                         </svg>
                         <span className="style-label text-black200 whitespace-nowrap">
-                          {photoCount} {photoCount < 5 ? 'fotografie' : 'fotografií'} • {tpl.stampCount} {tpl.stampCount === 1 ? 'známka' : tpl.stampCount < 5 ? 'známky' : 'známek'}
+                          {t('photoCount', { count: photoCount })} • {t('stampCount', { count: tpl.stampCount })}
                         </span>
                       </div>
 
@@ -255,7 +263,7 @@ export default function EditorPage() {
                           <line x1="12" y1="8" x2="12" y2="8" strokeWidth="3" />
                           <line x1="12" y1="12" x2="12" y2="16" />
                         </svg>
-                        Informace o šabloně
+                        {t('templateInfo')}
                       </div>
 
                       <div className="mt-auto flex flex-col items-center gap-[12px] relative z-30 pointer-events-auto">
@@ -268,18 +276,18 @@ export default function EditorPage() {
                               </span>
                             ) : (
                               <span className="style-product-price text-success">
-                                Cena {priceInfo.price} Kč
+                                {t('priceLabel', { price: priceInfo.price })}
                               </span>
                             )
                           ) : (
                             <span className="style-product-price text-transparent select-none" aria-hidden="true">
-                              Cena 000 Kč
+                              {t('priceLabel', { price: '000' })}
                             </span>
                           )}
                         </div>
                         {/* CTA */}
                         <Button onClick={() => handleSelectTemplate(tpl.id)}>
-                          Vybrat šablonu
+                          {t('selectTemplate')}
                         </Button>
                       </div>
                     </div>
@@ -307,18 +315,18 @@ export default function EditorPage() {
           <div className="flex-1 flex flex-col items-center justify-center p-8 gap-10 animate-[fadeIn_0.2s_ease-out] text-center">
             <div className="w-24 h-24 bg-success rounded-full flex items-center justify-center text-secondary text-5xl shadow-xl shadow-success/20 font-light">✓</div>
             <div className="space-y-4">
-              <h1 className="style-h1 text-secondary">Váš arch byl vložen do košíku!</h1>
+              <h1 className="style-h1 text-secondary">{t('successTitle')}</h1>
               <p className="style-body text-black300 max-w-lg mx-auto">
-                Skvělá práce. Váš grafický návrh je připraven k tisku a bezpečně uložen v košíku. Počet kusů si můžete upravit před zaplacením.
+                {t('successText')}
               </p>
             </div>
-            
+
             <div className="flex flex-col md:flex-row gap-4 mt-4 w-full md:w-auto">
               <Button onClick={() => window.location.reload()} variant="outlined" className="w-full md:w-auto">
-                Vytvořit další arch
+                {t('createAnother')}
               </Button>
               <Button onClick={() => window.location.href = '/kosik'} className="w-full md:w-auto">
-                Přejít do košíku
+                {t('goToCart')}
               </Button>
             </div>
           </div>

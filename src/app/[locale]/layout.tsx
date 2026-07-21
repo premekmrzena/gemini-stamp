@@ -6,6 +6,7 @@ import { routing } from '@/i18n/routing';
 import GoogleAnalytics from './GoogleAnalytics';
 import AnalyticsPageview from '@/components/AnalyticsPageview';
 import CookieConsent from '@/components/CookieConsent';
+import CartToast from '@/components/CartToast';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -36,6 +37,7 @@ export default async function LocaleLayout({
       </Suspense>
       {children}
       <CookieConsent />
+      <CartToast />
     </NextIntlClientProvider>
   );
 }

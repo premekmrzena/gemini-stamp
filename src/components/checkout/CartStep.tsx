@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { CartItem } from '@/context/CartContext';
 
 type Props = {
@@ -10,9 +11,10 @@ type Props = {
 };
 
 export default function CartStep({ cartItems, removeFromCart, updateQuantity, onPreviewArch }: Props) {
+  const t = useTranslations('checkout.cart');
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="style-h3 text-secondary mb-2">Košík</h3>
+      <h3 className="style-h3 text-secondary mb-2">{t('title')}</h3>
       {cartItems.map((item) => {
         const isCustom = item.item_type === 'custom';
         return (

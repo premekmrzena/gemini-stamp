@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount } = useCart();
+  const t = useTranslations('header');
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
@@ -28,13 +30,13 @@ export default function Header() {
         {/* Desktop: nav + košík */}
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
           <nav className="flex items-center text-[15px] lg:text-[16px] font-medium tracking-[-0.02em] leading-none whitespace-nowrap">
-            <Link href="/kategorie/znamky" className="pr-[22px] hover:text-primary-hover transition">Známky</Link>
+            <Link href="/kategorie/znamky" className="pr-[22px] hover:text-primary-hover transition">{t('categories.stamps')}</Link>
             <span className="w-px h-5 bg-secondary/30" />
-            <Link href="/vytvorit-arch" className="px-[22px] hover:text-primary-hover transition">Kreativní archy</Link>
+            <Link href="/vytvorit-arch" className="px-[22px] hover:text-primary-hover transition">{t('categories.sheets')}</Link>
             <span className="w-px h-5 bg-secondary/30" />
-            <Link href="/kategorie/fdc" className="px-[22px] hover:text-primary-hover transition">First day cover</Link>
+            <Link href="/kategorie/fdc" className="px-[22px] hover:text-primary-hover transition">{t('categories.fdc')}</Link>
             <span className="w-px h-5 bg-secondary/30" />
-            <Link href="/kategorie/plakety" className="px-[22px] hover:text-primary-hover transition">Dárkové plakety</Link>
+            <Link href="/kategorie/plakety" className="px-[22px] hover:text-primary-hover transition">{t('categories.plaques')}</Link>
           </nav>
 
           <Link href="/kosik" className="flex items-center group flex-shrink-0">
@@ -69,7 +71,7 @@ export default function Header() {
           <button
             onClick={toggleMenu}
             className="text-secondary focus:outline-none w-[30px] h-[40px] flex items-center justify-center"
-            aria-label="Přepnout menu"
+            aria-label={t('toggleMenu')}
           >
             {isMobileMenuOpen ? (
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,10 +92,10 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-hamburger-bcgr border-t border-black400 shadow-2xl md:hidden flex flex-col">
           <nav className="flex flex-col text-[16px] font-medium tracking-[-0.02em] px-[24px] py-4 gap-2">
-            <Link href="/kategorie/znamky" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Známky</Link>
-            <Link href="/vytvorit-arch" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Kreativní archy</Link>
-            <Link href="/kategorie/fdc" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">First day cover</Link>
-            <Link href="/kategorie/plakety" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">Dárkové plakety</Link>
+            <Link href="/kategorie/znamky" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">{t('categories.stamps')}</Link>
+            <Link href="/vytvorit-arch" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">{t('categories.sheets')}</Link>
+            <Link href="/kategorie/fdc" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">{t('categories.fdc')}</Link>
+            <Link href="/kategorie/plakety" onClick={toggleMenu} className="transition px-4 py-3 rounded-md text-secondary hover:bg-black400 hover:text-primary-hover">{t('categories.plaques')}</Link>
           </nav>
         </div>
       )}

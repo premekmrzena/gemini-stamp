@@ -1,1 +1,263 @@
-{}
+{
+  "header": {
+    "categories": {
+      "stamps": "Stamps",
+      "sheets": "Creative Sheets",
+      "fdc": "First Day Cover",
+      "plaques": "Gift Plaques"
+    },
+    "toggleMenu": "Toggle menu"
+  },
+  "footer": {
+    "howToBuy": "How to buy",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy"
+  },
+  "breadcrumbs": {
+    "home": "Home"
+  },
+  "cart": {
+    "added": "Added",
+    "addToCart": "Add to cart",
+    "addedToCart": "Added to cart"
+  },
+  "cookieConsent": {
+    "text": "We use cookies to run the shop and the sheet editor properly, and to understand site traffic.",
+    "moreInfo": "More information",
+    "reject": "Reject",
+    "accept": "Accept all"
+  },
+  "home": {
+    "hero": {
+      "title": "Turn your memories into a beautiful collectible treasure!",
+      "perex": "A Creative Sheet featuring renowned artists or landmarks from your travels!",
+      "step1Title": "Choose a template",
+      "step1MobileTitle": "Choose template",
+      "step1Text": "History, art, or famous landmarks.",
+      "step2Title": "Upload your photos",
+      "step2MobileTitle": "Upload photos",
+      "step2Text": "Add your own photos - maybe ones you took on your phone today.",
+      "step3Title": "Write your own text",
+      "step3MobileTitle": "Write text",
+      "step3Text": "Add your own personal message to the Creative Sheet.",
+      "sliderAlt": "Create your own sheet with stamps and photos",
+      "arrowAlt": "Pointer",
+      "cta": "Create a Creative Sheet",
+      "whatIsLink": "What is a Creative Sheet?"
+    },
+    "reviewStrip": {
+      "title": "Reviews from happy customers",
+      "faqTitle": "Frequently asked questions (FAQ)",
+      "readMore": "Read",
+      "smilingCustomerAlt": "Smiling customer",
+      "reviews": {
+        "review1": {
+          "country": "Japan",
+          "text": "A beautiful memory of the Czech Republic!",
+          "fullText": "A beautiful memory of the Czech Republic! After returning from Prague, I had a sheet made from my own travel photos, and combining it with traditionally hand-engraved Czech stamps is absolutely magical. The package arrived carefully wrapped and without a single scratch. I'll treasure this for the rest of my life."
+        },
+        "review2": {
+          "country": "South Korea",
+          "text": "A unique souvenir, beautifully made.",
+          "fullText": "A unique souvenir, beautifully made. I was looking for a gift that wouldn't just be another fridge magnet from a souvenir shop, and this was exactly it. The print is sharp down to the smallest detail, the paper feels great, and the online editor was easy to use even for me, though I'd never done anything like it before. I'll definitely recommend it to friends."
+        },
+        "review3": {
+          "country": "China",
+          "text": "Brought it home as a gift - everyone loved it!",
+          "fullText": "Brought it home as a gift - everyone loved it! I ordered several right after returning from Prague, one for each family member, each with different photos. I was worried an order from abroad would be complicated, but the whole process went smoothly and quickly. Now everyone at home has a piece of our shared trip."
+        },
+        "review4": {
+          "country": "Japan",
+          "text": "Excellent print quality, fast delivery.",
+          "fullText": "Excellent print quality, fast delivery. I ordered all the way to Japan and the package still arrived in perfect condition within a reasonable time. The colors are vivid, the details sharp, and the packaging was sturdy enough that the sheet survived the trip without a single bent corner."
+        },
+        "review5": {
+          "country": "South Korea",
+          "text": "Ordered one for the whole family, everyone loved it.",
+          "fullText": "Ordered one for the whole family, everyone loved it. Before our family gathering I prepared a personal sheet for everyone with photos from our trip to Prague. It was the hit of the evening - everyone got a unique memory and nobody expected it to look so professional."
+        }
+      }
+    },
+    "shopInfoStrip": {
+      "shipping": { "title": "Shipping", "text": "Worldwide" },
+      "pickup": { "title": "Local pickup", "text": "Free in Prague" },
+      "fastProduction": { "title": "Fast production", "text": "2-7 business days" },
+      "securePayment": { "title": "Secure payment", "text": "By card or bank transfer" }
+    },
+    "stampCategories": {
+      "title": "A Creative Sheet with a piece of history",
+      "intro": "Postage stamps on a sheet are miniature windows into the world of culture, science and art. On a Creative Sheet you'll find works that have survived centuries - and now come to life alongside your own photos.",
+      "history": { "title": "Czech and European history", "text": "Rulers, events, milestones that shaped Western civilization." },
+      "artists": { "title": "World-renowned artists", "text": "Alfons Mucha, Kupka, Filla and their works of art." },
+      "landmarks": { "title": "Landmarks and architecture", "text": "Prague, Český Krumlov, Telč, Charles Bridge. Icons of Czech architecture." },
+      "heritage": { "title": "World cultural heritage", "text": "Music, poetry, theatre. The richness that shaped Europe's spirit." },
+      "exploreTemplates": "Explore templates"
+    },
+    "purchaseCategories": {
+      "title": "What can you buy from us?",
+      "intro": "Four product categories for gift lovers and collectors alike. We recommend a sheet with your own photos.",
+      "exploreLink": "→ Find out how to create your own Creative Sheet",
+      "stamps": { "title": "Postage stamps", "text": "Collectible and classic stamps featuring Czech and European history, art or nature." },
+      "sheets": { "title": "Creative Sheets", "text": "A sheet made of real postage stamps complemented by your own photos and text." },
+      "fdc": { "title": "First Day Cover (FDC)", "text": "First-day-of-issue envelopes with a stamp and postmark from the day the stamp was first issued." },
+      "plaques": { "title": "Gift Plaques", "text": "Representative plaques to give as a gift or as an addition to a collector's set." },
+      "featuredBadge": "Recommended"
+    },
+    "trustBadges": {
+      "liveVisitors": "{count, plural, one {# person is} other {# people are}} creating a Creative Sheet right now",
+      "happyCustomers": "Already {count}+ happy customers"
+    }
+  },
+  "checkout": {
+    "cart": {
+      "title": "Cart",
+      "empty": "Your cart is empty",
+      "backToShop": "Back to shop",
+      "unit": "pcs"
+    },
+    "footer": {
+      "back": "Back",
+      "submitting": "Submitting...",
+      "pay": "Pay",
+      "finish": "Finish",
+      "nextStep": "Next step"
+    },
+    "paymentModal": { "title": "Card payment" },
+    "archPreviewAlt": "Preview of your stamp sheet",
+    "address": {
+      "title": "Billing details",
+      "firstName": "First name *",
+      "lastName": "Last name *",
+      "phone": "Phone *",
+      "shippingPhone": "Phone",
+      "email": "Email *",
+      "addressLine1": "Street and house no. *",
+      "city": "City *",
+      "zip": "ZIP code *",
+      "country": "Country *",
+      "countryPlain": "Country",
+      "selectCountry": "Select country...",
+      "czechRepublic": "Czech Republic",
+      "companySectionTitle": "Company (optional)",
+      "companyName": "Company name",
+      "shippingCompanyName": "Company",
+      "companyId": "Company ID",
+      "taxId": "Tax ID",
+      "shipToDifferent": "Ship to a different address",
+      "shippingAddressTitle": "Shipping address",
+      "note": "Note",
+      "notePlaceholder": "Additional info..."
+    },
+    "countries": {
+      "Japonsko": "Japan",
+      "Jižní Korea": "South Korea",
+      "Čína": "China",
+      "Vietnam": "Vietnam",
+      "Austrálie": "Australia",
+      "Belgie": "Belgium",
+      "Francie": "France",
+      "Itálie": "Italy",
+      "Kanada": "Canada",
+      "Německo": "Germany",
+      "Nizozemsko": "Netherlands",
+      "Polsko": "Poland",
+      "Rakousko": "Austria",
+      "Slovensko": "Slovakia",
+      "Spojené království": "United Kingdom",
+      "Spojené státy (USA)": "United States (USA)",
+      "Španělsko": "Spain",
+      "Švýcarsko": "Switzerland"
+    },
+    "shipping": {
+      "title": "Shipping",
+      "paymentTitle": "Payment",
+      "options": {
+        "osobni": {
+          "name": "Personal pickup (Prague)",
+          "desc": "You can pick up your order at: Jindřišská 126/15, Prague 1"
+        },
+        "ceska": {
+          "name": "Czech Republic",
+          "descLetter": "Standard letter",
+          "descRegistered": "Registered letter",
+          "descParcel": "Parcel"
+        },
+        "mezinarodni": {
+          "name": "International shipping",
+          "desc": "You'll enter the destination country in the next step"
+        },
+        "karta": {
+          "name": "Card payment online",
+          "desc": "Securely via Stripe"
+        },
+        "prevod": {
+          "name": "Bank transfer",
+          "desc": "Instructions will be emailed to you"
+        }
+      }
+    },
+    "discount": {
+      "applied": "Code {code} applied",
+      "removeAria": "Remove discount code",
+      "placeholder": "Discount code",
+      "apply": "Apply",
+      "loading": "..."
+    },
+    "summary": {
+      "title": "Order summary",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "shipping": "Shipping",
+      "total": "Total"
+    },
+    "payment": {
+      "processing": "Processing payment...",
+      "pay": "Pay {amount} Kč",
+      "error": "An unexpected error occurred during payment.",
+      "loadingGateway": "Loading secure payment gateway..."
+    },
+    "createArch": {
+      "sortOptions": {
+        "recommended": "Recommended",
+        "priceAsc": "Price: lowest first",
+        "priceDesc": "Price: highest first",
+        "nameAsc": "Name: A-Z",
+        "bestseller": "Bestseller"
+      },
+      "loadingStudio": "Loading studio...",
+      "customDesignPrefix": "Custom design: ",
+      "chooseTemplate": "Choose a template",
+      "introText": "Create a beautiful keepsake or a unique gift in just a few moments, bearing your own signature and forever capturing the magic of your journey. Create a work of art starring you.",
+      "whatIsLink": "What is a Creative Sheet?",
+      "loadingTemplates": "Loading templates...",
+      "photoCount": "{count, plural, one {# photo} other {# photos}}",
+      "stampCount": "{count, plural, one {# stamp} other {# stamps}}",
+      "templateInfo": "Template info",
+      "priceLabel": "Price {price} Kč",
+      "selectTemplate": "Choose template",
+      "templateDetailAria": "Template details {name}",
+      "successTitle": "Your sheet has been added to the cart!",
+      "successText": "Great work. Your design is ready for print and safely saved in your cart. You can adjust the quantity before checkout.",
+      "createAnother": "Create another sheet",
+      "goToCart": "Go to cart"
+    },
+    "thankYou": {
+      "title": "Your order has been placed!",
+      "thanksText": "Thank you for your purchase at <b>My Creative Stamp</b>. We've just sent the order details with an item overview to your email.",
+      "orderNumberLabel": "Order number",
+      "spamNotice": "Don't forget to check your spam or junk folder.",
+      "backToShop": "Back to shop",
+      "footer": "© {year} My Creative Stamp – collectible stamps with a story."
+    }
+  },
+  "metadata": {
+    "cart": { "title": "Cart" },
+    "createArch": {
+      "title": "Create a Creative Sheet",
+      "description": "Choose a template, upload your own photos and text, and create a unique Creative Sheet with real postage stamps."
+    },
+    "thankYou": { "title": "Thank you for your order" }
+  }
+}

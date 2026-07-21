@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCart } from '@/context/CartContext';
 
 // Jaká data tlačítko potřebuje
@@ -16,6 +17,7 @@ type AddToCartButtonProps = {
 
 export default function AddToCartButton({ product }: AddToCartButtonProps) {
   const { addToCart } = useCart();
+  const t = useTranslations('cart');
   // Přidáme stav pro zobrazení úspěšného přidání
   const [isAdded, setIsAdded] = useState(false);
 
@@ -68,7 +70,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
         </svg>
       )}
-      {isAdded ? 'Přidáno' : 'Do košíku'}
+      {isAdded ? t('added') : t('addToCart')}
     </button>
   );
 }

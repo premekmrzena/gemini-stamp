@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Button from '@/components/Button';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 const sliderImages = [
@@ -11,13 +12,13 @@ const sliderImages = [
   '/images/hero03.png',
 ];
 
-const steps = [
-  { id: 1, title: 'Vyber si šablonu', mobileTitle: 'Vyber šablonu', text: 'Historie, umění nebo známé památky.' },
-  { id: 2, title: 'Nahraj svoje fotky', mobileTitle: 'Nahraj fotky', text: 'Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.' },
-  { id: 3, title: 'Napiš vlastní text', mobileTitle: 'Napiš text', text: 'Na Kreativní arch si můžete dopsat vlastní vzkaz.' },
-];
-
 export default function Hero() {
+  const t = useTranslations('home.hero');
+  const steps = [
+    { id: 1, title: t('step1Title'), mobileTitle: t('step1MobileTitle'), text: t('step1Text') },
+    { id: 2, title: t('step2Title'), mobileTitle: t('step2MobileTitle'), text: t('step2Text') },
+    { id: 3, title: t('step3Title'), mobileTitle: t('step3MobileTitle'), text: t('step3Text') },
+  ];
   const [currentSlide, setCurrentSlide] = useState(0);
   const kenburnsRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
 
@@ -64,7 +65,7 @@ export default function Hero() {
           >
             <Image
               src={src}
-              alt="Vytvoř si vlastní arch se známkami a fotkami"
+              alt={t('sliderAlt')}
               fill
               sizes="(max-width: 767px) 535px, 750px"
               preload={index === 0}
@@ -81,11 +82,11 @@ export default function Hero() {
       <div className="layout-container">
 
         <h1 className="style-h1 text-center mb-3 lg:mb-4">
-          Proměň svoje zážitky v krásný sběratelský poklad!
+          {t('title')}
         </h1>
 
         <p className="hidden md:block style-perex text-center text-secondary/70 mb-8 lg:mb-8 max-w-[620px] mx-auto">
-          Kreativní arch s významnými umělci nebo památkami z Vašich cest!
+          {t('perex')}
         </p>
 
         {/* Desktop / Tablet */}
@@ -137,20 +138,20 @@ export default function Hero() {
             <div className="inline-flex relative">
               <Image
                 src="/images/handarrow.svg"
-                alt="Ukazatel"
+                alt={t('arrowAlt')}
                 width={60}
                 height={60}
                 className="absolute -left-[70px] bottom-3 pointer-events-none md:w-[70px] md:-left-[84px] md:bottom-[14px] lg:w-[80px] lg:-left-[95px] lg:bottom-[14px]"
               />
               <Link href="/vytvorit-arch">
-                <Button>Vytvořit Kreativní arch</Button>
+                <Button>{t('cta')}</Button>
               </Link>
             </div>
             <Link
               href="/co-je-kreativni-arch"
               className="style-body text-secondary/60 hover:text-secondary transition-colors underline underline-offset-4 decoration-secondary/30 hover:decoration-secondary/60"
             >
-              Co je Kreativní arch?
+              {t('whatIsLink')}
             </Link>
           </div>
         </div>

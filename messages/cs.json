@@ -1,0 +1,263 @@
+{
+  "header": {
+    "categories": {
+      "stamps": "Známky",
+      "sheets": "Kreativní archy",
+      "fdc": "First day cover",
+      "plaques": "Dárkové plakety"
+    },
+    "toggleMenu": "Přepnout menu"
+  },
+  "footer": {
+    "howToBuy": "Jak nakupovat",
+    "faq": "FaQ",
+    "contact": "Kontakt",
+    "terms": "Obchodní podmínky",
+    "privacy": "Ochrana osobních údajů"
+  },
+  "breadcrumbs": {
+    "home": "Domů"
+  },
+  "cart": {
+    "added": "Přidáno",
+    "addToCart": "Do košíku",
+    "addedToCart": "Přidáno do košíku"
+  },
+  "cookieConsent": {
+    "text": "Souhlas s cookies, pro zajištění základního chodu e-shopu, editoru archů a porozumění návštěvnosti.",
+    "moreInfo": "Více informací",
+    "reject": "Odmítnout",
+    "accept": "Přijmout vše"
+  },
+  "home": {
+    "hero": {
+      "title": "Proměň svoje zážitky v krásný sběratelský poklad!",
+      "perex": "Kreativní arch s významnými umělci nebo památkami z Vašich cest!",
+      "step1Title": "Vyber si šablonu",
+      "step1MobileTitle": "Vyber šablonu",
+      "step1Text": "Historie, umění nebo známé památky.",
+      "step2Title": "Nahraj svoje fotky",
+      "step2MobileTitle": "Nahraj fotky",
+      "step2Text": "Přidejte vlastní fotky, které jste třeba dnes vyfotili na mobil.",
+      "step3Title": "Napiš vlastní text",
+      "step3MobileTitle": "Napiš text",
+      "step3Text": "Na Kreativní arch si můžete dopsat vlastní vzkaz.",
+      "sliderAlt": "Vytvoř si vlastní arch se známkami a fotkami",
+      "arrowAlt": "Ukazatel",
+      "cta": "Vytvořit Kreativní arch",
+      "whatIsLink": "Co je Kreativní arch?"
+    },
+    "reviewStrip": {
+      "title": "Recenze spokojených zákazníků",
+      "faqTitle": "Nejčastější otázky a odpovědi (FAQ)",
+      "readMore": "Přečíst",
+      "smilingCustomerAlt": "Usměvavá zákaznice",
+      "reviews": {
+        "review1": {
+          "country": "Japonsko",
+          "text": "Krásná vzpomínka na Českou republiku!",
+          "fullText": "Krásná vzpomínka na Českou republiku! Po návratu z Prahy jsem si nechala vytvořit arch z vlastních fotek z cesty a spojení s tradiční ruční rytinou českých známek je naprosto kouzelné. Balení dorazilo pečlivě zabalené a bez jediného poškození. Tohle si budu opatrovat celý život."
+        },
+        "review2": {
+          "country": "Korea",
+          "text": "Unikátní suvenýr, dokonalé zpracování.",
+          "fullText": "Unikátní suvenýr, dokonalé zpracování. Hledal jsem dárek, který nebude jen další magnetkou z obchodu se suvenýry, a tohle to bylo přesně ono. Tisk je ostrý až do nejmenšího detailu, papír příjemný na dotek a editor na webu byl jednoduchý i pro mě, i když jsem nikdy nic podobného nedělal. Určitě doporučím přátelům."
+        },
+        "review3": {
+          "country": "Čína",
+          "text": "Přivezla jsem domů jako dárek — všichni nadšení!",
+          "fullText": "Přivezla jsem domů jako dárek — všichni nadšení! Objednala jsem hned několik kusů pro celou rodinu po návratu z Prahy, každý s jinými fotkami. Bála jsem se, že objednávka ze zahraničí bude komplikovaná, ale celý proces proběhl hladce a rychle. Teď mají všichni doma kousek naší společné cesty."
+        },
+        "review4": {
+          "country": "Japonsko",
+          "text": "Kvalita tisku výborná, doručení rychlé.",
+          "fullText": "Kvalita tisku výborná, doručení rychlé. Objednávala jsem až do Japonska a přesto zásilka dorazila v pořádku a v rozumném čase. Barvy jsou živé, detaily ostré a balení dostatečně pevné na to, aby arch cestu přežil bez jediného ohnutí rohu."
+        },
+        "review5": {
+          "country": "Korea",
+          "text": "Objednal pro celou rodinu, všichni nadšení.",
+          "fullText": "Objednal pro celou rodinu, všichni nadšení. Před naším rodinným srazem jsem každému připravil vlastní arch s fotkami z výletu do Prahy. Byl to naprostý hit večera — každý dostal jedinečnou vzpomínku a nikdo nečekal, jak profesionálně to bude vypadat."
+        }
+      }
+    },
+    "shopInfoStrip": {
+      "shipping": { "title": "Doprava", "text": "Do celého světa" },
+      "pickup": { "title": "Osobní odběr", "text": "Zdarma v Praze" },
+      "fastProduction": { "title": "Rychlá výroba", "text": "2–7 pracovních dnů" },
+      "securePayment": { "title": "Bezpečná platba", "text": "Kartou nebo převodem" }
+    },
+    "stampCategories": {
+      "title": "Kreativní arch s kouskem historie",
+      "intro": "Poštovní známky na archu jsou miniaturní okna do světa kultury, vědy a umění. Na Kreativním archu se setkáte s díly, která přežila staletí — a nyní ožijí vedle vašich vlastních fotek.",
+      "history": { "title": "Česká a evropská historie", "text": "Panovníci, události, milníky které formovaly západní civilizaci." },
+      "artists": { "title": "Světoznámí umělci", "text": "Alfons Mucha, Kupka, Filla a jejich umělecká díla." },
+      "landmarks": { "title": "Památky a architektura", "text": "Praha, Český Krumlov, Telč, Karlův most. Ikony české architektury." },
+      "heritage": { "title": "Světové kulturní dědictví", "text": "Hudba, poezie, divadlo. Bohatství, které duchovně formovalo Evropu." },
+      "exploreTemplates": "Prozkoumat šablony"
+    },
+    "purchaseCategories": {
+      "title": "Co si u nás můžete koupit?",
+      "intro": "Čtyři kategorie produktů pro milovníky originálních dárků i sběratele. Doporučujeme arch s vlastními fotkami.",
+      "exploreLink": "→ Zjistěte, jak vytvořit vlastní Kreativní arch",
+      "stamps": { "title": "Poštovní známky", "text": "Sběratelské i klasické známky s českou a evropskou historií, uměním nebo přírodou." },
+      "sheets": { "title": "Kreativní archy", "text": "Arch ze skutečných poštovních známek doplněný o vaše vlastní fotografie a text." },
+      "fdc": { "title": "First Day Cover (FDC)", "text": "Obálky prvního dne vydání se známkou a razítkem k datu, kdy známka poprvé vyšla." },
+      "plaques": { "title": "Dárkové plakety", "text": "Reprezentativní plakety k darování nebo jako doplněk sběratelské kolekce." },
+      "featuredBadge": "Doporučujeme"
+    },
+    "trustBadges": {
+      "liveVisitors": "{count, plural, one {# návštěvník} few {# návštěvníci} other {# návštěvníků}} právě vytváří kreativní arch",
+      "happyCustomers": "Již {count}+ spokojených zákazníků"
+    }
+  },
+  "checkout": {
+    "cart": {
+      "title": "Košík",
+      "empty": "Váš košík je prázdný",
+      "backToShop": "Zpět k nákupu",
+      "unit": "ks"
+    },
+    "footer": {
+      "back": "Zpět",
+      "submitting": "Odesílám...",
+      "pay": "Zaplatit",
+      "finish": "Dokončit",
+      "nextStep": "Další krok"
+    },
+    "paymentModal": { "title": "Platba kartou" },
+    "archPreviewAlt": "Náhled vašeho archu známek",
+    "address": {
+      "title": "Fakturační údaje",
+      "firstName": "Jméno *",
+      "lastName": "Příjmení *",
+      "phone": "Telefon *",
+      "shippingPhone": "Telefon",
+      "email": "E-mail *",
+      "addressLine1": "Ulice a č.p. *",
+      "city": "Město *",
+      "zip": "PSČ *",
+      "country": "Země *",
+      "countryPlain": "Země",
+      "selectCountry": "Vyberte zemi...",
+      "czechRepublic": "Česká republika",
+      "companySectionTitle": "Firma (nepovinné)",
+      "companyName": "Název firmy",
+      "shippingCompanyName": "Firma",
+      "companyId": "IČO",
+      "taxId": "DIČ",
+      "shipToDifferent": "Doručit na jinou adresu",
+      "shippingAddressTitle": "Doručovací adresa",
+      "note": "Poznámka",
+      "notePlaceholder": "Doplňující info..."
+    },
+    "countries": {
+      "Japonsko": "Japonsko",
+      "Jižní Korea": "Jižní Korea",
+      "Čína": "Čína",
+      "Vietnam": "Vietnam",
+      "Austrálie": "Austrálie",
+      "Belgie": "Belgie",
+      "Francie": "Francie",
+      "Itálie": "Itálie",
+      "Kanada": "Kanada",
+      "Německo": "Německo",
+      "Nizozemsko": "Nizozemsko",
+      "Polsko": "Polsko",
+      "Rakousko": "Rakousko",
+      "Slovensko": "Slovensko",
+      "Spojené království": "Spojené království",
+      "Spojené státy (USA)": "Spojené státy (USA)",
+      "Španělsko": "Španělsko",
+      "Švýcarsko": "Švýcarsko"
+    },
+    "shipping": {
+      "title": "Doprava",
+      "paymentTitle": "Platba",
+      "options": {
+        "osobni": {
+          "name": "Osobní odběr (Praha)",
+          "desc": "Svoji objednávku si můžete vyzvednout na adrese: Jindřišská 126/15, Praha 1"
+        },
+        "ceska": {
+          "name": "Česká republika",
+          "descLetter": "Obyčejné psaní",
+          "descRegistered": "Doporučené psaní",
+          "descParcel": "Balíček"
+        },
+        "mezinarodni": {
+          "name": "Mezinárodní doprava",
+          "desc": "Zemi doručení zadáte v dalším kroku"
+        },
+        "karta": {
+          "name": "Online platba kartou",
+          "desc": "Bezpečně přes Stripe"
+        },
+        "prevod": {
+          "name": "Bankovní převod",
+          "desc": "Pokyny obdržíte v e-mailu"
+        }
+      }
+    },
+    "discount": {
+      "applied": "Kód {code} uplatněn",
+      "removeAria": "Odebrat slevový kód",
+      "placeholder": "Slevový kód",
+      "apply": "Použít",
+      "loading": "..."
+    },
+    "summary": {
+      "title": "Shrnutí objednávky",
+      "subtotal": "Mezisoučet",
+      "discount": "Sleva",
+      "shipping": "Doprava",
+      "total": "Celkem"
+    },
+    "payment": {
+      "processing": "Zpracovávám platbu...",
+      "pay": "Zaplatit {amount} Kč",
+      "error": "Došlo k nečekané chybě při platbě.",
+      "loadingGateway": "Načítám bezpečnou platební bránu..."
+    },
+    "createArch": {
+      "sortOptions": {
+        "recommended": "Doporučené",
+        "priceAsc": "Cena: od nejnižší",
+        "priceDesc": "Cena: od nejvyšší",
+        "nameAsc": "Název: A–Z",
+        "bestseller": "Nejprodávanější"
+      },
+      "loadingStudio": "Načítám studio...",
+      "customDesignPrefix": "Vlastní návrh: ",
+      "chooseTemplate": "Vyberte si šablonu",
+      "introText": "Vytvořte si během několika okamžiků nádhernou památku nebo jedinečný dar, který ponese váš vlastní rukopis a navždy zachytí kouzlo vaší cesty. Vytvořte umělecké dílo, jehož hlavním motivem budete vy sami.",
+      "whatIsLink": "Co je Kreativní arch?",
+      "loadingTemplates": "Načítáme šablony...",
+      "photoCount": "{count, plural, one {# fotografie} few {# fotografie} other {# fotografií}}",
+      "stampCount": "{count, plural, one {# známka} few {# známky} other {# známek}}",
+      "templateInfo": "Informace o šabloně",
+      "priceLabel": "Cena {price} Kč",
+      "selectTemplate": "Vybrat šablonu",
+      "templateDetailAria": "Detail šablony {name}",
+      "successTitle": "Váš arch byl vložen do košíku!",
+      "successText": "Skvělá práce. Váš grafický návrh je připraven k tisku a bezpečně uložen v košíku. Počet kusů si můžete upravit před zaplacením.",
+      "createAnother": "Vytvořit další arch",
+      "goToCart": "Přejít do košíku"
+    },
+    "thankYou": {
+      "title": "Objednávka byla úspěšně odeslána!",
+      "thanksText": "Děkujeme za váš nákup na <b>My Creative Stamp</b>. Detaily objednávky s přehledem položek jsme vám právě odeslali na e-mail.",
+      "orderNumberLabel": "Číslo objednávky",
+      "spamNotice": "Nezapomeňte zkontrolovat složku nevyžádané pošty nebo spam.",
+      "backToShop": "Zpět do obchodu",
+      "footer": "© {year} My Creative Stamp – sběratelské známky s příběhem."
+    }
+  },
+  "metadata": {
+    "cart": { "title": "Košík" },
+    "createArch": {
+      "title": "Vytvořit Kreativní arch",
+      "description": "Vyberte si šablonu, nahrajte vlastní fotografie a text a vytvořte si originální Kreativní arch se skutečnými poštovními známkami."
+    },
+    "thankYou": { "title": "Děkujeme za objednávku" }
+  }
+}

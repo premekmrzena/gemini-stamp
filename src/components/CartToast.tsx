@@ -1,11 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useCart } from '@/context/CartContext';
 
 export default function CartToast() {
   const { toast, dismissToast } = useCart();
+  const t = useTranslations('cart');
 
   if (!toast.visible || !toast.item) return null;
 
@@ -25,7 +27,7 @@ export default function CartToast() {
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
-          <h4 className="style-h4 text-success m-0">Přidáno do košíku</h4>
+          <h4 className="style-h4 text-success m-0">{t('addedToCart')}</h4>
         </div>
 
         <hr className="border-black200 w-full m-0" />

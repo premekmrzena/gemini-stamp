@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 type BreadcrumbItem = {
   label: string;
@@ -6,7 +7,8 @@ type BreadcrumbItem = {
 };
 
 export default function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
-  const all: BreadcrumbItem[] = [{ label: 'Domů', href: '/' }, ...items];
+  const t = useTranslations('breadcrumbs');
+  const all: BreadcrumbItem[] = [{ label: t('home'), href: '/' }, ...items];
 
   return (
     <nav className="bg-[#0F172A]">

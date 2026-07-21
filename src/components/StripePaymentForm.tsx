@@ -3,9 +3,16 @@
 import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useTranslations, useLocale } from 'next-intl';
 
 // 1. Inicializace Stripe pomocí tvého veřejného klíče
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+// Mapování next-intl locale na StripeElementLocale - jen 'en' je dnes reálně aktivní
+// mutace, ostatní (ko/ja/zh-*) se doplní, až budou mít i skutečný obsah (viz fáze 5).
+function toStripeLocale(locale: string): 'en' | 'auto' {
+  return locale === 'en' ? 'en' : 'auto';
+}
 
 // --- VNITŘNÍ KOMPONENTA: Samotný formulář s tlačítkem ---
 // Přidali jsme orderId do props
@@ -14,6 +21,7 @@ const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) 
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const t = useTranslations('checkout.payment');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +40,7 @@ const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) 
 
     // Pokud dojde k chybě (např. zamítnutá karta), kód pokračuje zde
     if (error) {
-      setErrorMessage(error.message || 'Došlo k nečekané chybě při platbě.');
+      setErrorMessage(error.message || t('error'));
     }
 
     setIsLoading(false);
@@ -46,7 +54,7 @@ const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) 
         disabled={!stripe || isLoading}
         className="w-full bg-[#FF6B35] text-[#0F172A] style-body-bold py-[14px] rounded-full hover:bg-[#FF7F51] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
       >
-        {isLoading ? 'Zpracovávám platbu...' : `Zaplatit ${amount.toLocaleString('cs-CZ')} Kč`}
+        {isLoading ? t('processing') : t('pay', { amount: amount.toLocaleString('cs-CZ') })}
       </button>
 
       {errorMessage && (
@@ -62,6 +70,8 @@ const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) 
 // Přidali jsme orderId do parametrů funkce
 export default function StripePaymentForm({ amount, orderId }: { amount: number, orderId: string }) {
   const [clientSecret, setClientSecret] = useState('');
+  const t = useTranslations('checkout.payment');
+  const locale = useLocale();
 
   useEffect(() => {
     fetch('/api/create-payment-intent', {
@@ -80,7 +90,7 @@ export default function StripePaymentForm({ amount, orderId }: { amount: number,
     return (
       <div className="w-full flex flex-col items-center justify-center py-10 gap-4">
         <div className="w-8 h-8 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin"></div>
-        <p className="style-body text-[#FDFBF7]/50">Načítám bezpečnou platební bránu...</p>
+        <p className="style-body text-[#FDFBF7]/50">{t('loadingGateway')}</p>
       </div>
     );
   }
@@ -89,9 +99,10 @@ export default function StripePaymentForm({ amount, orderId }: { amount: number,
     <div className="w-full">
       <Elements 
         stripe={stripePromise} 
-        options={{ 
-          clientSecret, 
-          appearance: { 
+        options={{
+          clientSecret,
+          locale: toStripeLocale(locale),
+          appearance: {
             theme: 'night',
             variables: {
               fontFamily: 'Poppins, system-ui, sans-serif',
