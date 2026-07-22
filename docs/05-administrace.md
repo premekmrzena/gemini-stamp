@@ -54,9 +54,9 @@ Bezpečnost: tabulka `discount_codes` má RLS bez policy pro `anon` (veřejný w
 
 ## 5. Fakturace
 
-Fakturace (vystavení daňového dokladu) se řeší mimo appku, plánovaně přes eDoklad API (zatím nenapojeno). Appka už ale sbírá vše, co k tomu eDoklad bude potřebovat: `orders.billing_company_name`/`billing_company_id`/`billing_company_tax_id` (IČO/DIČ, vyplní se jen pokud zákazník zadá firemní údaje v košíku) + plnou fakturační adresu a rozpad položek (`cart_items`). Žádné UI ani API endpoint pro fakturaci v appce zatím není.
+Fakturace (vystavení daňového dokladu) se řeší mimo appku, plánovaně přes iDoklad API (zatím nenapojeno). Appka už ale sbírá vše, co k tomu iDoklad bude potřebovat: `orders.billing_company_name`/`billing_company_id`/`billing_company_tax_id` (IČO/DIČ, vyplní se jen pokud zákazník zadá firemní údaje v košíku) + plnou fakturační adresu a rozpad položek (`cart_items`). Žádné UI ani API endpoint pro fakturaci v appce zatím není.
 
 ## Otevřené body
 - Žádná role/oprávnění — kdokoli s Supabase Auth účtem vidí a může měnit vše (objednávky i produkty)
 - Žádné notifikace ani audit log akcí admina (kdo a kdy změnil stav/produkt)
-- eDoklad napojení na fakturaci zatím chybí (viz sekce 5 výše)
+- iDoklad napojení na fakturaci zatím chybí (viz sekce 5 výše)

@@ -6,14 +6,16 @@
 
 | Co chybí | Proč je to odložené | Co bude potřeba, až na to přijde čas |
 |---|---|---|
-| **Stripe webhook nezaregistrovaný** v Stripe Dashboardu | Projekt zatím běží na testovacím Stripe účtu. Doména je už finální (`mycreativestamp.com`), takže registraci lze provést kdykoli | V Stripe Dashboardu (Developers → Webhooks) zaregistrovat `https://mycreativestamp.com/api/stripe-webhook`, event `payment_intent.succeeded`, doplnit `STRIPE_WEBHOOK_SECRET` do env. Detail v [sekci 1](01-technicka-infrastruktura.md#platby--stripe). |
+| **Stripe webhook nezaregistrovaný** v Stripe Dashboardu | Projekt zatím běží na testovacím Stripe účtu. Doména je už finální (`mycreativestamp.com`), takže registraci lze provést kdykoli | V Stripe Dashboardu (Developers → Webhooks) zaregistrovat `https://mycreativestamp.com/api/stripe-webhook`, eventy `payment_intent.succeeded`, `payment_intent.payment_failed` a `payment_intent.canceled` (poslední dva od 2026-07-22 kvůli automatickému vrácení skladu), doplnit `STRIPE_WEBHOOK_SECRET` do env. Detail v [sekci 1](01-technicka-infrastruktura.md#platby--stripe). |
+| **Aktivace ostrého Stripe účtu** | Zatím testovací klíče/testovací karty, plán 2026-07-22 přejít na živý provoz | Přepnout `STRIPE_SECRET_KEY`/`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` z testovacích na live klíče (Vercel env), zaregistrovat live webhook (viz řádek výše, live režim má vlastní `STRIPE_WEBHOOK_SECRET`), reálný end-to-end test platby s malou částkou. |
+| **Napojení košíku/checkoutu na API dopravce** | Plán 2026-07-22, zatím `getShippingOptions()` v `src/lib/constants.ts` vrací jen 3 pevné možnosti (osobní odběr / ČR / mezinárodní) s natvrdo danou cenou podle váhy | Nahradit nebo doplnit pevné ceny reálným dotazem na zvoleného dopravce (sledovací číslo, skutečná cena podle rozměru/váhy/cíle). Dá se čekat, že se přitom budou měnit CZ texty v `ShippingStep`/`AddressForm` – platí zavedený vzor „CZ a EN text vznikají spolu" (viz [sekce 9](09-jazykove-mutace.md)), po každé změně spustit `npm run check:messages`. |
 | **Resend e-maily ze sandbox domény** `onboarding@resend.dev` | Vědomě odloženo 2026-06-16 — vlastní doména se bude řešit později | Zverifikovat doménu v Resendu, změnit `from` adresu na obou místech v `src/lib/email.ts` (`sendOrderConfirmation`, `sendShippingNotification`). Dokud se to nezmění, sandbox pravděpodobně pošle jen na ověřenou adresu vlastníka účtu, ne libovolnému zákazníkovi. Detail v [sekci 1](01-technicka-infrastruktura.md#e-maily--resend). |
 
 ## Fakturace
 
 | Co chybí | Proč je to odložené | Co bude potřeba, až na to přijde čas |
 |---|---|---|
-| **Napojení na eDoklad API** | Uživatel se rozhodl řešit fakturaci samostatně, později | Appka už sbírá vše potřebné: `orders.billing_company_name`/`billing_company_id`/`billing_company_tax_id` (IČO/DIČ) + plná fakturační adresa + `cart_items`. Zbývá navrhnout API integraci (kdy se má doklad vystavit, jaké jsou eDoklad endpointy) a UI/trigger v adminu. Detail v [sekci 5](05-administrace.md#4-fakturace). |
+| **Napojení na iDoklad API** | Uživatel se rozhodl řešit fakturaci samostatně, později (plán napojit brzy po ostrém Stripe, 2026-07-22) | Appka už sbírá vše potřebné: `orders.billing_company_name`/`billing_company_id`/`billing_company_tax_id` (IČO/DIČ) + plná fakturační adresa + `cart_items`. Zbývá navrhnout API integraci (kdy se má doklad vystavit, jaké jsou iDoklad endpointy) a UI/trigger v adminu. Detail v [sekci 5](05-administrace.md#4-fakturace). |
 
 ## Administrace a bezpečnost
 

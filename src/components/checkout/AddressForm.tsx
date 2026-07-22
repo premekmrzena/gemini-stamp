@@ -5,6 +5,8 @@ import { INTERNATIONAL_COUNTRIES } from '@/lib/constants';
 type FormData = Record<string, string>;
 
 type Props = {
+  formId: string;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   formData: FormData;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   customerNote: string;
@@ -59,6 +61,8 @@ const SelectField = ({
 );
 
 export default function AddressForm({
+  formId,
+  onSubmit,
   formData,
   onChange,
   customerNote,
@@ -74,7 +78,7 @@ export default function AddressForm({
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-8">
       <div className="flex flex-col gap-6">
         <h3 className="style-h3 text-secondary">{t('title')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -159,6 +163,6 @@ export default function AddressForm({
           className="bg-secondary border border-black400 rounded-[4px] p-4 min-h-[100px] style-body text-black placeholder:text-black300 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-y"
         />
       </div>
-    </div>
+    </form>
   );
 }

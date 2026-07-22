@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:messages": "node scripts/check-message-keys.mjs"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",

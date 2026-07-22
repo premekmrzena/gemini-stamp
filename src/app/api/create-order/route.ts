@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getShippingOptions, PAYMENT_OPTIONS } from '@/lib/constants';
 import { sendOrderConfirmation } from '@/lib/email';
@@ -24,8 +24,20 @@ type CreateOrderBody = {
 };
 
 export async function POST(req: Request) {
+  let body: CreateOrderBody;
   try {
-    const body: CreateOrderBody = await req.json();
+    // Vlastní catch jen pro parsování těla - přerušený/prázdný request (typicky
+    // vratká mobilní síť nebo zabité pozadí prohlížeče uprostřed odesílání)
+    // dřív spadl do obecného 500 s nesrozumitelnou technickou hláškou.
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Nepodařilo se přečíst data objednávky. Zkontrolujte prosím připojení a zkuste to znovu.' },
+      { status: 400 }
+    );
+  }
+
+  try {
     const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent, discountCode } = body;
 
     if (!cartItems?.length) {
@@ -37,6 +49,9 @@ export async function POST(req: Request) {
     let totalWeightGrams = 0;
     const validatedItems: CartItemSnapshot[] = [];
     const soldIncrements: { productId: string; qty: number }[] = [];
+    // Jen 'product' položky - custom_stamps šablony nemají fyzicky omezený
+    // sklad (viz docs/sql/015_products_reserve_stock.sql).
+    const stockReservations: { product_id: string; qty: number }[] = [];
 
     for (const item of cartItems) {
       if (item.item_type === 'product') {
@@ -56,6 +71,7 @@ export async function POST(req: Request) {
         totalWeightGrams += (product.weight_grams || 0) * item.quantity;
         validatedItems.push({ ...item, price: effectivePrice, weight_grams: product.weight_grams });
         soldIncrements.push({ productId: product.id, qty: item.quantity });
+        stockReservations.push({ product_id: product.id, qty: item.quantity });
 
       } else if (item.item_type === 'custom') {
         const { data: stamp, error } = await supabase
@@ -116,6 +132,23 @@ export async function POST(req: Request) {
 
     const totalPrice = computedSubtotal - discountAmount + shippingOption.price + paymentOption.price;
 
+    // Atomicky sníží sklad pro celý košík v jedné transakci (all-or-nothing) -
+    // řeší i race condition dvou zákazníků kupujících poslední kus současně,
+    // což by samotný SELECT-check před insertem nezachytil.
+    let stockReserved = false;
+    if (stockReservations.length > 0) {
+      const { error: reserveError } = await supabase.rpc('reserve_stock', { p_items: stockReservations });
+      if (reserveError) {
+        console.error('Chyba při rezervaci skladu:', reserveError);
+        const match = reserveError.message.match(/^INSUFFICIENT_STOCK:(.+):(\d+):(\d+)$/);
+        const friendlyError = match
+          ? `Produkt „${match[1]}“ není skladem v požadovaném množství (dostupno: ${match[2]} ks, požadováno: ${match[3]} ks)`
+          : 'Některou položku se nepodařilo rezervovat na skladě, zkuste to prosím znovu';
+        return NextResponse.json({ error: friendlyError }, { status: 400 });
+      }
+      stockReserved = true;
+    }
+
     const orderData = {
       status: 'Nová',
       total_price: totalPrice,
@@ -137,28 +170,43 @@ export async function POST(req: Request) {
       .select('id')
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      // Sklad byl už rezervovaný (odečtený) - insert samotné objednávky teď
+      // selhal (vzácné, jen neočekávaná DB chyba), takže rezervaci vrátíme zpět.
+      if (stockReserved) {
+        const { error: releaseError } = await supabase.rpc('release_stock', { p_items: stockReservations });
+        if (releaseError) console.error('Chyba při vracení skladu po neúspěšném insertu:', releaseError);
+      }
+      throw insertError;
+    }
 
-    for (const { productId, qty } of soldIncrements) {
-      supabase.rpc('increment_product_sold_count', { p_product_id: productId, p_qty: qty }).then(({ error }) => {
+    // after() garantuje, že tahle vedlejší práce doběhne, i když Vercel po
+    // odeslání response okamžitě zmrazí instanci funkce (fire-and-forget bez
+    // waitUntil by na serverless mohl nespolehlivě vynechávat e-maily/počítadla).
+    after(async () => {
+      for (const { productId, qty } of soldIncrements) {
+        const { error } = await supabase.rpc('increment_product_sold_count', { p_product_id: productId, p_qty: qty });
         if (error) console.error('Chyba při aktualizaci sold_count:', error);
-      });
-    }
+      }
 
-    if (discountCode) {
-      supabase.rpc('redeem_discount_code', { p_code: discountCode }).then(({ error }) => {
+      if (discountCode) {
+        const { error } = await supabase.rpc('redeem_discount_code', { p_code: discountCode });
         if (error) console.error('Chyba při uplatnění slevového kódu:', error);
-      });
-    }
+      }
 
-    const shortOrderId = data.id.slice(-8).toUpperCase();
-    sendOrderConfirmation({
-      email: formData.billing_email,
-      orderId: shortOrderId,
-      customerName: formData.billing_first_name,
-      totalPrice,
-      cartItems: validatedItems,
-    }).catch((err) => console.error('Email error:', err));
+      const shortOrderId = data.id.slice(-8).toUpperCase();
+      try {
+        await sendOrderConfirmation({
+          email: formData.billing_email,
+          orderId: shortOrderId,
+          customerName: formData.billing_first_name,
+          totalPrice,
+          cartItems: validatedItems,
+        });
+      } catch (err) {
+        console.error('Email error:', err);
+      }
+    });
 
     return NextResponse.json({ orderId: data.id, totalPrice });
 

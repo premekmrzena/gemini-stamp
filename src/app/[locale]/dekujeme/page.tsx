@@ -15,7 +15,15 @@ function ThankYouContent() {
   const orderId = searchParams.get('orderId');
   const displayId = orderId ? orderId.slice(-8).toUpperCase() : null;
 
+  // Stripe u karetních plateb vyžadujících přesměrování (typicky 3D Secure)
+  // vždy přesměruje na return_url bez ohledu na výsledek - úspěch/neúspěch
+  // rozlišuje jen `redirect_status` v query. Bankovní převod (bez Stripe)
+  // sem naviguje přímo bez tohoto parametru, takže tam žádný check není.
+  const redirectStatus = searchParams.get('redirect_status');
+  const paymentFailed = redirectStatus !== null && redirectStatus !== 'succeeded';
+
   useEffect(() => {
+    if (paymentFailed) return;
     const timer = setTimeout(() => {
       clearCart();
       if (typeof window !== 'undefined') {
@@ -25,7 +33,29 @@ function ThankYouContent() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [paymentFailed]);
+
+  if (paymentFailed) {
+    return (
+      <main className="flex-grow w-full py-[60px] md:py-[100px] animate-fadeIn">
+        <div className="layout-container flex flex-col items-center justify-center">
+          <div className="text-center flex flex-col items-center gap-6 max-w-2xl">
+            <h1 className="style-h1 text-secondary">{t('paymentFailed.title')}</h1>
+            <p className="style-perex text-secondary font-medium">
+              {t.rich('paymentFailed.text', {
+                orderId: displayId ?? '---',
+                b: (chunks) => <span className="font-bold underline">{chunks}</span>,
+              })}
+            </p>
+          </div>
+
+          <Link href="/kosik" className="mt-10">
+            <Button variant="outlined" arrow="left">{t('paymentFailed.backToCart')}</Button>
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-grow w-full py-[60px] md:py-[100px] animate-fadeIn">

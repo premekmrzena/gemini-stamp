@@ -134,6 +134,7 @@ export type Order = {
   tracking_number: string | null;
   discount_code: string | null;
   discount_amount: number;
+  stock_released: boolean;
 };
 
 export type CustomStamp = {

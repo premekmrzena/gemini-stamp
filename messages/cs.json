@@ -249,7 +249,12 @@
       "orderNumberLabel": "Číslo objednávky",
       "spamNotice": "Nezapomeňte zkontrolovat složku nevyžádané pošty nebo spam.",
       "backToShop": "Zpět do obchodu",
-      "footer": "© {year} My Creative Stamp – sběratelské známky s příběhem."
+      "footer": "© {year} My Creative Stamp – sběratelské známky s příběhem.",
+      "paymentFailed": {
+        "title": "Platbu se nepodařilo dokončit",
+        "text": "Vaše objednávka <b>#{orderId}</b> byla uložena, ale platba kartou neproběhla (např. zamítnutí banky nebo přerušené ověření). Košík jsme vám zachovali – vraťte se do košíku a zkuste platbu znovu, nebo zvolte platbu bankovním převodem.",
+        "backToCart": "Zpět do košíku"
+      }
     }
   },
   "metadata": {

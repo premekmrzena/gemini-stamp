@@ -7,8 +7,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(request: Request) {
+  let body: { orderId?: string };
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Nepodařilo se přečíst požadavek na platbu. Zkontrolujte prosím připojení a zkuste to znovu.' },
+      { status: 400 }
+    );
+  }
+
+  try {
     const { orderId } = body;
 
     if (!orderId || typeof orderId !== 'string') {

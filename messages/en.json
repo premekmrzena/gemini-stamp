@@ -249,7 +249,12 @@
       "orderNumberLabel": "Order number",
       "spamNotice": "Don't forget to check your spam or junk folder.",
       "backToShop": "Back to shop",
-      "footer": "© {year} My Creative Stamp – collectible stamps with a story."
+      "footer": "© {year} My Creative Stamp – collectible stamps with a story.",
+      "paymentFailed": {
+        "title": "We couldn't complete your payment",
+        "text": "Your order <b>#{orderId}</b> was saved, but the card payment didn't go through (e.g. declined by your bank or the verification was interrupted). We've kept your cart – go back and try the payment again, or choose bank transfer instead.",
+        "backToCart": "Back to cart"
+      }
     }
   },
   "metadata": {

@@ -15,6 +15,8 @@ import OrderSummary from '@/components/checkout/OrderSummary';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
 
+const ADDRESS_FORM_ID = 'checkout-address-form';
+
 const EMPTY_FORM = {
   billing_first_name: '', billing_last_name: '', billing_email: '', billing_phone: '',
   billing_company_name: '', billing_company_id: '', billing_company_tax_id: '',
@@ -58,7 +60,11 @@ const CheckoutPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // Formulář se submituje přes button[form=ADDRESS_FORM_ID] ve footeru (mimo
+    // strom <form>), aby proklikl nativní HTML5 validaci povinných polí -
+    // preventDefault tu zastaví skutečnou GET navigaci prohlížeče.
+    e.preventDefault();
     submitOrder({
       cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent,
       discountCode: appliedDiscount?.code ?? null,
@@ -107,6 +113,8 @@ const CheckoutPage = () => {
             )}
             {currentStep === 3 && (
               <AddressForm
+                formId={ADDRESS_FORM_ID}
+                onSubmit={handleSubmit}
                 formData={formData}
                 onChange={handleInputChange}
                 customerNote={customerNote}
@@ -128,15 +136,25 @@ const CheckoutPage = () => {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 w-full z-50 bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center shadow-lg">
+      {/* z-[60]: musí zůstat nad CookieConsent (z-50, fixed bottom-0, může se
+          objevit uprostřed checkoutu po 2s) - jinak by lišta na mobilu (kde je
+          vyšší, text a tlačítka pod sebou) mohla překrýt tlačítko Zaplatit. */}
+      <footer className="fixed bottom-0 left-0 w-full z-[60] bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center shadow-lg">
         <div className="layout-container flex justify-between items-center">
-          <Button onClick={currentStep === 1 ? undefined : () => setCurrentStep((p) => p - 1)} variant="outlined" arrow="left">
+          <Button
+            type="button"
+            onClick={currentStep === 1 ? undefined : () => setCurrentStep((p) => p - 1)}
+            variant="outlined"
+            arrow="left"
+          >
             {currentStep === 1 ? <Link href="/">{t('footer.back')}</Link> : t('footer.back')}
           </Button>
           <div className="flex flex-col items-end">
             {orderError && <p className="text-red-500 text-sm mb-2">{orderError}</p>}
             <Button
-              onClick={currentStep === 3 ? handleSubmit : () => setCurrentStep((p) => p + 1)}
+              type={currentStep === 3 ? 'submit' : 'button'}
+              form={currentStep === 3 ? ADDRESS_FORM_ID : undefined}
+              onClick={currentStep === 3 ? undefined : () => setCurrentStep((p) => p + 1)}
               disabled={isSubmitting}
               arrow="right"
             >
