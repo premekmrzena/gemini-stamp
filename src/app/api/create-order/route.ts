@@ -103,7 +103,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const shippingOptions = getShippingOptions(totalWeightGrams);
+    const shippingOptions = getShippingOptions(totalWeightGrams, computedSubtotal, formData.billing_country);
     const shippingOption = shippingOptions.find((o) => o.id === shippingMethodId);
     if (!shippingOption) {
       return NextResponse.json({ error: 'Neplatná metoda dopravy' }, { status: 400 });
@@ -132,19 +132,19 @@ export async function POST(req: Request) {
 
     const totalPrice = computedSubtotal - discountAmount + shippingOption.price + paymentOption.price;
 
-    // Atomicky sníží sklad pro celý košík v jedné transakci (all-or-nothing) -
-    // řeší i race condition dvou zákazníků kupujících poslední kus současně,
-    // což by samotný SELECT-check před insertem nezachytil.
+    // Atomicky sníží sklad pro celý košík v jedné transakci. Sklad je jen
+    // informace pro doplňování skladu, ne tvrdý limit - reserve_stock nákup
+    // nikdy neblokuje kvůli nedostatku (stock_quantity může klesnout do záporu),
+    // viz docs/sql/018_products_reserve_stock_no_block.sql.
     let stockReserved = false;
     if (stockReservations.length > 0) {
       const { error: reserveError } = await supabase.rpc('reserve_stock', { p_items: stockReservations });
       if (reserveError) {
         console.error('Chyba při rezervaci skladu:', reserveError);
-        const match = reserveError.message.match(/^INSUFFICIENT_STOCK:(.+):(\d+):(\d+)$/);
-        const friendlyError = match
-          ? `Produkt „${match[1]}“ není skladem v požadovaném množství (dostupno: ${match[2]} ks, požadováno: ${match[3]} ks)`
-          : 'Některou položku se nepodařilo rezervovat na skladě, zkuste to prosím znovu';
-        return NextResponse.json({ error: friendlyError }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Některou položku se nepodařilo rezervovat na skladě, zkuste to prosím znovu' },
+          { status: 400 }
+        );
       }
       stockReserved = true;
     }

@@ -41,11 +41,11 @@ const CheckoutPage = () => {
   const { submitOrder, isSubmitting, orderError, createdOrderId, serverTotal, isPaymentModalOpen, setIsPaymentModalOpen } = useCheckout();
 
   const totalWeightGrams = cartItems.reduce((sum, item) => sum + (item.weight_grams || 0) * item.quantity, 0);
-  const shippingOptions = getShippingOptions(totalWeightGrams);
+  const shippingOptions = getShippingOptions(totalWeightGrams, cartTotal, formData.billing_country);
   const shippingCost = shippingOptions.find((o) => o.id === selectedShipping)?.price ?? 0;
   const paymentCost = PAYMENT_OPTIONS.find((o) => o.id === selectedPayment)?.price ?? 0;
   const totalOrderPrice = cartTotalAfterDiscount + shippingCost + paymentCost;
-  const isMezinarodni = selectedShipping === 'mezinarodni';
+  const isMezinarodni = selectedShipping === 'cenne-psani' || selectedShipping === 'ems';
 
   // Hydration guard (počká na klientský mount) - nejde nahradit lazy initializerem,
   // ten by běžel i při SSR a dal by jiný výsledek než na klientovi.
@@ -53,11 +53,31 @@ const CheckoutPage = () => {
   useEffect(() => { setIsMounted(true); }, []);
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [currentStep]);
 
+  // Cenné psaní/EMS se nabízí jen pro některé země (viz COUNTRY_SHIPPING_INFO) - pokud zákazník
+  // po výběru přepne zemi na takovou, kde už zvolená služba není dostupná, vybraná možnost by
+  // "zmizela" ze shippingOptions a cena by tiše spadla na 0 Kč - proto se v tom případě zruší.
+  useEffect(() => {
+    if (selectedShipping && !shippingOptions.some((o) => o.id === selectedShipping)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reaguje na cizí zdroj (přepočet dostupných možností podle zvolené země), ne na vlastní stav
+      setSelectedShipping('');
+    }
+  }, [shippingOptions, selectedShipping]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleShippingChange = (id: string) => {
+    setSelectedShipping(id);
+    // billing_country zdvojuje roli "cílové země zásilky", dokud zákazník nezvolí doručení na
+    // jinou adresu - při přepnutí zpátky na tuzemskou dopravu ji resetujeme, ať se v adresním
+    // kroku needitovaně neuloží dřívější zahraniční volba pod zobrazenou "Česká republika".
+    if (id === 'osobni' || id === 'ceska') {
+      setFormData((prev) => (prev.billing_country === 'Česká republika' ? prev : { ...prev, billing_country: 'Česká republika' }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -105,10 +125,12 @@ const CheckoutPage = () => {
               <ShippingStep
                 shippingOptions={shippingOptions}
                 selectedShipping={selectedShipping}
-                setSelectedShipping={setSelectedShipping}
+                setSelectedShipping={handleShippingChange}
                 paymentOptions={PAYMENT_OPTIONS}
                 selectedPayment={selectedPayment}
                 setSelectedPayment={setSelectedPayment}
+                internationalCountry={formData.billing_country}
+                setInternationalCountry={(country) => setFormData((prev) => ({ ...prev, billing_country: country }))}
               />
             )}
             {currentStep === 3 && (
@@ -155,7 +177,7 @@ const CheckoutPage = () => {
               type={currentStep === 3 ? 'submit' : 'button'}
               form={currentStep === 3 ? ADDRESS_FORM_ID : undefined}
               onClick={currentStep === 3 ? undefined : () => setCurrentStep((p) => p + 1)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || (currentStep === 2 && !selectedShipping)}
               arrow="right"
             >
               {isSubmitting ? t('footer.submitting') : currentStep === 3 ? (selectedPayment === 'karta' ? t('footer.pay') : t('footer.finish')) : t('footer.nextStep')}

@@ -4,14 +4,19 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import Button from '@/components/Button';
 import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getSalePrice } from '@/lib/pricing';
 import { sanitizeDescriptionHtml } from '@/lib/sanitize';
+import { getLocalizedProductField } from '@/lib/product-i18n';
 import { Product } from '@/types/database';
 
-type RelatedProduct = Pick<Product, 'id' | 'name' | 'price' | 'sale_price' | 'image_url'>;
+type RelatedProduct = Pick<
+  Product,
+  'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'image_url'
+>;
 
 type ProductDetailClientProps = {
   product: Product;
@@ -19,8 +24,12 @@ type ProductDetailClientProps = {
 };
 
 export default function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
+  const locale = useLocale();
   const salePrice = getSalePrice(product.price, product.sale_price);
   const isCreativeArch = product.category === 'kreativni-archy';
+  const localizedName = getLocalizedProductField(product, locale, 'name');
+  const localizedShortDescription = getLocalizedProductField(product, locale, 'short_description');
+  const localizedDetailedDescription = getLocalizedProductField(product, locale, 'detailed_description');
   const router = useRouter();
   const [isDescOpen, setIsDescOpen] = useState(true);
   const [isParamsOpen, setIsParamsOpen] = useState(true); 
@@ -63,7 +72,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       <div className="layout-container">
         
         <h1 className="style-h2 mb-6 text-center lg:hidden w-full select-none">
-          {product.name}
+          {localizedName}
         </h1>
 
         <div className="flex flex-col lg:flex-row gap-[32px] md:gap-[29px] lg:gap-[42px] mb-[64px]">
@@ -75,10 +84,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               onClick={() => setLightboxImg(mainImage)}
               onContextMenu={(e) => e.preventDefault()}
             >
-              <Image 
-                src={mainImage} 
-                alt={product.name} 
-                fill 
+              <Image
+                src={mainImage}
+                alt={localizedName}
+                fill
                 priority
                 className="object-contain object-top pointer-events-none" 
                 onDragStart={(e) => e.preventDefault()}
@@ -112,10 +121,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
           <div className="w-full lg:w-1/2 flex flex-col items-center text-center lg:items-start lg:text-left gap-0">
             <h1 className="style-h2 mb-4 hidden lg:block select-none">
-              {product.name}
+              {localizedName}
             </h1>
-            
-            <p className="style-perex text-white/80 mb-4 select-none">{product.short_description}</p>
+
+            <p className="style-perex text-white/80 mb-4 select-none">{localizedShortDescription}</p>
 
             {/* TAGY */}
             <div className="flex flex-wrap justify-center lg:justify-start gap-1 mb-6 select-none pointer-events-none">
@@ -215,7 +224,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             )}
 
             {/* POPIS */}
-            {product.detailed_description && (
+            {localizedDetailedDescription && (
               <div className="w-full border-t border-black300/30 pt-6 mt-6 text-left">
                 <button 
                   className="w-full flex items-center justify-between cursor-pointer text-left group"
@@ -232,7 +241,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 
                 <div
                   className={`${isDescOpen ? 'block' : 'hidden'} mt-4 select-none rich-description style-body text-white/70 whitespace-pre-line`}
-                  dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(product.detailed_description) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(localizedDetailedDescription) }}
                 />
               </div>
             )}
@@ -247,20 +256,21 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
               {relatedProducts.map((relProd) => {
                 const relSalePrice = getSalePrice(relProd.price, relProd.sale_price);
+                const relLocalizedName = getLocalizedProductField(relProd, locale, 'name');
                 return (
                 <div
                   key={relProd.id}
                   className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col active:bg-black500 active:scale-[0.98] active:z-10 md:hover:bg-black500 md:hover:scale-[1.02] md:hover:z-10 transition-all duration-300"
                   onContextMenu={(e) => e.preventDefault()}
                 >
-                  <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={`Detail produktu ${relProd.name}`}></Link>
+                  <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={`Detail produktu ${relLocalizedName}`}></Link>
                   <div
                     className="relative w-full h-[120px] bg-transparent mb-6 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none"
                     onContextMenu={(e) => e.preventDefault()}
                   >
                     <Image
                         src={relProd.image_url}
-                        alt={relProd.name}
+                        alt={relLocalizedName}
                         fill
                         className="object-contain pointer-events-none"
                         onDragStart={(e) => e.preventDefault()}
@@ -269,7 +279,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                     <div className="absolute inset-0 z-10 bg-transparent" />
                   </div>
                   <div className="flex flex-col items-center text-center relative z-10 pointer-events-none select-none">
-                    <h3 className="style-h4 mb-4 line-clamp-2 h-[48px] flex items-center">{relProd.name}</h3>
+                    <h3 className="style-h4 mb-4 line-clamp-2 h-[48px] flex items-center">{relLocalizedName}</h3>
                     {relSalePrice ? (
                       <span className="style-product-price flex items-center gap-2">
                         <span className="text-black300 line-through">{relProd.price} Kč</span>

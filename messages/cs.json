@@ -173,6 +173,10 @@
     "shipping": {
       "title": "Doprava",
       "paymentTitle": "Platba",
+      "international": {
+        "title": "Mezinárodní doprava",
+        "noneAvailable": "Do vybrané země bohužel nelze žádnou z našich mezinárodních služeb odeslat."
+      },
       "options": {
         "osobni": {
           "name": "Osobní odběr (Praha)",
@@ -180,13 +184,15 @@
         },
         "ceska": {
           "name": "Česká republika",
-          "descLetter": "Obyčejné psaní",
-          "descRegistered": "Doporučené psaní",
-          "descParcel": "Balíček"
+          "descRegistered": "Doporučené psaní"
         },
-        "mezinarodni": {
-          "name": "Mezinárodní doprava",
-          "desc": "Zemi doručení zadáte v dalším kroku"
+        "cenne-psani": {
+          "name": "Cenné psaní do zahraničí",
+          "desc": "Sledovatelná zásilka s pojištěním, nutné převzetí"
+        },
+        "ems": {
+          "name": "EMS",
+          "desc": "Expresní doprava, nejrychlejší doručení do zahraničí, nutné převzetí"
         },
         "karta": {
           "name": "Online platba kartou",

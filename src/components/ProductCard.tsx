@@ -2,15 +2,27 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import AddToCartButton from '@/components/AddToCartButton';
 import StartCreatingButton from '@/components/StartCreatingButton';
 import { getSalePrice } from '@/lib/pricing';
+import { getLocalizedProductField } from '@/lib/product-i18n';
 import { ProductCategory } from '@/types/database';
 
 export type ProductType = {
   id: string;
   name: string;
   short_description: string | null;
+  name_en?: string | null;
+  short_description_en?: string | null;
+  name_ko?: string | null;
+  short_description_ko?: string | null;
+  name_ja?: string | null;
+  short_description_ja?: string | null;
+  name_zh_hans?: string | null;
+  short_description_zh_hans?: string | null;
+  name_zh_hant?: string | null;
+  short_description_zh_hant?: string | null;
   price: number;
   sale_price: number | null;
   image_url: string;
@@ -23,12 +35,14 @@ export type ProductType = {
 };
 
 export default function ProductCard({ product }: { product: ProductType }) {
+  const locale = useLocale();
   const isTop = !!product.tag_top;
   const isNovinka = product.tag_new;
   const isJenUNas = !isTop && !isNovinka;
   const salePrice = getSalePrice(product.price, product.sale_price);
   const isCreativeArch = product.category === 'kreativni-archy';
-
+  const localizedName = getLocalizedProductField(product, locale, 'name');
+  const localizedDescription = getLocalizedProductField(product, locale, 'short_description');
 
   return (
     <div
@@ -38,7 +52,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
       <Link
         href={`/produkt/${product.id}`}
         className="absolute inset-0 z-20 rounded cursor-pointer"
-        aria-label={`Detail produktu ${product.name}`}
+        aria-label={`Detail produktu ${localizedName}`}
       />
 
       <div className="absolute top-[28px] right-0 z-30 flex flex-col items-end gap-1 pointer-events-none">
@@ -67,7 +81,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
       <div className="relative w-full h-[158px] md:h-[120px] lg:h-[170px] bg-transparent mb-4 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none pointer-events-none">
         <Image
           src={product.image_url || '/images/product-image_0001.jpg'}
-          alt={product.name}
+          alt={localizedName}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
           className="object-contain"
@@ -76,8 +90,8 @@ export default function ProductCard({ product }: { product: ProductType }) {
       </div>
 
       <div className="flex flex-col flex-grow items-center text-center relative z-10 pointer-events-none select-none">
-        <h3 className="style-h4 mb-2 line-clamp-2 min-h-[2.8em]">{product.name}</h3>
-        <p className="style-body text-secondary/70 mb-4 line-clamp-3">{product.short_description}</p>
+        <h3 className="style-h4 mb-2 line-clamp-2 min-h-[2.8em]">{localizedName}</h3>
+        <p className="style-body text-secondary/70 mb-4 line-clamp-3">{localizedDescription}</p>
       </div>
 
       <div className="mt-auto flex flex-col items-center relative z-30">

@@ -173,6 +173,10 @@
     "shipping": {
       "title": "Shipping",
       "paymentTitle": "Payment",
+      "international": {
+        "title": "International shipping",
+        "noneAvailable": "Unfortunately none of our international services can be shipped to the selected country."
+      },
       "options": {
         "osobni": {
           "name": "Personal pickup (Prague)",
@@ -180,13 +184,15 @@
         },
         "ceska": {
           "name": "Czech Republic",
-          "descLetter": "Standard letter",
-          "descRegistered": "Registered letter",
-          "descParcel": "Parcel"
+          "descRegistered": "Registered letter"
         },
-        "mezinarodni": {
-          "name": "International shipping",
-          "desc": "You'll enter the destination country in the next step"
+        "cenne-psani": {
+          "name": "Insured mail abroad",
+          "desc": "Trackable, insured shipment, signature required on delivery"
+        },
+        "ems": {
+          "name": "EMS",
+          "desc": "Express shipping, fastest international delivery, signature required on delivery"
         },
         "karta": {
           "name": "Card payment online",

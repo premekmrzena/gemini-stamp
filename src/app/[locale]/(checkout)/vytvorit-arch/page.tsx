@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
@@ -14,17 +14,37 @@ import Footer from '@/components/Footer';
 import TrustBadges from '@/components/TrustBadges';
 import { TEMPLATES, Template } from '@/lib/editorConfig';
 import { getSalePrice, getEffectivePrice } from '@/lib/pricing';
+import { getLocalizedProductField } from '@/lib/product-i18n';
 
-type TemplateInfo = { name: string; short_description: string | null; price: number; sale_price: number | null; sold_count: number; is_active: boolean };
+type TemplateInfo = {
+  name: string;
+  short_description: string | null;
+  name_en: string | null;
+  short_description_en: string | null;
+  name_ko: string | null;
+  short_description_ko: string | null;
+  name_ja: string | null;
+  short_description_ja: string | null;
+  name_zh_hans: string | null;
+  short_description_zh_hans: string | null;
+  name_zh_hant: string | null;
+  short_description_zh_hant: string | null;
+  price: number;
+  sale_price: number | null;
+  sold_count: number;
+  is_active: boolean;
+};
 
 // Název a popis se editují v adminu u produktu a mají přednost před texty natvrdo v editorConfig.ts
-// (ty slouží jen jako záskok, než se data ze Supabase načtou).
-function nameOf(tpl: Template, infos: Record<string, TemplateInfo>): string {
-  return infos[tpl.productId]?.name ?? tpl.name;
+// (ty slouží jen jako záskok, než se data ze Supabase načtou - zatím jen česky, viz docs/09-jazykove-mutace.md 4d).
+function nameOf(tpl: Template, infos: Record<string, TemplateInfo>, locale: string): string {
+  const info = infos[tpl.productId];
+  return info ? getLocalizedProductField(info, locale, 'name') : tpl.name;
 }
 
-function descriptionOf(tpl: Template, infos: Record<string, TemplateInfo>): string {
-  return infos[tpl.productId]?.short_description || tpl.description;
+function descriptionOf(tpl: Template, infos: Record<string, TemplateInfo>, locale: string): string {
+  const info = infos[tpl.productId];
+  return (info ? getLocalizedProductField(info, locale, 'short_description') : null) || tpl.description;
 }
 
 // Popisky (label) žijí v messages/*.json pod checkout.createArch.sortOptions (klíč = stejný jako tady) - tady zůstává jen řadicí logika.
@@ -32,9 +52,9 @@ const SORT_OPTIONS = {
   doporucene: { labelKey: 'recommended', compare: null },
   price_asc: { labelKey: 'priceAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(a, infos) - priceOf(b, infos) },
   price_desc: { labelKey: 'priceDesc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(b, infos) - priceOf(a, infos) },
-  name_asc: { labelKey: 'nameAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => nameOf(a, infos).localeCompare(nameOf(b, infos), 'cs') },
+  name_asc: { labelKey: 'nameAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string) => nameOf(a, infos, locale).localeCompare(nameOf(b, infos, locale), locale) },
   bestseller: { labelKey: 'bestseller', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => (infos[b.productId]?.sold_count ?? 0) - (infos[a.productId]?.sold_count ?? 0) },
-} as const satisfies Record<string, { labelKey: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>) => number) | null }>;
+} as const satisfies Record<string, { labelKey: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string) => number) | null }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
@@ -55,6 +75,7 @@ const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
 
 export default function EditorPage() {
   const t = useTranslations('checkout.createArch');
+  const locale = useLocale();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
@@ -84,14 +105,16 @@ export default function EditorPage() {
     async function fetchProductInfo() {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, short_description, price, sale_price, sold_count, is_active')
+        .select(
+          'id, name, short_description, name_en, short_description_en, name_ko, short_description_ko, name_ja, short_description_ja, name_zh_hans, short_description_zh_hans, name_zh_hant, short_description_zh_hant, price, sale_price, sold_count, is_active'
+        )
         .in('id', TEMPLATES.map((tpl) => tpl.productId));
 
       if (error || !data) { setProductInfoLoaded(true); return; }
 
       const byId: Record<string, TemplateInfo> = {};
       for (const row of data) {
-        byId[row.id] = { name: row.name, short_description: row.short_description, price: row.price, sale_price: row.sale_price, sold_count: row.sold_count, is_active: row.is_active };
+        byId[row.id] = row;
       }
       setProductInfo(byId);
       setProductInfoLoaded(true);
@@ -109,8 +132,8 @@ export default function EditorPage() {
 
   const sortedTemplates = useMemo(() => {
     const compare = SORT_OPTIONS[sortKey].compare;
-    return compare ? [...visibleTemplates].sort((a, b) => compare(a, b, productInfo)) : visibleTemplates;
-  }, [sortKey, productInfo, visibleTemplates]);
+    return compare ? [...visibleTemplates].sort((a, b) => compare(a, b, productInfo, locale)) : visibleTemplates;
+  }, [sortKey, productInfo, visibleTemplates, locale]);
 
   const selectedTemplate = TEMPLATES.find((tpl) => tpl.id === selectedTemplateId);
 
@@ -165,7 +188,7 @@ export default function EditorPage() {
       
       {/* --- HLAVIČKA ZE STRÁNKY KOŠÍKU SE STEPPEREM (NEDOTČENO) --- */}
       <div className="sticky top-0 z-40 w-full"><CheckoutHeader
-        center={currentStep === 2 && selectedTemplate ? <h3 className="style-h4 text-secondary">{nameOf(selectedTemplate, productInfo)}</h3> : undefined}
+        center={currentStep === 2 && selectedTemplate ? <h3 className="style-h4 text-secondary">{nameOf(selectedTemplate, productInfo, locale)}</h3> : undefined}
         right={<Stepper currentStep={currentStep} />}
       /></div>
       
@@ -211,8 +234,8 @@ export default function EditorPage() {
                 const photoCount = tpl.slots.length;
                 const priceInfo = productInfo[tpl.productId];
                 const salePrice = priceInfo ? getSalePrice(priceInfo.price, priceInfo.sale_price) : null;
-                const name = nameOf(tpl, productInfo);
-                const description = descriptionOf(tpl, productInfo);
+                const name = nameOf(tpl, productInfo, locale);
+                const description = descriptionOf(tpl, productInfo, locale);
 
                 return (
                   <div
@@ -306,7 +329,7 @@ export default function EditorPage() {
           <StampEditor
             onComplete={handleEditorComplete}
             templateId={selectedTemplateId}
-            templateName={selectedTemplate ? nameOf(selectedTemplate, productInfo) : undefined}
+            templateName={selectedTemplate ? nameOf(selectedTemplate, productInfo, locale) : undefined}
           />
         )}
 

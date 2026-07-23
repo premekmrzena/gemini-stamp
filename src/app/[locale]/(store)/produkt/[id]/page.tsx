@@ -5,8 +5,15 @@ import ProductDetailClient from './ProductDetailClient';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { SITE_URL } from '@/lib/site';
 import { Product } from '@/types/database';
+import { getLocalizedProductField } from '@/lib/product-i18n';
 
-type RelatedProduct = Pick<Product, 'id' | 'name' | 'price' | 'sale_price' | 'image_url'>;
+const RELATED_PRODUCT_COLUMNS =
+  'id, name, name_en, name_ko, name_ja, name_zh_hans, name_zh_hant, price, sale_price, image_url';
+
+type RelatedProduct = Pick<
+  Product,
+  'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'image_url'
+>;
 
 const categoryLabels: Record<string, string> = {
   'znamky': 'Poštovní známky',
@@ -32,23 +39,25 @@ const getProduct = cache(async (productId: string) => {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; locale: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { id, locale } = await params;
   const product = await getProduct(id);
 
   if (!product) {
     return { title: 'Produkt nenalezen' };
   }
 
-  const description = product.short_description || `${product.name} – sběratelský produkt My Creative Stamp.`;
+  const name = getLocalizedProductField(product, locale, 'name');
+  const shortDescription = getLocalizedProductField(product, locale, 'short_description');
+  const description = shortDescription || `${name} – sběratelský produkt My Creative Stamp.`;
 
   return {
-    title: product.name,
+    title: name,
     description,
     alternates: { canonical: `/produkt/${id}` },
     openGraph: {
-      title: product.name,
+      title: name,
       description,
       url: `/produkt/${id}`,
       images: [{ url: product.image_url }],
@@ -59,11 +68,12 @@ export async function generateMetadata({
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; locale: string }>;
 }) {
   // Získání ID z URL (pravidla Next.js 15+)
   const resolvedParams = await params;
   const productId = resolvedParams.id;
+  const locale = resolvedParams.locale;
 
   // 1. Stáhneme detail hlavního produktu
   const product = await getProduct(productId);
@@ -89,7 +99,7 @@ export default async function ProductPage({
     // Stáhneme všechna ID, která jsi ručně vybral v DB
     const { data: related, error: relatedError } = await supabase
       .from('products')
-      .select('id, name, price, sale_price, image_url')
+      .select(RELATED_PRODUCT_COLUMNS)
       .in('id', product.related_stamp_id);
 
     if (related && !relatedError) {
@@ -101,7 +111,7 @@ export default async function ProductPage({
   if (relatedProducts.length === 0) {
     const { data: fallback } = await supabase
       .from('products')
-      .select('id, name, price, sale_price, image_url')
+      .select(RELATED_PRODUCT_COLUMNS)
       .neq('id', product.id) // Vynecháme aktuální produkt
       .order('created_at', { ascending: false })
       .limit(3);
@@ -112,12 +122,14 @@ export default async function ProductPage({
   const categoryLabel = categoryLabels[product.category] || product.category;
   // Kreativní archy nemají vlastní stránku kategorie – vstupním bodem je editor.
   const categoryHref = product.category === 'kreativni-archy' ? '/vytvorit-arch' : `/kategorie/${product.category}`;
+  const localizedName = getLocalizedProductField(product, locale, 'name');
+  const localizedShortDescription = getLocalizedProductField(product, locale, 'short_description');
 
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.name,
-    description: product.short_description || undefined,
+    name: localizedName,
+    description: localizedShortDescription || undefined,
     image: product.image_url,
     sku: product.catalog_number || product.id,
     offers: {
@@ -140,7 +152,7 @@ export default async function ProductPage({
       <Breadcrumbs
         items={[
           { label: categoryLabel, href: categoryHref },
-          { label: product.name },
+          { label: localizedName },
         ]}
       />
       <ProductDetailClient product={product} relatedProducts={relatedProducts} />
