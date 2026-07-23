@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { ShippingOption, PaymentOption, INTERNATIONAL_COUNTRIES } from '@/lib/constants';
+import { ApplePayBadge, GooglePayBadge } from '@/components/PayBadges';
 
 type Props = {
   shippingOptions: ShippingOption[];
@@ -113,6 +114,12 @@ export default function ShippingStep({
             <div className="flex-grow flex flex-col gap-1">
               <h4 className={`style-h4 ${selectedPayment === option.id ? 'text-primary' : 'text-secondary'}`}>{t(`options.${option.id}.name`)}</h4>
               <p className="style-body text-black200">{t(`options.${option.id}.desc`)}</p>
+              {option.id === 'karta' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <ApplePayBadge />
+                  <GooglePayBadge />
+                </div>
+              )}
             </div>
             <input type="radio" checked={selectedPayment === option.id} onChange={() => setSelectedPayment(option.id)} className="sr-only" />
           </label>

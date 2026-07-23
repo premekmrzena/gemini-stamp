@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { BANK_ACCOUNT_NUMBER, BANK_NAME, BANK_IBAN, BANK_SWIFT } from '@/lib/czechQrPayment';
 
 const contactRows = [
   {
@@ -25,7 +26,7 @@ const contactRows = [
   },
   {
     title: 'Bankovní spojení',
-    text: 'Číslo účtu: 3686330015/3030\nBanka: Air Bank, a.s.\nIBAN: CZ04 3030 0000 0036 8633 0015\nSWIFT/BIC: AIRACZPP',
+    text: `Číslo účtu: ${BANK_ACCOUNT_NUMBER}\nBanka: ${BANK_NAME}\nIBAN: ${BANK_IBAN.replace(/(.{4})/g, '$1 ').trim()}\nSWIFT/BIC: ${BANK_SWIFT}`,
     icon: 'bank',
   },
 ];

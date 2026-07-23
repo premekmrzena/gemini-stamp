@@ -4,6 +4,7 @@ import { resend } from '@/lib/resend';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { ShippingNotificationEmail } from '@/components/emails/ShippingNotificationEmail';
 import { CartItemSnapshot } from '@/types/database';
+import { generatePaymentQrCodeDataUrl, getVariableSymbol } from '@/lib/czechQrPayment';
 
 type SendOrderConfirmationParams = {
   email: string;
@@ -11,6 +12,7 @@ type SendOrderConfirmationParams = {
   customerName: string;
   totalPrice: number;
   cartItems: CartItemSnapshot[];
+  isBankTransfer: boolean;
 };
 
 export async function sendOrderConfirmation({
@@ -19,9 +21,21 @@ export async function sendOrderConfirmation({
   customerName,
   totalPrice,
   cartItems,
+  isBankTransfer,
 }: SendOrderConfirmationParams) {
+  const bankTransfer = isBankTransfer
+    ? {
+        variableSymbol: getVariableSymbol(orderId),
+        qrCodeDataUrl: await generatePaymentQrCodeDataUrl({
+          amount: totalPrice,
+          orderId,
+          message: `Objednavka ${orderId}`,
+        }),
+      }
+    : null;
+
   const emailHtml = await render(
-    React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, cartItems })
+    React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, cartItems, bankTransfer })
   );
 
   return resend.emails.send({

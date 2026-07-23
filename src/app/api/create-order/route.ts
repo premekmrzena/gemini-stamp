@@ -202,6 +202,7 @@ export async function POST(req: Request) {
           customerName: formData.billing_first_name,
           totalPrice,
           cartItems: validatedItems,
+          isBankTransfer: paymentMethodId === 'prevod',
         });
       } catch (err) {
         console.error('Email error:', err);

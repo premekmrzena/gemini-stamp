@@ -325,7 +325,7 @@
         },
         "karta": {
           "name": "Card payment online",
-          "desc": "Securely via Stripe"
+          "desc": "Securely via the Stripe payment gateway"
         },
         "prevod": {
           "name": "Bank transfer",

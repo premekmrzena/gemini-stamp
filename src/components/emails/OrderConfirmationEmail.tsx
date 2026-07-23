@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { CartItemSnapshot } from '@/types/database';
+import { BANK_ACCOUNT_NUMBER, BANK_IBAN, BANK_SWIFT } from '@/lib/czechQrPayment';
 
 interface OrderEmailProps {
   orderId: string;
   customerName: string;
   totalPrice: number;
   cartItems: CartItemSnapshot[];
+  bankTransfer: { variableSymbol: string; qrCodeDataUrl: string } | null;
 }
 
 export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
@@ -13,6 +15,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
   customerName,
   totalPrice,
   cartItems,
+  bankTransfer,
 }) => {
   const fontStack = "'Poppins', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
@@ -132,6 +135,43 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
               {totalPrice.toLocaleString('cs-CZ')} Kč
             </p>
           </div>
+
+          {bankTransfer && (
+            <div style={{
+              marginTop: '28px',
+              paddingTop: '24px',
+              borderTop: '1px solid #334155',
+            }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 16px 0', color: '#FDFBF7' }}>
+                Platební údaje k bankovnímu převodu
+              </h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ verticalAlign: 'top', width: '132px', paddingBottom: '12px' }}>
+                      <img
+                        src={bankTransfer.qrCodeDataUrl}
+                        width={132}
+                        height={132}
+                        alt="QR platba"
+                        style={{ display: 'block', borderRadius: '6px' }}
+                      />
+                    </td>
+                    <td style={{ verticalAlign: 'top', paddingLeft: '20px', fontSize: '14px', color: '#CBD5E1', lineHeight: '1.8' }}>
+                      <div>Číslo účtu: <strong style={{ color: '#FDFBF7' }}>{BANK_ACCOUNT_NUMBER}</strong></div>
+                      <div>IBAN: <strong style={{ color: '#FDFBF7' }}>{BANK_IBAN.replace(/(.{4})/g, '$1 ').trim()}</strong></div>
+                      <div>SWIFT/BIC: <strong style={{ color: '#FDFBF7' }}>{BANK_SWIFT}</strong></div>
+                      <div>Variabilní symbol: <strong style={{ color: '#FDFBF7' }}>{bankTransfer.variableSymbol}</strong></div>
+                      <div>Částka: <strong style={{ color: '#FDFBF7' }}>{totalPrice.toLocaleString('cs-CZ')} Kč</strong></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style={{ fontSize: '13px', color: '#8B95AC', marginTop: '14px', lineHeight: '1.5' }}>
+                Naskenujte QR kód v bankovní aplikaci pro rychlé předvyplnění platby, nebo zadejte údaje ručně. Objednávku začneme připravovat po připsání platby na účet.
+              </p>
+            </div>
+          )}
         </div>
 
         <div style={{ 

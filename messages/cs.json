@@ -325,7 +325,7 @@
         },
         "karta": {
           "name": "Online platba kartou",
-          "desc": "Bezpečně přes Stripe"
+          "desc": "Bezpečně přes platební bránu Stripe"
         },
         "prevod": {
           "name": "Bankovní převod",
