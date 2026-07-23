@@ -1,0 +1,1200 @@
+openapi: 3.0.3
+info:
+  title: B2B-CISService
+  description: B2B-CISService used for communication with an external client ....
+  version: 1.2.0
+servers:
+  - url: https://b2b-test.postaonline.cz:444/restservices/CISService/v1
+    description: Testing server
+  - url: https://b2b.postaonline.cz:444/restservices/CISService/v1
+    description: Production server
+tags:
+  - name: CODE LIST - CUSTOM CONTENT
+  - name: CODE LIST - COUNTRIES
+  - name: CODE LIST - PROVINCE
+  - name: CODE LIST - ORG POSTCODES
+  - name: CODE LIST - POST DETAIL
+  - name: OVERVIEW - STATUSES
+
+paths:
+  /customsContent:
+    get:
+      description: Code list of customs contents. The operation returns the name of the content for the given HS code of the customs content of the consignment. The method can be started without a parameter - a complete code list of the customs content of the consignment with HS codes is obtained. / Číselník celního obsahu zásilek. Operace vrací pro daný HS kód celního obsahu zásilky název obsahu. Metodu lze spustit bez parametru – získá se kompletní číselník celního obsahu zásilky s HS kódy.
+      summary: Customs content
+      tags:
+        - CODE LIST - CUSTOM CONTENT
+      operationId: getCustomsContent
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: hsCode
+          in: query
+          required: false
+          description: The HS code of the customs content of the consignment. / HS kód celního obsahu zásilky.
+          schema:
+            $ref: '#/components/schemas/HSCode'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomContentResult'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /customsContent/synonyms:
+    get:
+      description: Method returns the synonyms for given HS code and language. The method can be started without a parameter - a complete code list of all synonyms. / Metoda vrací pro daný HS kód a jazyk synonymum k názvu zboží v daném jazyce. Metodu lze spustit bez parametru – získá se seznam všech synonym.
+      summary: Get synonyms of customs content
+      tags:
+        - CODE LIST - CUSTOM CONTENT
+      operationId: getCustomsContentSynonyms
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: hsCode
+          in: query
+          required: false
+          description: The HS code of the customs content of the consignment. / HS kód celního obsahu zásilky.
+          schema:
+            $ref: '#/components/schemas/HSCode'
+        - name: language
+          in: query
+          required: false
+          description: Requested language of synonyms. / Požadovaný jazyk synonyma.
+          schema:
+            $ref: '#/components/schemas/Language'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynonymsResult'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '401':
+          $ref: '#/components/responses/401Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /countries:
+    get:
+      description: Code list of coutries. / Číselník zemí.
+      summary: Code list of Countries
+      tags:
+        - CODE LIST - COUNTRIES
+      operationId: getCountries
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: iso
+          in: query
+          required: false
+          description: ISO of the country - international sign norm. /ISO kód země – mezinárodní norma označení.
+          schema:
+            $ref: '#/components/schemas/ISO'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountriesResult'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /province:
+    get:
+      description: Code list of province. / Číselník provincií.
+      summary: Code list of Province
+      tags:
+        - CODE LIST - PROVINCE
+      operationId: getProvinces
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: iso
+          in: query
+          required: false
+          description: ISO of the country - international sign norm. /ISO kód země – mezinárodní norma označení.
+          schema:
+            $ref: '#/components/schemas/ISO'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvincesResult'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /organizationPostcode:
+    get:
+      description: Code list of postcodes of organizations. / Číselník psč organizací.
+      summary: Code list of organizations postcodes
+      tags:
+        - CODE LIST - ORG POSTCODES
+      operationId: getOrganizationPostcode
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: postcode
+          in: query
+          required: false
+          description: Postcode of the organization. / PSČ organizace.
+          schema:
+            $ref: '#/components/schemas/Postcode'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationPostcodeResult'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /postdetails:
+    get:
+      description: Code list of postffices - detail info. Wihtout any filter parameters/ Číselník pošt - detailní informace.
+      summary: Postoffices detail info
+      tags:
+        - CODE LIST - POST DETAIL
+      operationId: getPostdetailAll
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: postcodeList
+          in: query
+          required: false
+          description: List of postcodes of the organization. / List parametrů PSČ organizací.
+          schema:
+            $ref: '#/components/schemas/PostcodeList'
+        - name: language
+          in: query
+          required: false
+          description: Language - CZE, ENG. / Jazyk - CZE, ENG.
+          schema:
+            $ref: '#/components/schemas/Language'
+        - name: municipality
+          in: query
+          required: false
+          description: City/village. / Obec.
+          schema:
+            type: string
+            example: 'Opava'
+        - name: vppType
+          in: query
+          required: false
+          description: VppType for Czech post portal. / Vpp typ provozovny pro portál ČP.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/VppType'
+        - name: outletType
+          in: query
+          required: false
+          description: Type of Partner outlets. / Typ balíkovny.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/OutletType'
+        - name: excludeTechBranches
+          in: query
+          required: false
+          description: Without technical branches. / Bez technických provozoven
+          schema:
+            type: boolean
+            description: true = ano, false = ne (má technické provozovny)
+            example: true
+        - name: districtId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ID of district from code list CP. / Id okresu v číselnících ČP
+          example: '71'
+        - name: deliveryToPostOffice
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Product "Balík na poštu" - true/false. / Balík na poštu - ano/ne.
+          example: false
+        - name: atm
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: ATM - true/false. / Bankomat - ano/ne.
+          example: true
+        - name: parking
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Parking place - true/false. / Parkoviště - ano/ne.
+          example: true
+        - name: disabledAccess
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Disabled access - true/false. / Bezbariérový přístup - ano/ne.
+          example: false
+        - name: cardPayment
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Card payment available - true/false. / Platba kartou umožněna - ano/ne.
+          example: false
+        - name: czechpoint
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Czech point service - true/false. / Czech point - ano/ne.
+          example: false
+        - name: westernUnion
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Western Union service - true/false. / Western Union  - ano/ne.
+          example: true
+        - name: openingDay
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [1,2,3,4,5,6,7]
+          description: Searching by opening day (combination with openingTime parametr). / Vyhledávání podle dne otevření (v kombinaci s parametrem openingTime).
+          example: '5'
+        - name: openingTime
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Searching by opening time in format HH:MM (with openingDay parametr)./ Vyhledávání podle času otevření, formát HH:MI, (v kombinaci s parametrem openingDay).
+          example: '14:30'
+        - name: gps
+          in: query
+          required: false
+          schema:
+            type: string
+          description: GPS coordinates for searching the nearest post office. / GPS souřadnice pro vyhledávání nejbližší pobočky.
+          example: '49.5994714,18.1448006'
+        - name: changeDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Date of change (unix timestamp in milliseconds or ISO 8601 in UTC, or ISO 8601 with timezone). Separately usage of this parameter. / Datum změny (unix timestamp in milliseconds nebo ISO 8601 v UTC nebo s časovou zónou), používá se pro inkrementální synchronizaci poboček, tento query parametr nelze použít s ostatními parametry, pouze samostatně. Příklad - 1641036600000 nebo 2022-04-11T01:02:08.000Z nebo 2022-04-11T03:02:08.000+02:00
+          example: '1641036600000'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostdetailAllResult'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /postdetail/postcode/{postcode}:
+    get:
+      description: Code list of postffices - detail info. / Číselník pošt - detailní informace.
+      summary: Postoffices detail info
+      tags:
+        - CODE LIST - POST DETAIL
+      operationId: getPostdetail
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      parameters:
+        - name: postcode
+          in: path
+          required: true
+          description: Postcode of the organization (postoffice). / PSČ organizace (pobočky).
+          schema:
+            $ref: '#/components/schemas/Postcode'
+        - name: language
+          in: query
+          required: false
+          description: Language - CZE, ENG. / Jazyk - CZE, ENG.
+          schema:
+            $ref: '#/components/schemas/Language'
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostDetail'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+  /statusesOverview:
+    get:
+      description: Code list of statuses - overview of all statuses of consignments. / Číselník stavů - přehled všech stavů zásilek.
+      summary: Statuses overview
+      tags:
+        - OVERVIEW - STATUSES
+      operationId: getStatusesOverview
+      security:
+        - Api-Token: [ ]
+          HMAC_SHA256_Auth: [ ]
+          Authorization-Timestamp: [ ]
+      responses:
+        '200':
+          description: Successful call. / Úspěšné volání.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusesOverview'
+        '400':
+          $ref: '#/components/responses/400Response'
+        '403':
+          $ref: '#/components/responses/403Response'
+        '404':
+          $ref: '#/components/responses/404Response'
+        default:
+          $ref: '#/components/responses/defaultResponse'
+
+
+components:
+  securitySchemes:
+    Api-Token:
+      type: apiKey
+      in: header
+      name: Api-Token
+      description: |
+        Authorization and authentication by API key. This key is generated in User application.
+        In the User application is able to delete and generate a new key.
+
+        Autorizace a autentizace pomocí klíče API. Tento klíč je generován v uživatelské aplikaci.
+        V uživatelské aplikaci je možné smazat a vygenerovat nový klíč.
+
+        Example /Příklad:
+        ```
+        Api-Token: 123e4567-e89b-12d3-a456-426614174000
+        ```
+
+    HMAC_SHA256_Auth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        HMAC_SHA256_Auth is created by nonce (random string) and signature.
+        For the requests, the authorization by sercret key is neccessary. This secret key is generated in User application, secretKey is not part of the request.
+        The system of external partner generates 'nonce' - in form UUIDv4.
+        Signature is created as hash HMAC256 of this items:
+        ```
+        Authorization-Content-SHA256;Authorization-Timestamp;nonce
+        ```
+        as first parameter of HMAC function and
+        ```
+        secretKey
+        ```
+        as the second one. The secretKey is in Base64 format.
+        /
+        HMAC_SHA256_Auth je tvořen pomocí nonce (náhodný řežezec) a signature.
+
+        Pro požadavky je nutná autorizace tajného klíče. Tento tajný klíč je generován v uživatelské aplikaci, tajný klíč není součástí požadavku.
+        Systém externího partnera generuje 'nonce' - ve formátu UUIDv4.
+        Signature se vytvoří jako hash HMAC256 těchto položek:
+        ```
+        Authorization-Content-SHA256;Authorization-Timestamp;nonce
+        ```
+        jako první parametr HMAC funkce a
+        ```
+        secretKey
+        ```
+        jako druhý. SecretKey je ve formátu Base64.
+
+        Example /Příklad:
+        ```
+        Authorization: CP-HMAC-SHA256
+          nonce="74b03ffb-34e1-419e-8c6f-f8275bad9a41",
+          signature="QGBaYeY8loQZXbJRmj91JV2yTwsuBTME6wQhUrEm7mI="
+        ```
+
+    Authorization-Timestamp:
+      name: Authorization-Timestamp
+      in: header
+      type: apiKey
+      description: |
+        Authorization-Timestamp is used for count of HMAC_SHA256_Auth.The system of external partner generates the timestamp in form 'UTC UNIX Timestamp'.
+        This item must be connected to header as 'Authorization-Timestamp'.
+        This timestamp must be no longer time for 60 second, can't be in the future. The request with invalid timestamp will be refused with response code 401. /
+
+        Authorization-Timestamp je použito pro výpočet HMAC_SHA256_Auth. Systém externího partnera vygeneruje časové razítko ve formátu 'UTC UNIX Timestamp'.
+        Tato položka musí být připojena k hlavičce jako 'Authorization-Timestamp'.
+        Toto časové razítko nesmí být delší než čas 60 sekund, nemůže být v budoucnosti. Požadavek s neplatným časovým razítkem bude odmítnut s kódem odpovědi 401.
+
+        Example: /Příklad:
+        ```
+        Authorization-Timestamp: 1593561601
+        ```
+
+    Authorization-content-SHA256:
+      name: Authorization-Content-SHA256
+      in: header
+      type: apiKey
+      description: |
+        SHA256 of body of request. The system of external partner counts the hash SHA256 of 'requestBody' of JSON's body of request.
+        This hash must be connected to header as 'Authorization-Content-SHA256'.
+        In case that the conted hash doesn't agree with the hash of body in the request, request will be refused with response code 401.
+
+        SHA256 těla požadavku. Systém externího partnera počítá hash SHA256 'requestBody' těla požadavku JSON.
+        Tento hash musí být připojen k hlavičce jako 'Authorization-Content-SHA256'.
+        V případě, že tento hash nesouhlasí s hashem těla v požadavku, bude požadavek odmítnut s kódem odpovědi 401.
+
+        Example: / Příklad:
+        ```
+        Authorization-Content-SHA256:
+          f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8
+        ```
+
+  parameters:
+    xApiToken:
+      name: Api-Token
+      description: Api-Token - public part of the token, it is generated in User application./ Api-Token - veřejná část tokenu, je generována v Uživatelské aplikaci.
+      in: header
+      required: true
+      schema:
+        type: string
+        example: "123e4567-e89b-12d3-a456-426614174000"
+
+    # HMAC-SHA256 Signing Headers (documentation purpose only)
+    xHMACAuthorization:
+      name: Authorization
+      description: HMAC SHA256 Autorization. / Autorizace HMAC SHA256.
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 100
+        maxLength: 255
+        nullable: false
+        example: 'CP-HMAC-SHA256 nonce="74b03ffb-34e1-419e-8c6f-f8275bad9a41",signature="QGBaYeY8loQZXbJRmj91JV2yTwsuBTME6wQhUrEm7mI="'
+
+    xHMACAuthorizationTime:
+      name: Authorization-Timestamp
+      description: UTC Timestamp which is used for count. / UTC Časová značka použitá ve výpočtu.
+      in: header
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1593561600
+        maximum: 7952342400
+        nullable: false
+      example: 1593561601
+
+    xHMACAuthorizationContentSHA256:
+      name: Authorization-Content-SHA256
+      description: SHA256 of request body. / SHA256 těla požadavku.
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 64
+        maxLength: 64
+        nullable: false
+      example: "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8"
+
+  responses:
+    400Response:
+      description: Incorrect input values, eg blank mandatory parameters.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Error'
+            maxItems: 10
+    401Response:
+      description: Unauthorized.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Error'
+            maxItems: 10
+    403Response:
+      description: Forbidden.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Error'
+            maxItems: 10
+    404Response:
+      description: Not found.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Error'
+            maxItems: 10
+    defaultResponse:
+      description: An unexpected error, such as one of the services in use unavailable.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Error'
+            maxItems: 10
+
+  schemas:
+    HSCode:
+      type: string
+      minLength: 6
+      maxLength: 6
+      description: The HS code of the consignment (6-digit tariff code). / HS kod zásilky (6-ti místný tarifní kód).
+      example: '040390'
+
+    CustomContentResult:
+      type: object
+      properties:
+        customContentResultList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomContentParams'
+
+    SynonymsResult:
+      type: object
+      properties:
+        synonymsResultList:
+          type: array
+          items:
+            $ref: '#/components/schemas/SynonymsParams'
+
+    CountriesResult:
+      type: object
+      properties:
+        countriesList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Country'
+
+    ProvincesResult:
+      type: object
+      properties:
+        provincesList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Province'
+
+    OrganizationPostcodeResult:
+      type: object
+      properties:
+        orgPostcodeList:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgPostcode'
+
+    PostdetailAllResult:
+      type: object
+      properties:
+        PostdetailAllList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostDetail'
+          description: List with post's details. / Seznam s detaily poboček.
+
+    CustomContentParams:
+      type: object
+      required:
+        - contentID
+        - mainNameIndication
+        - hsCode
+      properties:
+        contentID:
+          $ref: '#/components/schemas/ContentID'
+        mainNameIndication:
+          type: boolean
+          description: Indication - is it the main product name for the HS code (true / false). / Indikace - je to hlavní název produktu pro kód HS (ANO/NE).
+          example: true
+        contentIDMaster:
+          $ref: '#/components/schemas/ContentIDMaster'
+        hsCode:
+          $ref: '#/components/schemas/HSCode'
+        nameCZE:
+          $ref: '#/components/schemas/NameCZE'
+        nameENG:
+          $ref: '#/components/schemas/NameENG'
+
+    SynonymsParams:
+      type: object
+      properties:
+        recordID:
+          type: integer
+          format: int32
+          description: ID of the record. / ID záznamu.
+          example: 28
+        contentID:
+          $ref: '#/components/schemas/ContentID'
+        nameCZE:
+          $ref: '#/components/schemas/NameCZE'
+        language:
+          $ref: '#/components/schemas/Language'
+        synonym:
+          type: string
+          description: Synonym of the name of product. / Synonymum k názvu zboží.
+          example: 'Jogurt kefírový'
+
+    Country:
+      type: object
+      required:
+        - iso
+        - countryName
+        - countryNameENG
+        - euMembership
+        - checkPostcode
+        - provinceUsage
+      properties:
+        iso:
+          $ref: '#/components/schemas/ISO'
+        countryName:
+          type: string
+          description: Name of the country. / Název země.
+          example: 'Česká republika'
+        countryNameENG:
+          type: string
+          description: Name of the country in english. / Název země anglicky.
+          example: 'Czech republic'
+        countryNameFRA:
+          type: string
+          description: Name of the country in french. / Název země francouzky.
+          example: 'Tcheque, République'
+        countryNameOrig:
+          type: string
+          description: Name of the country in original. / Název země v rodném jazyce (kódováno BASE64).
+          example: 'Česká republika'
+        euMembership:
+          type: boolean
+          description: Indication of membership in EU (true / false). / Indikace o členství v EU (ANO / NE).
+          example: true
+        isoSuperiorCountry:
+          type: string
+          description: ISO nadřazené země (jedná se o záznam části země, která má nadřazenou zemi, např. část Grónsko a země Dánsko
+          example: 'DANSKO'
+        checkPostcode:
+          type: boolean
+          description: Postcode check abroad (true / false). / Napojení kontrol na PSČ v cizích zemích - ANO / NE.
+          example: true
+        regularExpression:
+          type: string
+          description: Regular expression for check of the foreign postcode. / Regulární výraz pro kontrolu zahraničního PSČ.
+          example: '\d{7}'
+        provinceUsage:
+          type: boolean
+          description: Indication of usage of province in address (true / false). / Indikace, zda země používá provincie v adrese (ANO / NE).
+          example: false
+
+    Province:
+      type: object
+      required:
+        - isoProvince
+        - nameProvince
+      properties:
+        isoProvince:
+          type: string
+          description: ISO code of province. / ISO kód provincie.
+          example: 'ACT'
+        nameProvince:
+          type: string
+          description: Name of the province. / Název provincie.
+          example: 'Australian Capital Territory'
+
+    OrgPostcode:
+      type: object
+      required:
+        - postcode
+        - name
+      properties:
+        postcode:
+          $ref: '#/components/schemas/Postcode'
+        name:
+          type: string
+          description: Name of the organization. / Název organizace.
+          example: 'TV NOVA'
+        idAddressCP:
+          type: integer
+          format: int32
+          description: ID of the address by DDM. / ID adresy dle DDM.
+          example: 490021079
+        idAddressRuian:
+          type: integer
+          format: int32
+          description: ID of the address by RUIAN. / ID adresy dle RUIAN.
+          example: 83278338
+        municipality:
+          type: string
+          description: Name of the city/village. / Název obce.
+          example: 'Opava'
+        cityPart:
+          type: string
+          description: Part of the city. / Část obce.
+          example: 'Předměstí'
+        street:
+          type: string
+          description: Street. / Ulice.
+          example: 'Horní'
+        descriptiveNumber:
+          type: string
+          maxLength: 6
+          description: Descriptive (house) number. / Číslo popisné.
+          example: '42'
+        orientationNumber:
+          type: string
+          maxLength: 6
+          description: Orientation (sequence) number. / Číslo orientační.
+          example: '10'
+        addressPostcode:
+          type: string
+          description: Postcode of the address. / Adresní PSČ.
+          example: '74101'
+        xCoordinates:
+          type: string
+          description: Coordinates X in format WGS-84. / Souřadnice X ve formátu WGS-84.
+          example: '14.468513'
+        yCoordinates:
+          type: string
+          description: Coordinates Y in format WGS-84. / Souřadnice Y ve formátu WGS-84.
+          example: '50.067608'
+        x1Coordinates:
+          type: string
+          description: Coordinates X in format JTSK. / Souřadnice X ve formátu JTSK.
+          example: '1045661'
+        y1Coordinates:
+          type: string
+          description: Coordinates Y in format JTSK. / Souřadnice Y ve formátu JTSK.
+          example: '739759'
+
+    Postcode:
+      type: string
+      pattern: '^[1-9][0-9]{4,6}$'
+      description: Postcode of the organization (postoffice). / PSČ organizace (poboočky).
+      example: '15252'
+
+    ISO:
+      type: string
+      description: ISO of the country - international sign norm. /ISO kód země – mezinárodní norma označení.
+      example: 'CZ'
+
+    NameCZE:
+      type: string
+      description: Description of products in czech. Synonyms of product names. / Popis zboží v češtině. Synonyma k názvu zboží.
+      example: 'Podmáslí'
+
+    NameENG:
+      type: string
+      description: Description of products in english. Synonyms of product names. / Popis zboží v angličtině. Synonyma k názvu zboží.
+      example: 'Buttermilk'
+
+    ContentID:
+      type: integer
+      format: int32
+      description: ID of content of consignment. / ID obsahu zásilky.
+      example: 114
+
+    ContentIDMaster:
+      type: integer
+      format: int32
+      description: ID of content of the master consignment. It will be filled in case  mainNameIndication=false. / ID obsahu hlavní zásilky. Bude vyplněno v případě indikace mainNameIndication=false.
+      example: 110
+
+    Language:
+      type: string
+      enum:
+        - CZE
+        - ENG
+      description: Language - CZE, ENG. / Jazyk - CZE, ENG.
+      example: 'CZE'
+
+    PostcodeList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Postcode'
+
+    VppType:
+      type: integer
+      enum: [1,2,3,4,5,6,8,9]
+      description: >
+        vppType for Czech post portal:
+        1 - Postoffice / Pošta
+        2 - Partner post / Pošta partner
+        3 - Delivery point / Výdejní místo
+        4 - Depot / Depo
+        5 - Postoffice with restricted services / Poštovna
+        6 - At Partner outlet location / Balíkovna mimo poštu
+        8 - BOX-outlet / Balíkovna BOX
+        9 - Technical establishment / technická provozovna
+      example: '1'
+
+    OutletType:
+      type: integer
+      enum: [0,1,2,3,4]
+      description: >
+        Type of Partner outlets. / Typ balíkovny:
+          0 - It is not a partner outlet / Není balíkovna
+          1 - Internal / Interní
+          2 - External / Externí
+          3 - BOX / Balíkovna BOX
+      example: '1'
+
+    PostDetail:
+      type: object
+      properties:
+        attributes:
+          $ref: '#/components/schemas/AttributesDetail'
+        openingHours:
+          $ref: '#/components/schemas/OpeningHours'
+        services:
+          $ref: '#/components/schemas/Services'
+      description: Detail of post office. / Detail pobočky.
+
+
+    AttributesDetail:
+      type: object
+      required:
+        - postCode
+        - vppType
+        - name
+        - outletType
+        - atm
+        - parking
+        - disabledAccess
+        - cardPayment
+        - shoppingCenter
+        - czechPoint
+        - westernUnion
+        - callSystem
+      properties:
+        postCode:
+          $ref: '#/components/schemas/Postcode'
+        vppType:
+          $ref: '#/components/schemas/VppType'
+        name:
+          type: string
+          description: Name of the postoffice. / Název pobočky.
+          example: 'Opava'
+        municipality:
+          type: string
+          description: City, village. / Obec.
+          example: 'Opava'
+        cityPart:
+          type: string
+          description: Part of the city. / Část obce.
+          example: 'Kateřinky'
+        street:
+          type: string
+          description: Street. / Ulice.
+          example: 'Partyzánská'
+        descriptiveNumber:
+          type: string
+          description: Descriptive (house) number. / Číslo popisné.
+          example: '1521'
+        descriptiveNumberLetter:
+          type: string
+          description: Descriptive (house) number - sign. / Číslo popisné znak.
+          example: 'E'
+        orientationNumber:
+          type: string
+          description: Orientation number. / Číslo orientační.
+          example: '2'
+        orientationNumberLetter:
+          type: string
+          description: Orientation number - sign. / Číslo orientační znak.
+          example: 'B'
+        address:
+          type: string
+          description: Address. / Adresa.
+          example: 'Partyzánská 1521/7, Kateřinky, 74705, Opava'
+        addressPostCode:
+          type: string
+          description: Post code of the address place. / Adresní psč.
+          example: '74602'
+        pragueDistrict:
+          type: string
+          description: District of Prague. / Pražský obvod.
+          example: 'Praha 1'
+        urbanPart:
+          type: string
+          description: Urban part. / Městská část.
+          example: 'Praha 1'
+        district:
+          type: string
+          description: Name of the district. / Název okresu.
+          example: 'Opava'
+        idAddressCp:
+          type: string
+          description: ID of addres in ČP (by DDM). / ID adresy ČP (DDM).
+          example: '490021079'
+        idAddressRuian:
+          type: string
+          description: RUIAN code. / Kód RUIAN.
+          example: '83278338'
+        outletType:
+          $ref: '#/components/schemas/OutletType'
+        atm:
+          type: boolean
+          description: ATM - true/false. / Bankomat – ano/ne.
+          example: true
+        parking:
+          type: boolean
+          description: Parking place - true/false. / Prkoviště – ano/ne.
+          example: true
+        disabledAccess:
+          type: boolean
+          description: Disabled access - true/false. / Bezbariérový přístup - ano/ne.
+          example: false
+        cardPayment:
+          type: boolean
+          description: Card payment available - true/false. / Platba kartou umožněna - ano/ne.
+          example: true
+        shoppingCenter:
+          type: boolean
+          description: Shopping center - true/false. / Obchodní centrum - ano/ne.
+          example: false
+        czechPoint:
+          type: boolean
+          description: Czech Point service available - true/false. / Služba Czech point - ano/ne.
+          example: false
+        westernUnion:
+          type: boolean
+          description: Western Union service available - true/false. / Služba Western Union - ano/ne.
+          example: true
+        callSystem:
+          type: boolean
+          description: Call system - true/false. / Vyvolávací systém - ano/ne.
+          example: false
+        placementDescription:
+          type: string
+          description: Placement description. / Popis umístění pobočky.
+          example: 'Pobočka je naproti Tescu'
+        phone:
+          type: string
+          description: Phone number of the postoffice. / Telefon pobočky.
+          example: '721221221'
+        closingDate:
+          type: string
+          format: date-time
+          description: datum uzavření pobočky (unix timestamp milliseconds)
+          example: 1640732400000
+        reopeningDate:
+          type: string
+          format: date-time
+          description: datum znovu-otevření pobočky (unix timestamp milliseconds)
+          example: 1640732400000
+        latitude:
+          type: string
+          description: GPS - latitude - format WGS-84. / Zeměpisná šířka - formát WGS-84
+          example: '49.938273'
+        longitude:
+          type: string
+          description: GPS - longitude - format WGS-84. / Zeměpisná délka - formát WGS-84
+          example: '17.891565'
+        latitude1:
+          type: string
+          description: GPS - latitude - format JTSK. / Gps – zeměpisná šířka – formát JTSK
+          example: '1045661'
+        longitude1:
+          type: string
+          description: GPS - longitude - format JTSK. / Gps – zeměpisná délka – formát JTSK
+          example: '739759'
+
+    OpeningHours:
+      type: object
+      properties:
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/Day'
+
+    Day:
+      type: object
+      required:
+        - day
+      properties:
+        day:
+          type: string
+          enum: [1,2,3,4,5,6,7]
+          description: Order of the day in the week. / Den v týdnu.
+          example: '5'
+        from1:
+          type: string
+          description: Opening hour from (first) / První otevírací doba od.
+          example: '08:00'
+        to1:
+          type: string
+          description: Opening hour to (first). / První otevírací doba do.
+          example: '12:00'
+        from2:
+          type: string
+          description: Opening hour from (second) / Druhá otevírací doba od.
+          example: '13:00'
+        to2:
+          type: string
+          description: Opening hour to (second). / Druhá otevírací doba do.
+          example: '16:00'
+        from3:
+          type: string
+          description: Opening hour from (third) / Třetí otevírací doba od.
+          example: '18:00'
+        to3:
+          type: string
+          description: Opening hour to (third) / Třetí otevírací doba do.
+          example: '21:00'
+
+    DeliveryToPostOffice:
+      type: object
+      properties:
+        storingPost:
+          type: boolean
+          description: Package to postoffice - storing post - true/false. / Balík na poštu - ukládací pobočka - ano/ne.
+          example: true
+        temporaryStoringConstraint:
+          type: boolean
+          description: Package to postoffice - temporary storing constraint - true/false. / Balík na poštu - dočasné omezení ukládání - ano/ne.
+          example: false
+        limitStoring:
+          type: string
+          description: Storing of product "Na poštu" (to postoffice) with cash on delivery over 50000 CZK - true/false. / Ukládání produktu „Na poštu“ s cenou/dobírkou nad 50 000 Kč - ano/ne.
+          example: false
+        spareStoringPostOffice:
+          type: string
+          description: Post code of alternative storing post office, for storing product "Na poštu" (to postoffice) with cash on delivery over 50000CZK in case that the originally post office don't accept products with cash on delivery over 50000CZK. / PSČ náhradní ukládací provozovny, na které je možné zasílat produkt „Na poštu“ v případě, že není možno na provozovně ukládat zásilky s udanou cenou a dobírkou vyšší než 50 000 Kč.
+          example: '74221'
+        spareStoringPostOfficeName:
+          type: string
+          description: Name of alternative storing post office, which accept product with cash on delivery over 50000 CZK. / Název náhradní ukládací provozovny, na které je možné zasílat produkt „Na poštu“ v případě, že není možno na provozovně ukládat zásilky s udanou cenou a dobírkou vyšší než 50 000 Kč.
+          example: 'Kopřivnice'
+
+    Services:
+      type: object
+      properties:
+        deliveryToPostOffice:
+          $ref: '#/components/schemas/DeliveryToPostOffice'
+
+    StatusesOverview:
+      type: object
+      properties:
+        statusesList:
+          $ref: '#/components/schemas/StatusesList'
+
+    StatusesList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Statuses'
+
+    Statuses:
+      type: object
+      properties:
+        status:
+          type: string
+          example: '21'
+          description: Status - numerical interpretation of the status. / Stav - číselná interpretace stavu.
+        reason:
+          type: string
+          example: '00'
+          description: Reason - specification of the status. / Důvod - upřesnění stavu.
+        name:
+          type: string
+          example: 'PODANO'
+          description: Description of the Status. / Popis stavu.
+
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        x-request-id:
+          description: Identity uniquelly user transaction
+          type: string
+          example: 'ID-f81003313285-1592979767076-41-10'
+        code:
+          type: integer
+          description: error code
+          example: -50
+        status:
+          type: string
+          description: error description
+          example: '500'
+        message:
+          type: string
+          description: error message
+          example: 'Internal error'
+        moreInfo:
+          type: string
+          description: more info
+          example: 'Here is better detail of error. It could be some point to documentation or stacktrace and so on.'
+        date:
+          type: string
+          example: '2022-02-16T10:48:11+01:00'
+      required:
+        - message
+      description: Error object. / Objekt chyba.

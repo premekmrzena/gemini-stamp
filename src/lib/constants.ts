@@ -1,4 +1,4 @@
-import { OrderStatus } from '@/types/database';
+import { OrderStatus, ProductCategory } from '@/types/database';
 
 export const ORDER_STATUSES: { value: OrderStatus; group: 'neutral' | 'success' | 'danger' }[] = [
   { value: 'Nová', group: 'neutral' },
@@ -16,29 +16,6 @@ export const ORDER_STATUSES: { value: OrderStatus; group: 'neutral' | 'success' 
   { value: 'Uzavřeno', group: 'success' },
 ];
 
-export const INTERNATIONAL_COUNTRIES = [
-  '',
-  'Japonsko',
-  'Jižní Korea',
-  'Čína',
-  'Vietnam',
-  '---',
-  'Austrálie',
-  'Belgie',
-  'Francie',
-  'Itálie',
-  'Kanada',
-  'Německo',
-  'Nizozemsko',
-  'Polsko',
-  'Rakousko',
-  'Slovensko',
-  'Spojené království',
-  'Spojené státy (USA)',
-  'Španělsko',
-  'Švýcarsko',
-];
-
 export type ShippingOption = {
   id: string;
   name: string;
@@ -47,35 +24,171 @@ export type ShippingOption = {
 };
 
 // Zdroj: Přehled zemí a zahraničních služeb ČP (Prehled-zahranicnich-sluzeb_1_7_2026_CZ-EN.xlsx,
-// list "CZ"), platnost k 1.7.2026 - viz [[project_ceska_posta_api]] v paměti. Cenné psaní do
-// zahraničí NEJDE do všech zemí (např. Německo, USA, Švýcarsko, UK) - EMS jde prakticky všude,
-// proto se v checkoutu nabízí obě varianty, jen ty, které pro danou zemi ČP skutečně provozuje.
+// list "CZ"), platnost k 1.7.2026 - viz [[project_ceska_posta_api]] v paměti. Obsahuje jen země,
+// kam ČP aktuálně provozuje Cenné psaní A/NEBO EMS (145 z 227 zemí v přehledu - zbytek má
+// listovní/EMS příjem "zastaven", tam žádnou z našich mezinárodních služeb nenabízíme).
+// Cenné psaní ani EMS nejdou vždy obě do každé země (např. Cenné psaní nejde do Německa/USA/
+// Švýcarska/UK, EMS zase někdy chybí u menších/vzdálenějších zemí) - proto oba kódy nepovinné.
 export type CountryShippingInfo = {
+  iso2: string;
   cenneDostupne: boolean;
   cenneSkupina?: 'evropska' | 'mimoevropska';
-  emsSkupina: number;
+  emsSkupina?: number;
 };
 
 export const COUNTRY_SHIPPING_INFO: Record<string, CountryShippingInfo> = {
-  'Japonsko': { cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
-  'Jižní Korea': { cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
-  'Čína': { cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
-  'Vietnam': { cenneDostupne: false, emsSkupina: 105 },
-  'Austrálie': { cenneDostupne: false, emsSkupina: 107 },
-  'Belgie': { cenneDostupne: false, emsSkupina: 104 },
-  'Francie': { cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
-  'Itálie': { cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
-  'Kanada': { cenneDostupne: false, emsSkupina: 105 },
-  'Německo': { cenneDostupne: false, emsSkupina: 103 },
-  'Nizozemsko': { cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
-  'Polsko': { cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 101 },
-  'Rakousko': { cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
-  'Slovensko': { cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 100 },
-  'Spojené království': { cenneDostupne: false, emsSkupina: 104 },
-  'Spojené státy (USA)': { cenneDostupne: false, emsSkupina: 105 },
-  'Španělsko': { cenneDostupne: false, emsSkupina: 104 },
-  'Švýcarsko': { cenneDostupne: false, emsSkupina: 102 },
+  'Albánie': { iso2: 'AL', cenneDostupne: false, emsSkupina: 104 },
+  'Alžírsko': { iso2: 'DZ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 104 },
+  'Angola': { iso2: 'AO', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Argentina': { iso2: 'AR', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 107 },
+  'Arménie': { iso2: 'AM', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Austrálie': { iso2: 'AU', cenneDostupne: false, emsSkupina: 107 },
+  'Bangladéš': { iso2: 'BD', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
+  'Barbados': { iso2: 'BB', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Belgie': { iso2: 'BE', cenneDostupne: false, emsSkupina: 104 },
+  'Benin': { iso2: 'BJ', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Bhútán': { iso2: 'BT', cenneDostupne: false, emsSkupina: 106 },
+  'Bosna a Hercegovina': { iso2: 'BA', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Brazílie': { iso2: 'BR', cenneDostupne: false, emsSkupina: 106 },
+  'Bulharsko': { iso2: 'BG', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Burkina Faso': { iso2: 'BF', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Bělorusko': { iso2: 'BY', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Chile': { iso2: 'CL', cenneDostupne: false, emsSkupina: 105 },
+  'Chorvatsko': { iso2: 'HR', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Dánsko': { iso2: 'DK', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Džibutsko': { iso2: 'DJ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Egypt': { iso2: 'EG', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Ekvádor': { iso2: 'EC', cenneDostupne: false, emsSkupina: 106 },
+  'Estonsko': { iso2: 'EE', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Etiopie': { iso2: 'ET', cenneDostupne: false, emsSkupina: 105 },
+  'Faerské ostrovy': { iso2: 'FO', cenneDostupne: true, cenneSkupina: 'evropska' },
+  'Finsko': { iso2: 'FI', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Francie': { iso2: 'FR', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Francouzská Polynésie': { iso2: 'PF', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Gabon': { iso2: 'GA', cenneDostupne: false, emsSkupina: 105 },
+  'Ghana': { iso2: 'GH', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Gruzie': { iso2: 'GE', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 104 },
+  'Grónsko': { iso2: 'GL', cenneDostupne: true, cenneSkupina: 'evropska' },
+  'Guinea': { iso2: 'GN', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Guinea-Bissau': { iso2: 'GW', cenneDostupne: false, emsSkupina: 105 },
+  'Hongkong': { iso2: 'HK', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
+  'Indie': { iso2: 'IN', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Indonésie': { iso2: 'ID', cenneDostupne: false, emsSkupina: 105 },
+  'Irsko': { iso2: 'IE', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Itálie': { iso2: 'IT', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Izrael': { iso2: 'IL', cenneDostupne: false, emsSkupina: 105 },
+  'Jamajka': { iso2: 'JM', cenneDostupne: false, emsSkupina: 105 },
+  'Japonsko': { iso2: 'JP', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
+  'Jižní Afrika': { iso2: 'ZA', cenneDostupne: false, emsSkupina: 105 },
+  'Jordánsko': { iso2: 'JO', cenneDostupne: false, emsSkupina: 105 },
+  'Kamerun': { iso2: 'CM', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Kanada': { iso2: 'CA', cenneDostupne: false, emsSkupina: 105 },
+  'Kapverdy': { iso2: 'CV', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Katar': { iso2: 'QA', cenneDostupne: false, emsSkupina: 105 },
+  'Kazachstán': { iso2: 'KZ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Keňa': { iso2: 'KE', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Kolumbie': { iso2: 'CO', cenneDostupne: false, emsSkupina: 105 },
+  'Komory': { iso2: 'KM', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Korejská republika': { iso2: 'KR', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Kostarika': { iso2: 'CR', cenneDostupne: false, emsSkupina: 105 },
+  'Kuba': { iso2: 'CU', cenneDostupne: false, emsSkupina: 107 },
+  'Kuvajt': { iso2: 'KW', cenneDostupne: false, emsSkupina: 105 },
+  'Kypr': { iso2: 'CY', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Kyrgyzstán': { iso2: 'KG', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Laos': { iso2: 'LA', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Libanon': { iso2: 'LB', cenneDostupne: false, emsSkupina: 104 },
+  'Litva': { iso2: 'LT', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Lotyšsko': { iso2: 'LV', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Lucembursko': { iso2: 'LU', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Macao': { iso2: 'MO', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Madagaskar': { iso2: 'MG', cenneDostupne: false, emsSkupina: 105 },
+  'Malajsie': { iso2: 'MY', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Maledivy': { iso2: 'MV', cenneDostupne: false, emsSkupina: 107 },
+  'Mali': { iso2: 'ML', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Malta': { iso2: 'MT', cenneDostupne: false, emsSkupina: 104 },
+  'Maroko': { iso2: 'MA', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Mauricius': { iso2: 'MU', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Maďarsko': { iso2: 'HU', cenneDostupne: false, emsSkupina: 104 },
+  'Mexiko': { iso2: 'MX', cenneDostupne: false, emsSkupina: 105 },
+  'Moldavsko': { iso2: 'MD', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Monako': { iso2: 'MC', cenneDostupne: false, emsSkupina: 104 },
+  'Mongolsko': { iso2: 'MN', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Montserrat': { iso2: 'MS', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Mosambik': { iso2: 'MZ', cenneDostupne: false, emsSkupina: 107 },
+  'Myanmar': { iso2: 'MM', cenneDostupne: false, emsSkupina: 105 },
+  'Namibie': { iso2: 'NA', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Nauru': { iso2: 'NR', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Niger': { iso2: 'NE', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Nigérie': { iso2: 'NG', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Nikaragua': { iso2: 'NI', cenneDostupne: false, emsSkupina: 106 },
+  'Niue': { iso2: 'NU', cenneDostupne: false, emsSkupina: 107 },
+  'Nizozemsko': { iso2: 'NL', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Norsko': { iso2: 'NO', cenneDostupne: false, emsSkupina: 104 },
+  'Nová Kaledonie': { iso2: 'NC', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Nový Zéland': { iso2: 'NZ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 107 },
+  'Německo': { iso2: 'DE', cenneDostupne: false, emsSkupina: 103 },
+  'Panama': { iso2: 'PA', cenneDostupne: false, emsSkupina: 107 },
+  'Paraguay': { iso2: 'PY', cenneDostupne: false, emsSkupina: 106 },
+  'Peru': { iso2: 'PE', cenneDostupne: false, emsSkupina: 106 },
+  'Pobřeží slonoviny': { iso2: 'CI', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Polsko': { iso2: 'PL', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 101 },
+  'Portoriko': { iso2: 'PR', cenneDostupne: false, emsSkupina: 106 },
+  'Portugalsko': { iso2: 'PT', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Pákistán': { iso2: 'PK', cenneDostupne: false, emsSkupina: 104 },
+  'Rakousko': { iso2: 'AT', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Rumunsko': { iso2: 'RO', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Rusko': { iso2: 'RU', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Rwanda': { iso2: 'RW', cenneDostupne: false, emsSkupina: 105 },
+  'Salvador': { iso2: 'SV', cenneDostupne: false, emsSkupina: 106 },
+  'San Marino': { iso2: 'SM', cenneDostupne: false, emsSkupina: 104 },
+  'Saúdská Arábie': { iso2: 'SA', cenneDostupne: false, emsSkupina: 105 },
+  'Senegal': { iso2: 'SN', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Severní Makedonie': { iso2: 'MK', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Seychely': { iso2: 'SC', cenneDostupne: false, emsSkupina: 107 },
+  'Singapur': { iso2: 'SG', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Slovensko': { iso2: 'SK', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 100 },
+  'Slovinsko': { iso2: 'SI', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Spojené arabské emiráty': { iso2: 'AE', cenneDostupne: false, emsSkupina: 104 },
+  'Spojené státy americké': { iso2: 'US', cenneDostupne: false, emsSkupina: 105 },
+  'Srbsko': { iso2: 'RS', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Svatý Martin (NL)': { iso2: 'SX', cenneDostupne: false, emsSkupina: 106 },
+  'Svatý Vincenc a Grenadiny': { iso2: 'VC', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Svazijsko': { iso2: 'SZ', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Súdán': { iso2: 'SD', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Tanzanie': { iso2: 'TZ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Tchaj-wan': { iso2: 'TW', cenneDostupne: false, emsSkupina: 106 },
+  'Thajsko': { iso2: 'TH', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
+  'Togo': { iso2: 'TG', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Tunisko': { iso2: 'TN', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Turecko': { iso2: 'TR', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Uganda': { iso2: 'UG', cenneDostupne: false, emsSkupina: 105 },
+  'Ukrajina': { iso2: 'UA', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Uruguay': { iso2: 'UY', cenneDostupne: false, emsSkupina: 105 },
+  'Uzbekistán': { iso2: 'UZ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Vatikán': { iso2: 'VA', cenneDostupne: true, cenneSkupina: 'evropska' },
+  'Velká Británie': { iso2: 'GB', cenneDostupne: false, emsSkupina: 104 },
+  'Venezuela': { iso2: 'VE', cenneDostupne: false, emsSkupina: 105 },
+  'Vietnam': { iso2: 'VN', cenneDostupne: false, emsSkupina: 105 },
+  'Wallis a Futuna': { iso2: 'WF', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Zambie': { iso2: 'ZM', cenneDostupne: true, cenneSkupina: 'mimoevropska' },
+  'Zimbabwe': { iso2: 'ZW', cenneDostupne: false, emsSkupina: 105 },
+  'Ázerbájdžán': { iso2: 'AZ', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Írán': { iso2: 'IR', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Čad': { iso2: 'TD', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Černá Hora': { iso2: 'ME', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 102 },
+  'Čína': { iso2: 'CN', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 106 },
+  'Řecko': { iso2: 'GR', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Španělsko': { iso2: 'ES', cenneDostupne: false, emsSkupina: 104 },
+  'Šrí Lanka': { iso2: 'LK', cenneDostupne: true, cenneSkupina: 'mimoevropska', emsSkupina: 105 },
+  'Švédsko': { iso2: 'SE', cenneDostupne: true, cenneSkupina: 'evropska', emsSkupina: 104 },
+  'Švýcarsko': { iso2: 'CH', cenneDostupne: false, emsSkupina: 102 },
 };
+
+// '' = placeholder (zobrazuje se jako "Vybrat zemi"), zbytek abecedně dle českého lokále.
+export const INTERNATIONAL_COUNTRIES = [
+  '',
+  ...Object.keys(COUNTRY_SHIPPING_INFO).sort((a, b) => a.localeCompare(b, 'cs')),
+];
 
 // EMS - do zahraničí, ceník ČP platný od 1.7.2026, sloupec "s DPH" - použit vždy, i pro země
 // mimo EU kde je služba jinak od DPH osvobozená (rozhodnuto vědomě kvůli jednoduchosti, viz
@@ -157,16 +270,49 @@ export const getShippingOptions = (weightGrams: number, orderValueCzk: number = 
         desc: 'Sledovatelná zásilka s pojištěním, nutné převzetí',
       });
     }
-    options.push({
-      id: 'ems',
-      name: 'EMS',
-      price: Math.round(getEmsPrice(countryInfo.emsSkupina, weightGrams) * PACKAGING_MARKUP),
-      desc: 'Expresní doprava, nejrychlejší doručení do zahraničí, nutné převzetí',
-    });
+    if (countryInfo.emsSkupina) {
+      options.push({
+        id: 'ems',
+        name: 'EMS',
+        price: Math.round(getEmsPrice(countryInfo.emsSkupina, weightGrams) * PACKAGING_MARKUP),
+        desc: 'Expresní doprava, nejrychlejší doručení do zahraničí, nutné převzetí',
+      });
+    }
   }
 
   return options;
 };
+
+// Nejnižší mezinárodní cena napříč VŠEMI podporovanými zeměmi pro danou váhu/hodnotu objednávky -
+// orientační "od X Kč" než zákazník vybere konkrétní cílovou zemi (viz ShippingStep.tsx).
+export const getMinInternationalPrice = (weightGrams: number, orderValueCzk: number = 0): number => {
+  let min = Infinity;
+  for (const info of Object.values(COUNTRY_SHIPPING_INFO)) {
+    if (info.cenneDostupne && info.cenneSkupina) {
+      min = Math.min(min, getCennePsaniPrice(info.cenneSkupina, weightGrams, orderValueCzk));
+    }
+    if (info.emsSkupina) {
+      min = Math.min(min, getEmsPrice(info.emsSkupina, weightGrams));
+    }
+  }
+  return Math.round(min * PACKAGING_MARKUP);
+};
+
+// Ověřeno živým dotazem na /customsContent (Česká pošta B2B-CIS, číselník celního obsahu).
+// znamky/znamkove-archy: sběratelské známky, mimo EU záměrně jako neplatné poštovné v cílové zemi
+// (ne cenina) - HS 9704, ne 4907 (to je pro aktuálně platné poštovní známky).
+// kreativni-archy/fdc: tiskovina - HS 4911.91 "Tištěné obrazy". FDC obsahuje nalepenou známku,
+// ale ta je nalepením znehodnocená a přestává být cenina, takže se řadí stejně jako kreativní archy.
+// plakety: jediná shoda v číselníku ČP ("Plaketa").
+const CUSTOMS_HS_CODE_BY_CATEGORY: Record<ProductCategory, string> = {
+  znamky: '970400',
+  'znamkove-archy': '970400',
+  fdc: '491191',
+  'kreativni-archy': '491191',
+  plakety: '970300',
+};
+
+export const getCustomsHsCode = (category: ProductCategory): string => CUSTOMS_HS_CODE_BY_CATEGORY[category];
 
 export type PaymentOption = {
   id: string;

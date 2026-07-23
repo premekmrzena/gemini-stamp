@@ -6,7 +6,7 @@ import { Link } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import StripePaymentForm from '@/components/StripePaymentForm';
-import { getShippingOptions, PAYMENT_OPTIONS } from '@/lib/constants';
+import { getShippingOptions, getMinInternationalPrice, PAYMENT_OPTIONS } from '@/lib/constants';
 import { useCheckout } from '@/hooks/useCheckout';
 import CartStep from '@/components/checkout/CartStep';
 import ShippingStep from '@/components/checkout/ShippingStep';
@@ -42,10 +42,14 @@ const CheckoutPage = () => {
 
   const totalWeightGrams = cartItems.reduce((sum, item) => sum + (item.weight_grams || 0) * item.quantity, 0);
   const shippingOptions = getShippingOptions(totalWeightGrams, cartTotal, formData.billing_country);
+  const minInternationalPrice = getMinInternationalPrice(totalWeightGrams, cartTotal);
   const shippingCost = shippingOptions.find((o) => o.id === selectedShipping)?.price ?? 0;
   const paymentCost = PAYMENT_OPTIONS.find((o) => o.id === selectedPayment)?.price ?? 0;
   const totalOrderPrice = cartTotalAfterDiscount + shippingCost + paymentCost;
   const isMezinarodni = selectedShipping === 'cenne-psani' || selectedShipping === 'ems';
+  // "mezinarodni" je jen rozcestník (viz ShippingStep) - dokud zákazník nedovybere konkrétní
+  // mezinárodní službu, není to platná kupovatelná možnost a nesmí jít dál na krok 3.
+  const isValidShippingSelected = shippingOptions.some((o) => o.id === selectedShipping);
 
   // Hydration guard (počká na klientský mount) - nejde nahradit lazy initializerem,
   // ten by běžel i při SSR a dal by jiný výsledek než na klientovi.
@@ -57,7 +61,7 @@ const CheckoutPage = () => {
   // po výběru přepne zemi na takovou, kde už zvolená služba není dostupná, vybraná možnost by
   // "zmizela" ze shippingOptions a cena by tiše spadla na 0 Kč - proto se v tom případě zruší.
   useEffect(() => {
-    if (selectedShipping && !shippingOptions.some((o) => o.id === selectedShipping)) {
+    if (selectedShipping && selectedShipping !== 'mezinarodni' && !shippingOptions.some((o) => o.id === selectedShipping)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reaguje na cizí zdroj (přepočet dostupných možností podle zvolené země), ne na vlastní stav
       setSelectedShipping('');
     }
@@ -77,6 +81,11 @@ const CheckoutPage = () => {
     // kroku needitovaně neuloží dřívější zahraniční volba pod zobrazenou "Česká republika".
     if (id === 'osobni' || id === 'ceska') {
       setFormData((prev) => (prev.billing_country === 'Česká republika' ? prev : { ...prev, billing_country: 'Česká republika' }));
+    } else if (id === 'mezinarodni') {
+      // Opačný směr: dokud zákazník nezvolí zemi sám, select nesmí zůstat na "Česká republika"
+      // (to není platná položka v INTERNATIONAL_COUNTRIES a select by tiše ukázal první zemi
+      // v seznamu, jako by byla vybraná).
+      setFormData((prev) => (prev.billing_country === 'Česká republika' ? { ...prev, billing_country: '' } : prev));
     }
   };
 
@@ -131,6 +140,7 @@ const CheckoutPage = () => {
                 setSelectedPayment={setSelectedPayment}
                 internationalCountry={formData.billing_country}
                 setInternationalCountry={(country) => setFormData((prev) => ({ ...prev, billing_country: country }))}
+                minInternationalPrice={minInternationalPrice}
               />
             )}
             {currentStep === 3 && (
@@ -177,7 +187,7 @@ const CheckoutPage = () => {
               type={currentStep === 3 ? 'submit' : 'button'}
               form={currentStep === 3 ? ADDRESS_FORM_ID : undefined}
               onClick={currentStep === 3 ? undefined : () => setCurrentStep((p) => p + 1)}
-              disabled={isSubmitting || (currentStep === 2 && !selectedShipping)}
+              disabled={isSubmitting || (currentStep === 2 && !isValidShippingSelected)}
               arrow="right"
             >
               {isSubmitting ? t('footer.submitting') : currentStep === 3 ? (selectedPayment === 'karta' ? t('footer.pay') : t('footer.finish')) : t('footer.nextStep')}

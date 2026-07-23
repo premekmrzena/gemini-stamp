@@ -61,11 +61,15 @@
 | `STRIPE_WEBHOOK_SECRET` | Ověření podpisu Stripe webhooku |
 | `RESEND_API_KEY` | Odesílání e-mailů |
 | `BLOB_READ_WRITE_TOKEN` | Zápis do Vercel Blob |
+| `CESKA_POSTA_API_ENV` | `demo`/`live` přepínač pro `/api/admin/create-shipment` (default `demo`) |
+| `CESKA_POSTA_DEMO_ID_CONTRACT` / `_API_TOKEN` / `_PRIVATE_KEY` / `_CUSTOMER_ID` / `_POST_CODE` / `_LOCATION_NUMBER` | Přístupy k nAPI B2B-ZSK České pošty (demo prostředí), viz [sekce 10](10-doprava-a-celni-prohlaseni.md) |
+| `CESKA_POSTA_LIVE_ID_CONTRACT` / `_API_TOKEN` / `_PRIVATE_KEY` | Ostré přístupy k nAPI B2B-ZSK — zatím bez `CUSTOMER_ID`/`POST_CODE`/`LOCATION_NUMBER`, integrace zatím neběží naostro |
 
 ## Zjištěné nedodělky / otevřené body
 - **Stripe webhook** není zaregistrovaný v Dashboardu – čeká na finální produkční doménu (viz výše)
 - **E-maily jedou ze sandbox domény** `onboarding@resend.dev` – nutno před spuštěním nastavit vlastní ověřenou doménu v Resendu (sandbox typicky umí odeslat jen na ověřenou adresu vlastníka Resend účtu, ne libovolnému zákazníkovi)
 ## Změny
+- 2026-07-23: Napojení na nAPI B2B-ZSK České pošty (doprava + celní prohlášení), zatím proti demo prostředí — nová sekce [10](10-doprava-a-celni-prohlaseni.md).
 - 2026-07-12: `.devcontainer/devcontainer.json` – automatická instalace Claude Code CLI + `npm install` po vytvoření/rebuildu GitHub Codespace, viz výše.
 - 2026-07-10: Vercel Blob dostal jasnou strukturu složek pro nově nahrané soubory – `POST /api/upload-stamp` teď přijímá parametr `folder` (validovaný proti pevnému seznamu). Produktové fotky jdou do `products/{category}/`, zákaznické archy z editoru do `editor-orders/`. Starší soubory nahrané před touto změnou zůstávají ve staré ploché struktuře. Šablony editoru zůstávají jako statické soubory v `public/templates/`, nejsou v Blobu vůbec.
 - 2026-07-08: Nová stránka `/jak-nakupovat` (co lze koupit, doprava a osobní odběr, doba výroby, platba) + odkaz v patičce (`Footer.tsx`). Na homepage přibyl mezi Hero a recenze informační pruh 4 ikon (`ShopInfoStrip.tsx`), proklikává na tuto stránku. U kategorií `znamky`/`fdc`/`plakety` (`/kategorie/[slug]`) je titulek a perex nově na střed a bez vysvětlujícího videa (`kreativni-archy` beze změny). Karty produktů/šablon mají i `active:` variantu hover efektu pro tap na mobilu. Oprava ořezané palety barev v mobilním textovém panelu editoru (`ColorPickerInput.tsx`) – výška palety se dynamicky přizpůsobí dostupnému místu. Viz [sekce 4](04-popis-eshopu.md).

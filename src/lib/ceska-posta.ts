@@ -14,14 +14,22 @@ const postSignumRootCA = fs.readFileSync(
 );
 const postSignumAgent = new Agent({ connect: { ca: postSignumRootCA } });
 
-const SERVERS = {
-  demo: "https://b2b-test.postaonline.cz:444/restservices/ZSKService/v1",
-  live: "https://b2b.postaonline.cz:444/restservices/ZSKService/v1",
+// Každá B2B služba ČP (ZSK = zásilky, CIS = číselníky, ...) běží na vlastní cestě
+// pod stejným HMAC auth schématem, viz jejich OpenAPI specs v docs/api/.
+const SERVICE_PATHS = {
+  zsk: "ZSKService/v1",
+  cis: "CISService/v1",
 } as const;
 
-type CeskaPostaEnv = keyof typeof SERVERS;
+type CeskaPostaService = keyof typeof SERVICE_PATHS;
+export type CeskaPostaEnv = "demo" | "live";
 
-function getConfig(env: CeskaPostaEnv) {
+function getBaseUrl(env: CeskaPostaEnv, service: CeskaPostaService) {
+  const host = env === "demo" ? "b2b-test.postaonline.cz" : "b2b.postaonline.cz";
+  return `https://${host}:444/restservices/${SERVICE_PATHS[service]}`;
+}
+
+export function getCeskaPostaConfig(env: CeskaPostaEnv) {
   const prefix = env === "demo" ? "CESKA_POSTA_DEMO_" : "CESKA_POSTA_LIVE_";
 
   const idContract = process.env[`${prefix}ID_CONTRACT`];
@@ -29,12 +37,14 @@ function getConfig(env: CeskaPostaEnv) {
   const privateKey = process.env[`${prefix}PRIVATE_KEY`];
   const customerID = process.env[`${prefix}CUSTOMER_ID`];
   const postCode = process.env[`${prefix}POST_CODE`];
+  const locationNumberRaw = process.env[`${prefix}LOCATION_NUMBER`];
+  const locationNumber = locationNumberRaw ? Number(locationNumberRaw) : undefined;
 
   if (!idContract || !apiToken || !privateKey) {
     throw new Error(`Chybí env proměnné pro Českou poštu (${env}): ${prefix}ID_CONTRACT / API_TOKEN / PRIVATE_KEY`);
   }
 
-  return { idContract, apiToken, privateKey, customerID, postCode, baseUrl: SERVERS[env] };
+  return { idContract, apiToken, privateKey, customerID, postCode, locationNumber };
 }
 
 /**
@@ -72,14 +82,15 @@ function buildAuthHeaders(apiToken: string, privateKey: string, body?: string) {
 
 export async function ceskaPostaRequest(
   env: CeskaPostaEnv,
+  service: CeskaPostaService,
   path: string,
   init?: { method?: string; body?: unknown }
 ) {
-  const config = getConfig(env);
+  const config = getCeskaPostaConfig(env);
   const body = init?.body !== undefined ? JSON.stringify(init.body) : undefined;
   const authHeaders = buildAuthHeaders(config.apiToken, config.privateKey, body);
 
-  const response = await fetch(`${config.baseUrl}${path}`, {
+  const response = await fetch(`${getBaseUrl(env, service)}${path}`, {
     method: init?.method ?? "GET",
     headers: {
       ...authHeaders,
@@ -103,6 +114,6 @@ export async function ceskaPostaRequest(
 
 /** Ověří platnost přístupových údajů voláním Location (seznam podacích míst) - GET bez těla. */
 export async function testCeskaPostaConnection(env: CeskaPostaEnv) {
-  const config = getConfig(env);
-  return ceskaPostaRequest(env, `/location/idContract/${config.idContract}`);
+  const config = getCeskaPostaConfig(env);
+  return ceskaPostaRequest(env, "zsk", `/location/idContract/${config.idContract}`);
 }

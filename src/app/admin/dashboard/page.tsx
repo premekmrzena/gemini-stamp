@@ -7,12 +7,13 @@ import { ORDER_STATUSES } from '@/lib/constants';
 import { OrderStatus, Order, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate } from '@/types/database';
 import { ProductFormModal, CATEGORY_LABELS } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
+import { ShipmentModal } from '@/components/admin/ShipmentModal';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 import { getEffectivePrice } from '@/lib/pricing';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -76,6 +77,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [shipmentOrder, setShipmentOrder] = useState<Order | null>(null);
   const [dateFilter, setDateFilter] = useState('');
   const orderModalBackdrop = useBackdropClose(() => setSelectedOrder(null));
 
@@ -1026,6 +1028,19 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* VYTVOŘIT ZÁSILKU */}
+              {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && (
+                <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+                  <span className="style-product-tag text-black300">Podání u dopravce:</span>
+                  <button
+                    onClick={() => setShipmentOrder(selectedOrder)}
+                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                  >
+                    <Truck size={14} /> Vytvořit zásilku
+                  </button>
+                </div>
+              )}
+
               {/* ADRESA A INFO */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
                 <div className="space-y-3">
@@ -1105,6 +1120,18 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL VYTVOŘENÍ ZÁSILKY */}
+      {shipmentOrder && (
+        <ShipmentModal
+          order={shipmentOrder}
+          onClose={() => setShipmentOrder(null)}
+          onShipped={(orderId, parcelCode) => {
+            setOrders(orders.map((o) => (o.id === orderId ? { ...o, tracking_number: parcelCode } : o)));
+            setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, tracking_number: parcelCode } : prev));
+          }}
+        />
       )}
 
       {/* FORMULÁŘ NOVÝ/EDITACE PRODUKTU */}
