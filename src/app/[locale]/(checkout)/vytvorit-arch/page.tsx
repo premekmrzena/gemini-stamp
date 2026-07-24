@@ -192,7 +192,7 @@ export default function EditorPage() {
         right={<Stepper currentStep={currentStep} />}
       /></div>
       
-      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${currentStep !== 1 ? 'pb-[64px]' : ''}`}>
+      <main className={`flex-1 min-h-0 w-full flex flex-col relative overflow-y-auto ${currentStep !== 1 ? 'pb-[64px] md:pb-[78px] lg:pb-[92px]' : ''}`}>
         
         {/* === KROK 1: VÝBĚR ŠABLONY === */}
         {currentStep === 1 && (

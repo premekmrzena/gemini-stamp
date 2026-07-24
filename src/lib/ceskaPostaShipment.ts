@@ -63,7 +63,9 @@ export function buildParcelServiceRequest(
   const recipientFirstName = order.shipping_is_different ? order.shipping_first_name : order.billing_first_name;
   const recipientLastName = order.shipping_is_different ? order.shipping_last_name : order.billing_last_name;
   const recipientAddressLine = order.shipping_is_different ? order.shipping_address_line1 : order.billing_address_line1;
+  const recipientAddressLine2 = order.shipping_is_different ? order.shipping_address_line2 : order.billing_address_line2;
   const recipientCity = order.shipping_is_different ? order.shipping_city : order.billing_city;
+  const recipientRegion = order.shipping_is_different ? order.shipping_region : order.billing_region;
   const recipientZip = order.shipping_is_different ? order.shipping_zip : order.billing_zip;
   const recipientCountryName = order.shipping_is_different ? order.shipping_country : order.billing_country;
   const recipientPhone = order.shipping_is_different ? order.shipping_phone : order.billing_phone;
@@ -76,13 +78,21 @@ export function buildParcelServiceRequest(
   const { street, houseNumber } = splitAddressLine(recipientAddressLine);
   const totalWeightKg = order.cart_items.reduce((sum, i) => sum + (i.weight_grams * i.quantity) / 1000, 0);
 
+  // AddressCOMMON (ČP schéma, additionalProperties: false) nemá volné pole pro byt/patro/budovu
+  // ani pro provincii/stát jako text - jediný kandidát by byl subIsoCountry, ale ten podle
+  // popisu čeká ISO kód území, ne text zadaný zákazníkem ("Guangdong", "大阪府"...), takže by ho
+  // šlo obsadit jen hádáním. Bezpečnější je připojit obě pole k street/city (obojí volný text,
+  // stejně jako u splitAddressLine - ČP mezinárodní adresy nevaliduje tak přísně jako tuzemské).
+  const streetWithLine2 = recipientAddressLine2 ? `${street}, ${recipientAddressLine2}` : street;
+  const cityWithRegion = recipientRegion ? `${recipientCity}, ${recipientRegion}` : recipientCity;
+
   const parcelAddress: Record<string, unknown> = {
     firstName: recipientFirstName,
     surname: recipientLastName,
     address: {
-      street,
+      street: streetWithLine2,
       houseNumber,
-      city: recipientCity,
+      city: cityWithRegion,
       zipCode: recipientZip,
       isoCountry,
     },

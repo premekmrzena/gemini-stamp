@@ -61,7 +61,13 @@ export default function CartStep({ cartItems, removeFromCart, updateQuantity, on
 
               <div className="flex justify-between items-center mt-2">
                 <div className="flex items-center bg-secondary rounded-full px-3 py-1 gap-3">
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-black">−</button>
+                  <button
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    disabled={item.quantity <= 1}
+                    className="text-black disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    −
+                  </button>
                   <span className="style-body-bold text-black">{item.quantity}</span>
                   <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-black">+</button>
                 </div>

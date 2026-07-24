@@ -272,7 +272,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
       <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="opacity-0 absolute w-0 h-0 pointer-events-none" accept="image/*" />
 
       {/* DESKTOP */}
-      <div className="hidden md:flex flex-col w-full min-h-[calc(100vh-80px)]" style={{ paddingBottom: showThankYou ? '0px' : '64px' }}>
+      <div className={`hidden md:flex flex-col w-full min-h-[calc(100vh-80px)] ${showThankYou ? '' : 'md:pb-[78px] lg:pb-[92px]'}`}>
         <div ref={desktopContainerRef} className="flex-1 w-full flex items-center justify-center p-8" onClick={() => setActiveSlotId(null)}>
           <div
             className="desktop-canvas-wrapper relative shadow-2xl bg-secondary border border-black300/10 shrink-0 touch-none rounded-[4px] overflow-hidden"
@@ -371,7 +371,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
               </div>
             )}
 
-            <footer className="w-full border-t border-black300/30 h-[64px] flex items-center justify-center">
+            <footer className="w-full border-t border-black300/30 md:h-[78px] lg:h-[92px] flex items-center justify-center">
               <div className="w-full max-w-[1440px] mx-auto px-[84px] flex justify-between items-center">
                 <Button onClick={() => window.location.href = '/vytvorit-arch'} variant="outlined" arrow="left">Zpět</Button>
                 <Button onClick={handleUploadAndComplete} disabled={!allPhotosFilled || isUploading} arrow="right">

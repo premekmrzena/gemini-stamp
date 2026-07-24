@@ -63,6 +63,21 @@ function getNextStatus(order: { status?: OrderStatus; shipping_method?: string }
   return flow[currentIndex + 1];
 }
 
+// Skutečná cílová adresa zásilky - shipping_* jen když zákazník zaškrtl "Doručit na jinou
+// adresu" (viz AddressForm), jinak billing_*. Stejná logika jako buildParcelServiceRequest
+// v ceskaPostaShipment.ts - držet v jednom místě, aby admin viděl to samé, co se pošle ČP.
+function getDeliveryAddress(order: Order) {
+  const useShipping = order.shipping_is_different;
+  return {
+    line1: useShipping ? order.shipping_address_line1 : order.billing_address_line1,
+    line2: useShipping ? order.shipping_address_line2 : order.billing_address_line2,
+    city: useShipping ? order.shipping_city : order.billing_city,
+    region: useShipping ? order.shipping_region : order.billing_region,
+    zip: useShipping ? order.shipping_zip : order.billing_zip,
+    country: useShipping ? order.shipping_country : order.billing_country,
+  };
+}
+
 export default function AdminDashboard() {
   // --- STAVY PRO AUTENTIZACI ---
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -1057,10 +1072,17 @@ export default function AdminDashboard() {
                   <h3 className="style-product-tag text-black300 flex items-center gap-2">
                     <MapPin size={14} className="text-primary" /> Doručení
                   </h3>
-                  <div className="style-body text-black200">
-                    {selectedOrder.billing_address_line1}<br />
-                    {selectedOrder.billing_city}, {selectedOrder.billing_zip}
-                  </div>
+                  {(() => {
+                    const addr = getDeliveryAddress(selectedOrder);
+                    return (
+                      <div className="style-body text-black200">
+                        {addr.line1}<br />
+                        {addr.line2 && <>{addr.line2}<br /></>}
+                        {addr.city}{addr.region ? `, ${addr.region}` : ''}, {addr.zip}<br />
+                        {addr.country}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

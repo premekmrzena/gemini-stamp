@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { INTERNATIONAL_COUNTRIES } from '@/lib/constants';
 
@@ -12,6 +12,7 @@ type Props = {
   customerNote: string;
   onNoteChange: (note: string) => void;
   isMezinarodni: boolean;
+  isPersonalPickup: boolean;
   shippingIsDifferent: boolean;
   onShippingIsDifferentChange: (v: boolean) => void;
 };
@@ -68,6 +69,7 @@ export default function AddressForm({
   customerNote,
   onNoteChange,
   isMezinarodni,
+  isPersonalPickup,
   shippingIsDifferent,
   onShippingIsDifferentChange,
 }: Props) {
@@ -76,6 +78,23 @@ export default function AddressForm({
   const countryLabels = Object.fromEntries(
     INTERNATIONAL_COUNTRIES.filter(Boolean).filter((c) => c !== '---').map((c) => [c, tCountries.has(c) ? tCountries(c) : c])
   );
+  // Lokálně řízeno (netřeba v rodičovském stavu) - jen skrývá/zobrazuje pole, která už formData
+  // sleduje. Výchozí stav odvozen z předvyplněných dat, ne vždy false, kdyby se zákazník vrátil
+  // krok zpátky poté, co firemní údaje vyplnil.
+  const [purchaseAsCompany, setPurchaseAsCompany] = useState(
+    () => !!(formData.billing_company_name || formData.billing_company_id || formData.billing_company_tax_id)
+  );
+
+  // Odškrtnutí checkboxu jen skrývá pole - bez tohohle by vyplněné IČO/DIČ zůstalo v formData
+  // a tiše by se odeslalo s objednávkou i po rozmyšlení "nakupuju jako soukromá osoba".
+  const handlePurchaseAsCompanyChange = (checked: boolean) => {
+    setPurchaseAsCompany(checked);
+    if (!checked) {
+      ['billing_company_name', 'billing_company_id', 'billing_company_tax_id'].forEach((name) => {
+        onChange({ target: { name, value: '' } } as React.ChangeEvent<HTMLInputElement>);
+      });
+    }
+  };
 
   return (
     <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-8">
@@ -87,45 +106,56 @@ export default function AddressForm({
           <InputField label={t('phone')} name="billing_phone" value={formData.billing_phone} onChange={onChange} required />
           <InputField label={t('email')} name="billing_email" value={formData.billing_email} onChange={onChange} type="email" required />
           <InputField label={t('addressLine1')} name="billing_address_line1" value={formData.billing_address_line1} onChange={onChange} required />
+          {isMezinarodni && (
+            <InputField label={t('addressLine2')} name="billing_address_line2" value={formData.billing_address_line2} onChange={onChange} />
+          )}
           <InputField label={t('city')} name="billing_city" value={formData.billing_city} onChange={onChange} required />
+          {isMezinarodni && (
+            <InputField label={t('region')} name="billing_region" value={formData.billing_region} onChange={onChange} />
+          )}
           <InputField label={t('zip')} name="billing_zip" value={formData.billing_zip} onChange={onChange} required />
           {isMezinarodni ? (
-            <SelectField
-              label={t('country')}
-              name="billing_country"
-              value={formData.billing_country}
-              onChange={onChange}
-              options={INTERNATIONAL_COUNTRIES}
-              optionLabels={countryLabels}
-              selectCountryLabel={t('selectCountry')}
-              required
-            />
+            // Země už byla vybraná v kroku Doprava (podle ní se počítá cena) - tady jen
+            // needitovatelně zobrazená, stejně jako u tuzemské varianty níže.
+            <InputField label={t('countryPlain')} value={countryLabels[formData.billing_country] ?? formData.billing_country} disabled />
           ) : (
             <InputField label={t('countryPlain')} value={t('czechRepublic')} disabled />
           )}
         </div>
 
         <div className="border-t border-white/10 pt-4">
-          <h4 className="style-h4 text-black300 mb-3">{t('companySectionTitle')}</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputField label={t('companyName')} name="billing_company_name" value={formData.billing_company_name} onChange={onChange} />
-            <InputField label={t('companyId')} name="billing_company_id" value={formData.billing_company_id} onChange={onChange} />
-            <InputField label={t('taxId')} name="billing_company_tax_id" value={formData.billing_company_tax_id} onChange={onChange} />
-          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={purchaseAsCompany}
+              onChange={(e) => handlePurchaseAsCompanyChange(e.target.checked)}
+              className="w-5 h-5 accent-primary rounded"
+            />
+            <span className="style-body text-secondary">{t('purchaseAsCompany')}</span>
+          </label>
+          {purchaseAsCompany && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <InputField label={t('companyName')} name="billing_company_name" value={formData.billing_company_name} onChange={onChange} />
+              <InputField label={t('companyId')} name="billing_company_id" value={formData.billing_company_id} onChange={onChange} />
+              <InputField label={t('taxId')} name="billing_company_tax_id" value={formData.billing_company_tax_id} onChange={onChange} />
+            </div>
+          )}
         </div>
       </div>
 
-      <label className="flex items-center gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={shippingIsDifferent}
-          onChange={(e) => onShippingIsDifferentChange(e.target.checked)}
-          className="w-5 h-5 accent-primary rounded"
-        />
-        <span className="style-body text-secondary">{t('shipToDifferent')}</span>
-      </label>
+      {!isPersonalPickup && (
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={shippingIsDifferent}
+            onChange={(e) => onShippingIsDifferentChange(e.target.checked)}
+            className="w-5 h-5 accent-primary rounded"
+          />
+          <span className="style-body text-secondary">{t('shipToDifferent')}</span>
+        </label>
+      )}
 
-      {shippingIsDifferent && (
+      {!isPersonalPickup && shippingIsDifferent && (
         <div className="flex flex-col gap-4 border-t border-white/10 pt-6">
           <h3 className="style-h3 text-secondary">{t('shippingAddressTitle')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,7 +164,13 @@ export default function AddressForm({
             <InputField label={t('shippingPhone')} name="shipping_phone" value={formData.shipping_phone} onChange={onChange} />
             <InputField label={t('shippingCompanyName')} name="shipping_company_name" value={formData.shipping_company_name} onChange={onChange} />
             <InputField label={t('addressLine1')} name="shipping_address_line1" value={formData.shipping_address_line1} onChange={onChange} required />
+            {isMezinarodni && (
+              <InputField label={t('addressLine2')} name="shipping_address_line2" value={formData.shipping_address_line2} onChange={onChange} />
+            )}
             <InputField label={t('city')} name="shipping_city" value={formData.shipping_city} onChange={onChange} required />
+            {isMezinarodni && (
+              <InputField label={t('region')} name="shipping_region" value={formData.shipping_region} onChange={onChange} />
+            )}
             <InputField label={t('zip')} name="shipping_zip" value={formData.shipping_zip} onChange={onChange} required />
             {isMezinarodni ? (
               <SelectField

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import StripePaymentForm from '@/components/StripePaymentForm';
@@ -28,6 +28,7 @@ const EMPTY_FORM = {
 
 const CheckoutPage = () => {
   const t = useTranslations('checkout');
+  const router = useRouter();
   const { cartItems, cartTotal, cartTotalAfterDiscount, discountAmount, appliedDiscount, removeFromCart, updateQuantity } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -79,7 +80,12 @@ const CheckoutPage = () => {
     // billing_country zdvojuje roli "cílové země zásilky", dokud zákazník nezvolí doručení na
     // jinou adresu - při přepnutí zpátky na tuzemskou dopravu ji resetujeme, ať se v adresním
     // kroku needitovaně neuloží dřívější zahraniční volba pod zobrazenou "Česká republika".
-    if (id === 'osobni' || id === 'ceska') {
+    if (id === 'osobni') {
+      // Osobní odběr nemá adresní krok "Doručit na jinou adresu" (AddressForm ho pro tuto
+      // variantu skrývá) - reset ať se needitovaně neodešle dřívější volba spolu s objednávkou.
+      setShippingIsDifferent(false);
+      setFormData((prev) => (prev.billing_country === 'Česká republika' ? prev : { ...prev, billing_country: 'Česká republika' }));
+    } else if (id === 'ceska') {
       setFormData((prev) => (prev.billing_country === 'Česká republika' ? prev : { ...prev, billing_country: 'Česká republika' }));
     } else if (id === 'mezinarodni') {
       // Opačný směr: dokud zákazník nezvolí zemi sám, select nesmí zůstat na "Česká republika"
@@ -90,9 +96,10 @@ const CheckoutPage = () => {
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Formulář se submituje přes button[form=ADDRESS_FORM_ID] ve footeru (mimo
-    // strom <form>), aby proklikl nativní HTML5 validaci povinných polí -
-    // preventDefault tu zastaví skutečnou GET navigaci prohlížeče.
+    // Formulář se submituje přes formEl.requestSubmit() z tlačítka ve footeru (mimo strom
+    // <form>, viz komentář u tlačítka níže) - proklikne to nativní HTML5 validaci povinných
+    // polí stejně jako submit tlačítko uvnitř formuláře. preventDefault tu zastaví skutečnou
+    // GET navigaci prohlížeče.
     e.preventDefault();
     submitOrder({
       cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent,
@@ -152,6 +159,7 @@ const CheckoutPage = () => {
                 customerNote={customerNote}
                 onNoteChange={setCustomerNote}
                 isMezinarodni={isMezinarodni}
+                isPersonalPickup={selectedShipping === 'osobni'}
                 shippingIsDifferent={shippingIsDifferent}
                 onShippingIsDifferentChange={setShippingIsDifferent}
               />
@@ -171,22 +179,32 @@ const CheckoutPage = () => {
       {/* z-[60]: musí zůstat nad CookieConsent (z-50, fixed bottom-0, může se
           objevit uprostřed checkoutu po 2s) - jinak by lišta na mobilu (kde je
           vyšší, text a tlačítka pod sebou) mohla překrýt tlačítko Zaplatit. */}
-      <footer className="fixed bottom-0 left-0 w-full z-[60] bg-black500 border-t border-black300/30 h-[80px] md:h-[116px] flex items-center justify-center shadow-lg">
+      <footer className="fixed bottom-0 left-0 w-full z-[60] bg-black500 border-t border-black300/30 h-[80px] md:h-[78px] lg:h-[92px] flex items-center justify-center shadow-lg">
         <div className="layout-container flex justify-between items-center">
           <Button
             type="button"
-            onClick={currentStep === 1 ? undefined : () => setCurrentStep((p) => p - 1)}
+            onClick={() => (currentStep === 1 ? router.push('/') : setCurrentStep((p) => p - 1))}
             variant="outlined"
             arrow="left"
           >
-            {currentStep === 1 ? <Link href="/">{t('footer.back')}</Link> : t('footer.back')}
+            {t('footer.back')}
           </Button>
           <div className="flex flex-col items-end">
             {orderError && <p className="text-red-500 text-sm mb-2">{orderError}</p>}
             <Button
-              type={currentStep === 3 ? 'submit' : 'button'}
-              form={currentStep === 3 ? ADDRESS_FORM_ID : undefined}
-              onClick={currentStep === 3 ? undefined : () => setCurrentStep((p) => p + 1)}
+              // Vždy type="button" s explicitním requestSubmit() na posledním kroku - ne
+              // type="submit" + form= atribut. Ten by se přepnul na "submit" ve stejném
+              // renderu, který krok posune na 3 (Next Step -> Adresa), a prohlížeč pak
+              // vyhodnotí default action kliknutí (submit) až PO tomto re-renderu - tj. hned
+              // po příchodu na krok s adresou by se validace spustila sama, bez doteku pole.
+              type="button"
+              onClick={() => {
+                if (currentStep === 3) {
+                  (document.getElementById(ADDRESS_FORM_ID) as HTMLFormElement | null)?.requestSubmit();
+                } else {
+                  setCurrentStep((p) => p + 1);
+                }
+              }}
               disabled={isSubmitting || (currentStep === 2 && !isValidShippingSelected)}
               arrow="right"
             >
