@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import StripePaymentForm from '@/components/StripePaymentForm';
-import { getShippingOptions, getMinInternationalPrice, PAYMENT_OPTIONS } from '@/lib/constants';
+import { PAYMENT_OPTIONS } from '@/lib/constants';
+import { getOrderCurrency } from '@/lib/currency';
+import { getShippingOptionsInCurrency, getMinInternationalPriceInCurrency, getPaymentOptionsInCurrency } from '@/lib/shippingCurrency';
+import { supabase } from '@/lib/supabase';
 import { useCheckout } from '@/hooks/useCheckout';
 import CartStep from '@/components/checkout/CartStep';
 import ShippingStep from '@/components/checkout/ShippingStep';
@@ -29,6 +32,8 @@ const EMPTY_FORM = {
 const CheckoutPage = () => {
   const t = useTranslations('checkout');
   const router = useRouter();
+  const locale = useLocale();
+  const currency = getOrderCurrency(locale);
   const { cartItems, cartTotal, cartTotalAfterDiscount, discountAmount, appliedDiscount, removeFromCart, updateQuantity } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -38,14 +43,30 @@ const CheckoutPage = () => {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [shippingIsDifferent, setShippingIsDifferent] = useState(false);
   const [previewArchImage, setPreviewArchImage] = useState<string | null>(null);
+  // Kurz CZK->EUR pro odhad ceny dopravy před odesláním objednávky (jen pro
+  // zobrazení - autoritativní přepočet dělá create-order server-side znovu).
+  const [czkRate, setCzkRate] = useState<number | null>(null);
 
-  const { submitOrder, isSubmitting, orderError, createdOrderId, serverTotal, isPaymentModalOpen, setIsPaymentModalOpen } = useCheckout();
+  const { submitOrder, isSubmitting, orderError, createdOrderId, serverTotal, serverCurrency, isPaymentModalOpen, setIsPaymentModalOpen } = useCheckout();
+
+  useEffect(() => {
+    if (currency !== 'EUR') return;
+    supabase
+      .from('exchange_rates')
+      .select('rate_to_eur')
+      .eq('currency_code', 'CZK')
+      .single()
+      .then(({ data }) => setCzkRate(data?.rate_to_eur ?? null));
+  }, [currency]);
 
   const totalWeightGrams = cartItems.reduce((sum, item) => sum + (item.weight_grams || 0) * item.quantity, 0);
-  const shippingOptions = getShippingOptions(totalWeightGrams, cartTotal, formData.billing_country);
-  const minInternationalPrice = getMinInternationalPrice(totalWeightGrams, cartTotal);
+  const shippingResult = getShippingOptionsInCurrency(totalWeightGrams, cartTotal, formData.billing_country, currency, czkRate);
+  const shippingOptions = shippingResult.ok ? shippingResult.options : [];
+  const minInternationalResult = getMinInternationalPriceInCurrency(totalWeightGrams, cartTotal, currency, czkRate);
+  const minInternationalPrice = minInternationalResult.ok ? minInternationalResult.price : 0;
+  const paymentOptions = getPaymentOptionsInCurrency(currency);
   const shippingCost = shippingOptions.find((o) => o.id === selectedShipping)?.price ?? 0;
-  const paymentCost = PAYMENT_OPTIONS.find((o) => o.id === selectedPayment)?.price ?? 0;
+  const paymentCost = paymentOptions.find((o) => o.id === selectedPayment)?.price ?? 0;
   const totalOrderPrice = cartTotalAfterDiscount + shippingCost + paymentCost;
   const isMezinarodni = selectedShipping === 'cenne-psani' || selectedShipping === 'ems';
   // "mezinarodni" je jen rozcestník (viz ShippingStep) - dokud zákazník nedovybere konkrétní
@@ -104,6 +125,7 @@ const CheckoutPage = () => {
     submitOrder({
       cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent,
       discountCode: appliedDiscount?.code ?? null,
+      locale,
     });
   };
 
@@ -132,6 +154,7 @@ const CheckoutPage = () => {
             {currentStep === 1 && (
               <CartStep
                 cartItems={cartItems}
+                currency={currency}
                 removeFromCart={removeFromCart}
                 updateQuantity={updateQuantity}
                 onPreviewArch={setPreviewArchImage}
@@ -140,9 +163,10 @@ const CheckoutPage = () => {
             {currentStep === 2 && (
               <ShippingStep
                 shippingOptions={shippingOptions}
+                currency={currency}
                 selectedShipping={selectedShipping}
                 setSelectedShipping={handleShippingChange}
-                paymentOptions={PAYMENT_OPTIONS}
+                paymentOptions={paymentOptions}
                 selectedPayment={selectedPayment}
                 setSelectedPayment={setSelectedPayment}
                 internationalCountry={formData.billing_country}
@@ -167,6 +191,7 @@ const CheckoutPage = () => {
           </div>
           <OrderSummary
             cartItems={cartItems}
+            currency={currency}
             cartTotal={cartTotal}
             shippingCost={shippingCost}
             totalOrderPrice={totalOrderPrice}
@@ -222,7 +247,7 @@ const CheckoutPage = () => {
               <button onClick={() => setIsPaymentModalOpen(false)} className="text-white text-2xl">×</button>
             </div>
             <div className="p-6 bg-white">
-              <StripePaymentForm amount={serverTotal ?? totalOrderPrice} orderId={createdOrderId} />
+              <StripePaymentForm amount={serverTotal ?? totalOrderPrice} currency={serverCurrency ?? currency} orderId={createdOrderId} />
             </div>
           </div>
         </div>

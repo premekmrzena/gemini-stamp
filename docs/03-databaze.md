@@ -42,13 +42,15 @@ RLS: `anon` může jen číst (veřejný výpis produktů na eshopu), `authentic
 ## `exchange_rates`
 Zavedeno 2026-07-17 (`docs/sql/014_exchange_rates.sql`), viz [sekce 9](09-jazykove-mutace.md). Kurzy pro přepočet `products.price_eur`/`sale_price_eur` do měny dané mezinárodní mutace – ručně editované v adminu (záložka "Kurzy měn"), žádné napojení na kurzovní API. Přepočet ceny se počítá za běhu v `src/lib/pricing.ts`, do `products` se nic nezapisuje.
 
+**`CZK` řádek přidán 2026-07-24** (`docs/sql/020_exchange_rates_czk.sql`, **připraveno, čeká na spuštění** – viz [sekce 9](09-jazykove-mutace.md), krok 4a) – jiný účel než KRW/JPY/CNY/TWD: převádí skutečnou Kč cenu poštovného (viz `src/lib/constants.ts`, `getShippingOptions`) na EUR pro zákazníky v EUR checkoutu (`src/lib/shippingCurrency.ts`), ne budoucí zobrazovací cenu mezinárodní mutace. Stejná tabulka/sémantika `rate_to_eur` ("1 EUR = X CZK"), jen vizuálně oddělené v admin záložce "Kurzy měn".
+
 | Sloupec | Typ | Povinné při insertu | Default |
 |---|---|---|---|
-| currency_code | text (PK), `CHECK` na `KRW`/`JPY`/`CNY`/`TWD` | ano | – |
-| rate_to_eur | numeric, `NULL` dokud admin nezadá reálnou hodnotu – appka musí NULL ošetřit (cenu v dané měně neukazovat) | ne (nullable) | – |
+| currency_code | text (PK), `CHECK` na `CZK`/`KRW`/`JPY`/`CNY`/`TWD` (rozšířeno 2026-07-24 o `CZK`) | ano | – |
+| rate_to_eur | numeric, `NULL` dokud admin nezadá reálnou hodnotu – appka musí NULL ošetřit (cenu v dané měně neukazovat, u `CZK` konkrétně `RATE_MISSING` odmítnutí objednávky v `create-order`) | ne (nullable) | – |
 | updated_at | timestamptz | ano | `now()` |
 
-Seednuto 4 řádky (`KRW`, `JPY`, `CNY`, `TWD`) s `rate_to_eur = null`. RLS: `anon` smí jen `SELECT` (kurz není citlivá hodnota, potřeba pro přepočet ceny na veřejném eshopu), `authenticated` (admin) má plný CRUD.
+Seednuto 4 řádky (`KRW`, `JPY`, `CNY`, `TWD`) s `rate_to_eur = null`, `CZK` řádek přibude migrací 020 se stejným `rate_to_eur = null` (nutné ručně nastavit v adminu, jinak EUR objednávky nepůjdou dokončit). RLS: `anon` smí jen `SELECT` (kurz není citlivá hodnota, potřeba pro přepočet ceny na veřejném eshopu), `authenticated` (admin) má plný CRUD.
 
 ## `orders`
 | Sloupec | Typ | Povinné při insertu | Default |
@@ -56,6 +58,7 @@ Seednuto 4 řádky (`KRW`, `JPY`, `CNY`, `TWD`) s `rate_to_eur = null`. RLS: `an
 | id | uuid (PK) | ano | `gen_random_uuid()` |
 | created_at | timestamptz | ano | `now()` |
 | status | text, `CHECK` na 13 platných hodnot (`orders_status_check`, od 2026-06-16) | ano | `'Nová'` |
+| currency | text, `CHECK` na `CZK`/`EUR` (od 2026-07-24, `docs/sql/019_orders_currency.sql`, **připraveno, čeká na spuštění**) – měna, ve které byla objednávka vytvořena/zaplacena, viz [sekce 9](09-jazykove-mutace.md) krok 4a | ano | `'CZK'` (`ADD COLUMN` dobackfilluje historické řádky) |
 | total_price | integer | ano | – |
 | shipping_method | text | ano | – |
 | shipping_cost | integer | ano | – |
@@ -129,3 +132,5 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/015_products_reserve_stock.sql` – provedeno 2026-07-22. Zavádí dvě `SECURITY DEFINER` RPC funkce: `reserve_stock(p_items jsonb)` atomicky (celý košík v jedné transakci, all-or-nothing) sníží `products.stock_quantity` při vytvoření objednávky – při nedostatku skladu u kterékoli položky `RAISE EXCEPTION` vrátí i dřívější UPDATEy ve stejném volání, objednávka se nevytvoří. `release_stock(p_items jsonb)` je symetrická kompenzace pro vzácný případ, kdy `reserve_stock` uspěje, ale insert do `orders` pak přesto selže. Volá `/api/create-order`. Netýká se `custom_stamps` (vlastní archy) – jejich šablonové produkty nemají fyzicky omezený sklad, `stock_quantity` se u nich v appce nepoužívá.
 - `docs/sql/016_orders_stock_released.sql` – provedeno 2026-07-22. Doplňuje `orders.stock_released` (boolean, default `false`) – idempotency flag pro `/api/stripe-webhook`, které teď při `payment_intent.payment_failed`/`payment_intent.canceled` volá `release_stock` a při následném `payment_intent.succeeded` (retry na stejném PaymentIntentu) volá `reserve_stock` zpět. Vyžaduje i rozšíření Stripe webhooku v Dashboardu o eventy `payment_intent.payment_failed`/`payment_intent.canceled`, viz [sekce 1](01-technicka-infrastruktura.md#platby--stripe).
 - `docs/sql/017_orders_webhook_rpc.sql` – napsáno 2026-07-22, **čeká na spuštění v Supabase SQL editoru**. Opravuje nález ze stejného dne: `orders` nemá pro `anon` žádnou `UPDATE` RLS policy, takže webhook (běží pod anon klíčem) při zápisu `status`/`stock_released` přímo přes `.update()` potichu neuspěl (PostgREST u UPDATE bez shody nehází chybu). Zavádí dvě `SECURITY DEFINER` RPC – `mark_order_paid(p_order_id)` a `set_order_stock_released(p_order_id, p_released)` – ať nejde přidávat širokou anon `UPDATE` policy (bezpečnostní riziko přes `orderId` v URL). `/api/stripe-webhook` teď volá tyhle RPC místo přímého `.update()`.
+- `docs/sql/019_orders_currency.sql` – napsáno 2026-07-24, **čeká na spuštění v Supabase SQL editoru**. Doplňuje `orders.currency` (text, `CHECK` na `CZK`/`EUR`, default `'CZK'` – dobackfilluje historické řádky automaticky), viz [sekce 9](09-jazykove-mutace.md) krok 4a.
+- `docs/sql/020_exchange_rates_czk.sql` – napsáno 2026-07-24, **čeká na spuštění v Supabase SQL editoru**. Rozšiřuje `exchange_rates_currency_code_check` o `CZK` a seedne řádek `('CZK', null)` – kurz pro přepočet Kč poštovného do EUR (`src/lib/shippingCurrency.ts`), nutné ručně nastavit v adminu po spuštění migrace, jinak EUR objednávky nepůjdou dokončit (`RATE_MISSING`).

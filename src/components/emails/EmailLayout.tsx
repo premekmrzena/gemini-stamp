@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { SITE_URL } from '@/lib/site';
 
 interface EmailLayoutProps {
   footerNote: string;
@@ -19,7 +20,7 @@ export function EmailLayout({ footerNote, children }: EmailLayoutProps) {
       margin: '0'
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
       `}} />
 
       <div style={{
@@ -28,15 +29,15 @@ export function EmailLayout({ footerNote, children }: EmailLayoutProps) {
         fontFamily: fontStack,
         color: '#FDFBF7'
       }}>
-        <h1 style={{
-          color: '#FF6B35',
-          fontSize: '28px',
-          fontWeight: '700',
-          marginBottom: '24px',
-          textAlign: 'center'
-        }}>
-          My Creative Stamp
-        </h1>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <img
+            src={`${SITE_URL}/images/creative-stamp_logo-email.png`}
+            width={176}
+            height={46}
+            alt="My Creative Stamp"
+            style={{ display: 'inline-block', border: '0' }}
+          />
+        </div>
 
         <div style={{
           backgroundColor: '#1E293B',
@@ -54,7 +55,7 @@ export function EmailLayout({ footerNote, children }: EmailLayoutProps) {
           textAlign: 'center',
           lineHeight: '1.5'
         }}>
-          <p style={{ margin: '0 0 10px 0' }}>My Creative Stamp • Jindřišská 126/15, Praha 1</p>
+          <p style={{ margin: '0 0 10px 0' }}>My Creative Stamp • Jindřišská 126/15, Prague 1</p>
           <p style={{ margin: '0' }}>{footerNote}</p>
         </div>
       </div>

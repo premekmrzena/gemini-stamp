@@ -9,6 +9,15 @@ export function convertFromEur(amountEur: number, rateToEur: number | null): num
   return Math.round(amountEur * rateToEur * 100) / 100;
 }
 
+// Opačný směr - kolik EUR odpovídá dané částce v jiné měně (rateToEur = "1 EUR
+// = X té měny", stejná sémantika jako u convertFromEur). Použito pro přepočet
+// poštovného: skutečná cena od České pošty je v Kč, zákazník v EUR košíku
+// potřebuje vidět EUR ekvivalent (viz src/lib/shippingCurrency.ts).
+export function convertToEur(amountInOtherCurrency: number, rateToEur: number | null): number | null {
+  if (rateToEur == null) return null;
+  return Math.round((amountInOtherCurrency / rateToEur) * 100) / 100;
+}
+
 // Spočítá výši slevy v Kč pro daný mezisoučet. Nikdy nevrátí víc, než je
 // mezisoučet (fixní sleva vyšší než košík se ořízne, ne do záporu).
 export function computeDiscountAmount(

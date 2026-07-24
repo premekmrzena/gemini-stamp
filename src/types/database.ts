@@ -4,7 +4,13 @@ export type ProductTopic = 'umeni' | 'pamatky' | 'znamky' | 'archy';
 
 export type DiscountType = 'percentage' | 'fixed';
 
-export type CurrencyCode = 'KRW' | 'JPY' | 'CNY' | 'TWD';
+export type CurrencyCode = 'CZK' | 'KRW' | 'JPY' | 'CNY' | 'TWD';
+
+// Měna objednávky/checkoutu - jen tyhle dvě se dnes reálně nabízí zákazníkovi
+// (viz src/lib/currency.ts, getOrderCurrency). Nezaměňovat s CurrencyCode výše,
+// což je enum cílových měn v exchange_rates (tam EUR chybí záměrně, je to
+// jejich základní/výchozí měna, ne řádek k přepočtu).
+export type Currency = 'CZK' | 'EUR';
 
 export type ExchangeRate = {
   currency_code: CurrencyCode;
@@ -100,6 +106,7 @@ export type Order = {
   id: string;
   created_at: string;
   status: OrderStatus;
+  currency: Currency;
   total_price: number;
   shipping_method: string;
   shipping_cost: number;

@@ -1,15 +1,18 @@
 import { NextResponse, after } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getShippingOptions, PAYMENT_OPTIONS } from '@/lib/constants';
+import { getEffectivePrice, computeDiscountAmount } from '@/lib/pricing';
+import { getOrderCurrency, getLocalizedPrice } from '@/lib/currency';
+import { getShippingOptionsInCurrency, getPaymentOptionsInCurrency } from '@/lib/shippingCurrency';
 import { sendOrderConfirmation } from '@/lib/email';
 import { CartItemSnapshot } from '@/types/database';
-import { getEffectivePrice, computeDiscountAmount } from '@/lib/pricing';
 
 type JoinedStampProduct = {
   id: string;
   name: string;
   price: number;
   sale_price: number | null;
+  price_eur: number | null;
+  sale_price_eur: number | null;
   weight_grams: number;
 };
 
@@ -21,6 +24,7 @@ type CreateOrderBody = {
   customerNote: string;
   shippingIsDifferent: boolean;
   discountCode: string | null;
+  locale: string;
 };
 
 export async function POST(req: Request) {
@@ -38,10 +42,27 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent, discountCode } = body;
+    const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent, discountCode, locale } = body;
 
     if (!cartItems?.length) {
       return NextResponse.json({ error: 'Košík je prázdný' }, { status: 400 });
+    }
+
+    // Měna se odvozuje ze server-side z locale (jen 'cs'|jinak), klient ji
+    // nikdy neposílá napřímo - viz docs/11-emaily.md a plán fáze 4a v paměti.
+    const currency = getOrderCurrency(locale);
+
+    // Kurz CZK jen pro EUR objednávky - potřeba k přepočtu poštovného
+    // (src/lib/shippingCurrency.ts). Chybějící kurz objednávku korektně
+    // zablokuje níž (RATE_MISSING), ne tiše naúčtuje špatnou částku.
+    let czkPerEur: number | null = null;
+    if (currency === 'EUR') {
+      const { data: rateRow } = await supabase
+        .from('exchange_rates')
+        .select('rate_to_eur')
+        .eq('currency_code', 'CZK')
+        .single();
+      czkPerEur = rateRow?.rate_to_eur ?? null;
     }
 
     // Validate prices server-side — never trust client amounts
@@ -57,7 +78,7 @@ export async function POST(req: Request) {
       if (item.item_type === 'product') {
         const { data: product, error } = await supabase
           .from('products')
-          .select('id, name, price, sale_price, weight_grams')
+          .select('id, name, price, sale_price, price_eur, sale_price_eur, weight_grams')
           .eq('id', item.id)
           .eq('is_active', true)
           .single();
@@ -66,7 +87,15 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: `Produkt ${item.id} nenalezen nebo není aktivní` }, { status: 400 });
         }
 
-        const effectivePrice = getEffectivePrice(product.price, product.sale_price);
+        const localizedPrice = getLocalizedPrice(product, currency);
+        if (!localizedPrice) {
+          return NextResponse.json(
+            { error: `Produkt ${product.name} není momentálně dostupný v této měně.`, code: 'PRICE_UNAVAILABLE', productId: product.id },
+            { status: 400 }
+          );
+        }
+
+        const effectivePrice = getEffectivePrice(localizedPrice.price, localizedPrice.salePrice);
         computedSubtotal += effectivePrice * item.quantity;
         totalWeightGrams += (product.weight_grams || 0) * item.quantity;
         validatedItems.push({ ...item, price: effectivePrice, weight_grams: product.weight_grams });
@@ -76,7 +105,7 @@ export async function POST(req: Request) {
       } else if (item.item_type === 'custom') {
         const { data: stamp, error } = await supabase
           .from('custom_stamps')
-          .select('id, preview_url, products(id, name, price, sale_price, weight_grams)')
+          .select('id, preview_url, products(id, name, price, sale_price, price_eur, sale_price_eur, weight_grams)')
           .eq('id', item.id)
           .single();
 
@@ -89,7 +118,15 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: 'Produkt pro vlastní razítko nenalezen' }, { status: 400 });
         }
 
-        const effectivePrice = getEffectivePrice(product.price, product.sale_price);
+        const localizedPrice = getLocalizedPrice(product, currency);
+        if (!localizedPrice) {
+          return NextResponse.json(
+            { error: `Produkt ${product.name} není momentálně dostupný v této měně.`, code: 'PRICE_UNAVAILABLE', productId: product.id },
+            { status: 400 }
+          );
+        }
+
+        const effectivePrice = getEffectivePrice(localizedPrice.price, localizedPrice.salePrice);
         computedSubtotal += effectivePrice * item.quantity;
         totalWeightGrams += (product.weight_grams || 0) * item.quantity;
         validatedItems.push({
@@ -103,13 +140,22 @@ export async function POST(req: Request) {
       }
     }
 
-    const shippingOptions = getShippingOptions(totalWeightGrams, computedSubtotal, formData.billing_country);
-    const shippingOption = shippingOptions.find((o) => o.id === shippingMethodId);
+    const shippingResult = getShippingOptionsInCurrency(totalWeightGrams, computedSubtotal, formData.billing_country, currency, czkPerEur);
+    if (!shippingResult.ok) {
+      return NextResponse.json(
+        { error: 'Kurz měny pro přepočet dopravy není momentálně k dispozici, zkuste to prosím později.', code: 'RATE_MISSING' },
+        { status: 400 }
+      );
+    }
+    const shippingOption = shippingResult.options.find((o) => o.id === shippingMethodId);
     if (!shippingOption) {
       return NextResponse.json({ error: 'Neplatná metoda dopravy' }, { status: 400 });
     }
 
-    const paymentOption = PAYMENT_OPTIONS.find((o) => o.id === paymentMethodId);
+    // U EUR objednávek getPaymentOptionsInCurrency vynechává 'prevod' (žádný
+    // EUR bankovní účet) - i kdyby to klient obešel, server ho tu odmítne
+    // stejně jako jakoukoli jinou neplatnou metodu platby.
+    const paymentOption = getPaymentOptionsInCurrency(currency).find((o) => o.id === paymentMethodId);
     if (!paymentOption) {
       return NextResponse.json({ error: 'Neplatná metoda platby' }, { status: 400 });
     }
@@ -151,6 +197,7 @@ export async function POST(req: Request) {
 
     const orderData = {
       status: 'Nová',
+      currency,
       total_price: totalPrice,
       shipping_method: shippingOption.name,
       shipping_cost: shippingOption.price,
@@ -206,6 +253,7 @@ export async function POST(req: Request) {
             orderId: shortOrderId,
             customerName: formData.billing_first_name,
             totalPrice,
+            currency,
             cartItems: validatedItems,
             isBankTransfer: paymentMethodId === 'prevod',
           });
@@ -215,7 +263,7 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ orderId: data.id, totalPrice });
+    return NextResponse.json({ orderId: data.id, totalPrice, currency });
 
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Interní chyba serveru';

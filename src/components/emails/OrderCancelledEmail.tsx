@@ -11,19 +11,19 @@ export const OrderCancelledEmail: React.FC<Readonly<OrderCancelledEmailProps>> =
   customerName,
 }) => {
   return (
-    <EmailLayout footerNote="Tento e-mail je automatickým oznámením o zrušení objednávky.">
-      <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '700' }}>
-        Objednávka byla zrušena
+    <EmailLayout footerNote="This email is an automatic notification that your order has been cancelled.">
+      <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '600' }}>
+        Your order has been cancelled
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
-        Ahoj {customerName},<br />
-        objednávka <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> byla zrušena a dál se nepřipravuje.
+        Hi {customerName},<br />
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has been cancelled and will not be processed further.
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
-        Pokud jste za objednávku již zaplatili, peníze vám v nejbližších dnech vrátíme na stejný platební prostředek.
+        If you&apos;ve already paid for the order, we&apos;ll refund it to the same payment method within the next few days.
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
-        Máte-li k tomu dotaz, klidně nám odpovězte na tento e-mail.
+        If you have any questions, feel free to reply to this email.
       </p>
     </EmailLayout>
   );

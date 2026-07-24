@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CartItem } from '@/context/CartContext';
+import { Currency } from '@/lib/currency';
 
 type FormData = Record<string, string>;
 
@@ -13,6 +14,7 @@ type CheckoutSubmitParams = {
   customerNote: string;
   shippingIsDifferent: boolean;
   discountCode: string | null;
+  locale: string;
 };
 
 export function useCheckout() {
@@ -20,6 +22,10 @@ export function useCheckout() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [serverTotal, setServerTotal] = useState<number | null>(null);
+  // Currency, kterou objednávku reálně vytvořil server (getOrderCurrency z
+  // locale v request body) - další krok (platba kartou) ji čte odsud, ne
+  // znovu z useLocale(), aby nemohla nastat neshoda.
+  const [serverCurrency, setServerCurrency] = useState<Currency | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const submitOrder = async (params: CheckoutSubmitParams) => {
@@ -39,6 +45,7 @@ export function useCheckout() {
           customerNote: params.customerNote,
           shippingIsDifferent: params.shippingIsDifferent,
           discountCode: params.discountCode,
+          locale: params.locale,
         }),
       });
 
@@ -47,6 +54,7 @@ export function useCheckout() {
 
       setCreatedOrderId(data.orderId);
       setServerTotal(data.totalPrice);
+      setServerCurrency(data.currency);
 
       if (params.selectedPayment === 'karta') {
         setIsPaymentModalOpen(true);
@@ -67,6 +75,7 @@ export function useCheckout() {
     orderError,
     createdOrderId,
     serverTotal,
+    serverCurrency,
     isPaymentModalOpen,
     setIsPaymentModalOpen,
   };

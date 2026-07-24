@@ -2,15 +2,17 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { CartItem } from '@/context/CartContext';
+import { Currency, formatPrice } from '@/lib/currency';
 
 type Props = {
   cartItems: CartItem[];
+  currency: Currency;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   onPreviewArch: (url: string) => void;
 };
 
-export default function CartStep({ cartItems, removeFromCart, updateQuantity, onPreviewArch }: Props) {
+export default function CartStep({ cartItems, currency, removeFromCart, updateQuantity, onPreviewArch }: Props) {
   const t = useTranslations('checkout.cart');
   return (
     <div className="flex flex-col gap-2">
@@ -71,7 +73,7 @@ export default function CartStep({ cartItems, removeFromCart, updateQuantity, on
                   <span className="style-body-bold text-black">{item.quantity}</span>
                   <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-black">+</button>
                 </div>
-                <p className="style-product-price text-success">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
+                <p className="style-product-price text-success">{formatPrice(item.price * item.quantity, currency)}</p>
               </div>
             </div>
           </div>

@@ -91,7 +91,7 @@ async function reserveStockAfterRecoveredPayment(orderId: string) {
 async function sendOrderConfirmationForCardPayment(orderId: string) {
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, status, billing_email, billing_first_name, total_price, cart_items')
+    .select('id, status, billing_email, billing_first_name, total_price, currency, cart_items')
     .eq('id', orderId)
     .single();
 
@@ -108,6 +108,7 @@ async function sendOrderConfirmationForCardPayment(orderId: string) {
       orderId: order.id.slice(-8).toUpperCase(),
       customerName: order.billing_first_name,
       totalPrice: order.total_price,
+      currency: order.currency,
       cartItems: order.cart_items as CartItemSnapshot[],
       isBankTransfer: false,
     });

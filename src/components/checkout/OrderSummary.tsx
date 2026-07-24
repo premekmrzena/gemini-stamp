@@ -1,17 +1,19 @@
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { CartItem } from '@/context/CartContext';
+import { Currency, formatPrice } from '@/lib/currency';
 import DiscountCodeInput from './DiscountCodeInput';
 
 type Props = {
   cartItems: CartItem[];
+  currency: Currency;
   cartTotal: number;
   shippingCost: number;
   totalOrderPrice: number;
   discountAmount: number;
 };
 
-export default function OrderSummary({ cartItems, cartTotal, shippingCost, totalOrderPrice, discountAmount }: Props) {
+export default function OrderSummary({ cartItems, currency, cartTotal, shippingCost, totalOrderPrice, discountAmount }: Props) {
   const t = useTranslations('checkout.summary');
   const tCart = useTranslations('checkout.cart');
   return (
@@ -28,30 +30,30 @@ export default function OrderSummary({ cartItems, cartTotal, shippingCost, total
               <p className="style-body text-black300">{item.quantity} {tCart('unit')}</p>
             </div>
             <p className="style-body text-black shrink-0">
-              {(item.price * item.quantity).toLocaleString('cs-CZ')} Kč
+              {formatPrice(item.price * item.quantity, currency)}
             </p>
           </div>
         ))}
         <div className="flex flex-col gap-2 py-4 border-t border-black200 style-body text-black">
           <div className="flex justify-between items-center">
             <span>{t('subtotal')}</span>
-            <span>{cartTotal.toLocaleString('cs-CZ')} Kč</span>
+            <span>{formatPrice(cartTotal, currency)}</span>
           </div>
           <DiscountCodeInput />
           {discountAmount > 0 && (
             <div className="flex justify-between items-center text-success">
               <span>{t('discount')}</span>
-              <span>-{discountAmount.toLocaleString('cs-CZ')} Kč</span>
+              <span>-{formatPrice(discountAmount, currency)}</span>
             </div>
           )}
           <div className="flex justify-between items-center">
             <span>{t('shipping')}</span>
-            <span>{shippingCost} Kč</span>
+            <span>{formatPrice(shippingCost, currency)}</span>
           </div>
         </div>
         <div className="flex justify-between items-center pt-4 border-t border-black200">
           <span className="style-body-bold text-black">{t('total')}</span>
-          <span className="style-product-price text-success">{totalOrderPrice.toLocaleString('cs-CZ')} Kč</span>
+          <span className="style-product-price text-success">{formatPrice(totalOrderPrice, currency)}</span>
         </div>
       </div>
     </aside>

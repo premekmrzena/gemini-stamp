@@ -13,13 +13,13 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
   trackingNumber,
 }) => {
   return (
-    <EmailLayout footerNote="Tento e-mail je automatickým oznámením o odeslání objednávky.">
-      <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '700' }}>
-        Vaše objednávka je na cestě!
+    <EmailLayout footerNote="This email is an automatic notification that your order has shipped.">
+      <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '600' }}>
+        Your order is on its way!
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
-        Ahoj {customerName},<br />
-        objednávka <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> byla právě odeslána.
+        Hi {customerName},<br />
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has just been shipped.
       </p>
 
       <div style={{
@@ -31,9 +31,9 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
         textAlign: 'center'
       }}>
         <p style={{ margin: '0', fontSize: '13px', color: '#8B95AC', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Sledovací číslo zásilky
+          Shipment tracking number
         </p>
-        <p style={{ margin: '8px 0 0 0', fontSize: '20px', fontWeight: '700', color: '#22C55E' }}>
+        <p style={{ margin: '8px 0 0 0', fontSize: '20px', fontWeight: '600', color: '#22C55E' }}>
           {trackingNumber}
         </p>
       </div>

@@ -6,13 +6,14 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import { SITE_URL } from '@/lib/site';
 import { Product } from '@/types/database';
 import { getLocalizedProductField } from '@/lib/product-i18n';
+import { getOrderCurrency, getLocalizedPrice } from '@/lib/currency';
 
 const RELATED_PRODUCT_COLUMNS =
-  'id, name, name_en, name_ko, name_ja, name_zh_hans, name_zh_hant, price, sale_price, image_url';
+  'id, name, name_en, name_ko, name_ja, name_zh_hans, name_zh_hant, price, sale_price, price_eur, sale_price_eur, image_url';
 
 type RelatedProduct = Pick<
   Product,
-  'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'image_url'
+  'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'price_eur' | 'sale_price_eur' | 'image_url'
 >;
 
 const categoryLabels: Record<string, string> = {
@@ -125,6 +126,9 @@ export default async function ProductPage({
   const localizedName = getLocalizedProductField(product, locale, 'name');
   const localizedShortDescription = getLocalizedProductField(product, locale, 'short_description');
 
+  const currency = getOrderCurrency(locale);
+  const localizedPrice = getLocalizedPrice(product, currency);
+
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -132,15 +136,19 @@ export default async function ProductPage({
     description: localizedShortDescription || undefined,
     image: product.image_url,
     sku: product.catalog_number || product.id,
-    offers: {
-      '@type': 'Offer',
-      url: `${SITE_URL}/produkt/${product.id}`,
-      priceCurrency: 'CZK',
-      price: product.sale_price ?? product.price,
-      availability: product.stock_quantity > 0
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
-    },
+    // Bez EUR ceny (nevyplněná v adminu) nejde vygenerovat platné offers -
+    // radši žádné structured data pro cenu než chybně označené jako Kč.
+    offers: localizedPrice
+      ? {
+          '@type': 'Offer',
+          url: `${SITE_URL}/produkt/${product.id}`,
+          priceCurrency: currency,
+          price: localizedPrice.salePrice ?? localizedPrice.price,
+          availability: product.stock_quantity > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+        }
+      : undefined,
   };
 
   return (

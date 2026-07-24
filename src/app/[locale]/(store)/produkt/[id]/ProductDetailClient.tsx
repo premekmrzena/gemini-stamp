@@ -4,18 +4,19 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Button from '@/components/Button';
 import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getSalePrice } from '@/lib/pricing';
+import { getOrderCurrency, getLocalizedPrice, formatPrice } from '@/lib/currency';
 import { sanitizeDescriptionHtml } from '@/lib/sanitize';
 import { getLocalizedProductField } from '@/lib/product-i18n';
 import { Product } from '@/types/database';
 
 type RelatedProduct = Pick<
   Product,
-  'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'image_url'
+  'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'price_eur' | 'sale_price_eur' | 'image_url'
 >;
 
 type ProductDetailClientProps = {
@@ -25,7 +26,10 @@ type ProductDetailClientProps = {
 
 export default function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
   const locale = useLocale();
-  const salePrice = getSalePrice(product.price, product.sale_price);
+  const t = useTranslations('cart');
+  const currency = getOrderCurrency(locale);
+  const localizedPrice = getLocalizedPrice(product, currency);
+  const salePrice = localizedPrice ? getSalePrice(localizedPrice.price, localizedPrice.salePrice) : null;
   const isCreativeArch = product.category === 'kreativni-archy';
   const localizedName = getLocalizedProductField(product, locale, 'name');
   const localizedShortDescription = getLocalizedProductField(product, locale, 'short_description');
@@ -152,14 +156,16 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
             <div className="w-full flex flex-col items-center lg:items-start mb-6 pt-2">
               <div className="mb-6 select-none">
-                {salePrice ? (
+                {!localizedPrice ? (
+                  <span className="style-product-price text-black300">{t('unavailable')}</span>
+                ) : salePrice ? (
                   <span className="style-product-price flex items-center gap-2">
-                    <span className="text-black300 line-through">{product.price} Kč</span>
-                    <span className="text-success">{salePrice} Kč</span>
+                    <span className="text-black300 line-through">{formatPrice(localizedPrice.price, currency)}</span>
+                    <span className="text-success">{formatPrice(salePrice, currency)}</span>
                   </span>
                 ) : (
                   <span className="style-product-price text-success">
-                    Cena {product.price} Kč
+                    {formatPrice(localizedPrice.price, currency)}
                   </span>
                 )}
               </div>
@@ -177,11 +183,14 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               ) : (
                 <Button
                   className="w-full md:w-[320px] relative z-20"
+                  disabled={!localizedPrice}
                   onClick={() => {
+                    if (!localizedPrice) return;
                     addToCart({
                       id: product.id,
-                      name: product.name,
-                      price: salePrice ?? product.price,
+                      name: localizedName,
+                      price: salePrice ?? localizedPrice.price,
+                      currency,
                       quantity: 1,
                       image_url: mainImage,
                       weight_grams: product.weight_grams,
@@ -255,7 +264,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             <h2 className="style-h2 text-center mb-12 select-none">Mohlo by vás také zajímat</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
               {relatedProducts.map((relProd) => {
-                const relSalePrice = getSalePrice(relProd.price, relProd.sale_price);
+                const relLocalizedPrice = getLocalizedPrice(relProd, currency);
+                const relSalePrice = relLocalizedPrice ? getSalePrice(relLocalizedPrice.price, relLocalizedPrice.salePrice) : null;
                 const relLocalizedName = getLocalizedProductField(relProd, locale, 'name');
                 return (
                 <div
@@ -280,13 +290,15 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   </div>
                   <div className="flex flex-col items-center text-center relative z-10 pointer-events-none select-none">
                     <h3 className="style-h4 mb-4 line-clamp-2 h-[48px] flex items-center">{relLocalizedName}</h3>
-                    {relSalePrice ? (
+                    {!relLocalizedPrice ? (
+                      <span className="style-product-price text-black300">{t('unavailable')}</span>
+                    ) : relSalePrice ? (
                       <span className="style-product-price flex items-center gap-2">
-                        <span className="text-black300 line-through">{relProd.price} Kč</span>
-                        <span className="text-success">{relSalePrice} Kč</span>
+                        <span className="text-black300 line-through">{formatPrice(relLocalizedPrice.price, currency)}</span>
+                        <span className="text-success">{formatPrice(relSalePrice, currency)}</span>
                       </span>
                     ) : (
-                      <span className="style-product-price text-success">Cena {relProd.price} Kč</span>
+                      <span className="style-product-price text-success">{formatPrice(relLocalizedPrice.price, currency)}</span>
                     )}
                   </div>
                 </div>

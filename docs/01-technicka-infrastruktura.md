@@ -45,8 +45,9 @@
 - Next.js Image povoluje doménu `*.public.blob.vercel-storage.com`
 
 ## E-maily – Resend
+> Obsah šablon (jaký text kde upravit, plán překladu) je v [sekci 11](11-emaily.md), tady jen infrastruktura a spouštěče.
 - Knihovny: `resend`, `@react-email/components`, `@react-email/render`
-- Šablony v `src/components/emails/`, všechny sdílí společnou kostru `EmailLayout.tsx` (tmavě modré pozadí, oranžové "My Creative Stamp" H1, patička s adresou):
+- Šablony v `src/components/emails/`, všechny sdílí společnou kostru `EmailLayout.tsx` (tmavě modré pozadí, logo, patička s adresou):
   - `OrderConfirmationEmail` – potvrzení objednávky (u platby převodem obsahuje i QR kód/bankovní údaje)
   - `ShippingNotificationEmail` – odeslání zásilky se sledovacím číslem
   - `PaymentReceivedEmail` – přijetí platby (stav `Zaplaceno`)

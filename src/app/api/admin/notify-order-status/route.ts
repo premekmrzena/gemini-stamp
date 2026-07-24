@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendPaymentReceived, sendReadyForPickup, sendOrderCancelled, sendRefunded } from '@/lib/email';
-import { OrderStatus } from '@/types/database';
+import { OrderStatus, Currency } from '@/types/database';
 
 // Admin už má objednávku načtenou client-side (přihlášený, authenticated role) - stejný vzor
 // jako existující /api/send-shipping-notification, žádné další čtení z DB tu není potřeba.
@@ -10,11 +10,12 @@ type NotifyOrderStatusBody = {
   orderId: string;
   customerName: string;
   totalPrice: number;
+  currency: Currency;
 };
 
 export async function POST(request: Request) {
   try {
-    const { newStatus, email, orderId, customerName, totalPrice } = (await request.json()) as NotifyOrderStatusBody;
+    const { newStatus, email, orderId, customerName, totalPrice, currency } = (await request.json()) as NotifyOrderStatusBody;
 
     if (!email || !orderId) {
       return NextResponse.json({ error: 'Chybí povinné údaje.' }, { status: 400 });
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
 
     switch (newStatus) {
       case 'Zaplaceno':
-        await sendPaymentReceived({ email, orderId, customerName, totalPrice });
+        await sendPaymentReceived({ email, orderId, customerName, totalPrice, currency });
         break;
       case 'K vyzvednutí':
         await sendReadyForPickup({ email, orderId, customerName });
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
         await sendOrderCancelled({ email, orderId, customerName });
         break;
       case 'Vráceny peníze':
-        await sendRefunded({ email, orderId, customerName, refundAmount: totalPrice });
+        await sendRefunded({ email, orderId, customerName, refundAmount: totalPrice, currency });
         break;
       default:
         // Ostatní stavy nemají mapovaný email - no-op, ne chyba.

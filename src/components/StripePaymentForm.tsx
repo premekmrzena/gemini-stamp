@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useTranslations, useLocale } from 'next-intl';
+import { Currency, formatPrice } from '@/lib/currency';
 
 // 1. Inicializace Stripe pomocí tvého veřejného klíče
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -16,7 +17,7 @@ function toStripeLocale(locale: string): 'en' | 'auto' {
 
 // --- VNITŘNÍ KOMPONENTA: Samotný formulář s tlačítkem ---
 // Přidali jsme orderId do props
-const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) => {
+const CheckoutForm = ({ amount, currency, orderId }: { amount: number, currency: Currency, orderId: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -54,7 +55,7 @@ const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) 
         disabled={!stripe || isLoading}
         className="w-full bg-[#FF6B35] text-[#0F172A] style-body-bold py-[14px] rounded-full hover:bg-[#FF7F51] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
       >
-        {isLoading ? t('processing') : t('pay', { amount: amount.toLocaleString('cs-CZ') })}
+        {isLoading ? t('processing') : t('pay', { amount: formatPrice(amount, currency) })}
       </button>
 
       {errorMessage && (
@@ -68,7 +69,7 @@ const CheckoutForm = ({ amount, orderId }: { amount: number, orderId: string }) 
 
 // --- HLAVNÍ KOMPONENTA ---
 // Přidali jsme orderId do parametrů funkce
-export default function StripePaymentForm({ amount, orderId }: { amount: number, orderId: string }) {
+export default function StripePaymentForm({ amount, currency, orderId }: { amount: number, currency: Currency, orderId: string }) {
   const [clientSecret, setClientSecret] = useState('');
   const t = useTranslations('checkout.payment');
   const locale = useLocale();
@@ -134,7 +135,7 @@ export default function StripePaymentForm({ amount, orderId }: { amount: number,
         }}
       >
         {/* Předáme orderId dolů do vnitřního formuláře */}
-        <CheckoutForm amount={amount} orderId={orderId} />
+        <CheckoutForm amount={amount} currency={currency} orderId={orderId} />
       </Elements>
     </div>
   );

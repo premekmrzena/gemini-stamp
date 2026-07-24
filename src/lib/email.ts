@@ -7,7 +7,7 @@ import { PaymentReceivedEmail } from '@/components/emails/PaymentReceivedEmail';
 import { ReadyForPickupEmail } from '@/components/emails/ReadyForPickupEmail';
 import { OrderCancelledEmail } from '@/components/emails/OrderCancelledEmail';
 import { RefundedEmail } from '@/components/emails/RefundedEmail';
-import { CartItemSnapshot } from '@/types/database';
+import { CartItemSnapshot, Currency } from '@/types/database';
 import { generatePaymentQrCodeBuffer, getVariableSymbol } from '@/lib/czechQrPayment';
 
 const QR_CODE_CONTENT_ID = 'qr-platba';
@@ -19,6 +19,7 @@ type SendOrderConfirmationParams = {
   orderId: string;
   customerName: string;
   totalPrice: number;
+  currency: Currency;
   cartItems: CartItemSnapshot[];
   isBankTransfer: boolean;
 };
@@ -28,29 +29,33 @@ export async function sendOrderConfirmation({
   orderId,
   customerName,
   totalPrice,
+  currency,
   cartItems,
   isBankTransfer,
 }: SendOrderConfirmationParams) {
-  const qrCodeBuffer = isBankTransfer
+  // Bank transfer je dnes jen pro CZK objednávky - create-order odmítá
+  // 'prevod' u EUR (žádný EUR bankovní účet), takže isBankTransfer &&
+  // currency === 'EUR' v praxi nenastane, ale pojistka tu zůstává.
+  const qrCodeBuffer = isBankTransfer && currency === 'CZK'
     ? await generatePaymentQrCodeBuffer({
         amount: totalPrice,
         orderId,
-        message: `Objednavka ${orderId}`,
+        message: `Order ${orderId}`,
       })
     : null;
 
-  const bankTransfer = isBankTransfer
+  const bankTransfer = isBankTransfer && currency === 'CZK'
     ? { variableSymbol: getVariableSymbol(orderId), qrCodeCid: QR_CODE_CONTENT_ID }
     : null;
 
   const emailHtml = await render(
-    React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, cartItems, bankTransfer })
+    React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, currency, cartItems, bankTransfer })
   );
 
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
-    subject: `Objednávka č. ${orderId} přijata – My Creative Stamp`,
+    subject: `Order #${orderId} received – My Creative Stamp`,
     html: emailHtml,
     attachments: qrCodeBuffer
       ? [
@@ -85,7 +90,7 @@ export async function sendShippingNotification({
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
-    subject: `Objednávka č. ${orderId} byla odeslána – My Creative Stamp`,
+    subject: `Order #${orderId} has shipped – My Creative Stamp`,
     html: emailHtml,
   });
 }
@@ -95,17 +100,18 @@ type SendPaymentReceivedParams = {
   orderId: string;
   customerName: string;
   totalPrice: number;
+  currency: Currency;
 };
 
-export async function sendPaymentReceived({ email, orderId, customerName, totalPrice }: SendPaymentReceivedParams) {
+export async function sendPaymentReceived({ email, orderId, customerName, totalPrice, currency }: SendPaymentReceivedParams) {
   const emailHtml = await render(
-    React.createElement(PaymentReceivedEmail, { orderId, customerName, totalPrice })
+    React.createElement(PaymentReceivedEmail, { orderId, customerName, totalPrice, currency })
   );
 
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
-    subject: `Platba za objednávku č. ${orderId} přijata – My Creative Stamp`,
+    subject: `Payment for order #${orderId} received – My Creative Stamp`,
     html: emailHtml,
   });
 }
@@ -124,7 +130,7 @@ export async function sendReadyForPickup({ email, orderId, customerName }: SendR
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
-    subject: `Objednávka č. ${orderId} je připravená k vyzvednutí – My Creative Stamp`,
+    subject: `Order #${orderId} ready for pickup – My Creative Stamp`,
     html: emailHtml,
   });
 }
@@ -143,7 +149,7 @@ export async function sendOrderCancelled({ email, orderId, customerName }: SendO
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
-    subject: `Objednávka č. ${orderId} byla zrušena – My Creative Stamp`,
+    subject: `Order #${orderId} was cancelled – My Creative Stamp`,
     html: emailHtml,
   });
 }
@@ -153,17 +159,18 @@ type SendRefundedParams = {
   orderId: string;
   customerName: string;
   refundAmount: number;
+  currency: Currency;
 };
 
-export async function sendRefunded({ email, orderId, customerName, refundAmount }: SendRefundedParams) {
+export async function sendRefunded({ email, orderId, customerName, refundAmount, currency }: SendRefundedParams) {
   const emailHtml = await render(
-    React.createElement(RefundedEmail, { orderId, customerName, refundAmount })
+    React.createElement(RefundedEmail, { orderId, customerName, refundAmount, currency })
   );
 
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
-    subject: `Platba za objednávku č. ${orderId} vrácena – My Creative Stamp`,
+    subject: `Payment for order #${orderId} refunded – My Creative Stamp`,
     html: emailHtml,
   });
 }

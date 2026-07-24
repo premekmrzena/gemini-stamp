@@ -21,7 +21,8 @@
   "cart": {
     "added": "Přidáno",
     "addToCart": "Do košíku",
-    "addedToCart": "Přidáno do košíku"
+    "addedToCart": "Přidáno do košíku",
+    "unavailable": "Momentálně nedostupné"
   },
   "cookieConsent": {
     "text": "Souhlas s cookies, pro zajištění základního chodu e-shopu, editoru archů a porozumění návštěvnosti.",
@@ -305,7 +306,7 @@
       "international": {
         "title": "Mezinárodní doprava",
         "desc": "Pro finální cenu musíte vybrat cílovou zemi. Celní prohlášení za vás uděláme zdarma.",
-        "priceFrom": "od {price} Kč",
+        "priceFrom": "od {price}",
         "noneAvailable": "Do vybrané země bohužel nelze žádnou z našich mezinárodních služeb odeslat."
       },
       "options": {
@@ -351,7 +352,7 @@
     },
     "payment": {
       "processing": "Zpracovávám platbu...",
-      "pay": "Zaplatit {amount} Kč",
+      "pay": "Zaplatit {amount}",
       "error": "Došlo k nečekané chybě při platbě.",
       "loadingGateway": "Načítám bezpečnou platební bránu..."
     },
@@ -372,7 +373,6 @@
       "photoCount": "{count, plural, one {# fotografie} few {# fotografie} other {# fotografií}}",
       "stampCount": "{count, plural, one {# známka} few {# známky} other {# známek}}",
       "templateInfo": "Informace o šabloně",
-      "priceLabel": "Cena {price} Kč",
       "selectTemplate": "Vybrat šablonu",
       "templateDetailAria": "Detail šablony {name}",
       "successTitle": "Váš arch byl vložen do košíku!",

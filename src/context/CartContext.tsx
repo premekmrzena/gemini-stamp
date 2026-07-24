@@ -1,14 +1,17 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { computeDiscountAmount } from '@/lib/pricing';
+import { getOrderCurrency, Currency } from '@/lib/currency';
 import { DiscountType } from '@/types/database';
 
 export type CartItem = {
   id: string;
   name: string;
   price: number;
+  currency: Currency;
   quantity: number;
   image_url: string;
   weight_grams: number;
@@ -50,6 +53,13 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  // CartProvider žije v kořenovém app/layout.tsx, MIMO NextIntlClientProvider
+  // (ten je až v app/[locale]/layout.tsx) - useLocale() by tu spadl stejně
+  // jako dřív CartToast (viz [[project_i18n_phase_4b]] v paměti). usePathname()
+  // funguje všude, takže se měna určuje přímo z URL prefixu.
+  const pathname = usePathname();
+  const currentCurrency = getOrderCurrency(pathname?.startsWith('/cs') ? 'cs' : 'en');
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [toast, setToast] = useState<ToastState>({ visible: false, item: null });
@@ -96,8 +106,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         // localStorage není dostupné při SSR, takže tohle musí zůstat v efektu (post-mount) -
         // lazy initializer ve useState by běžel i na serveru a způsobil hydration mismatch.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCartItems(JSON.parse(savedCart));
+        const parsed: CartItem[] = JSON.parse(savedCart);
+        // Košík uložený pod jinou měnou (typicky přepnutí /cs <-> /en mezi
+        // návštěvami) by jinak smíchal CZK a EUR ceny v jednom součtu -
+        // bezpečnější ho vyprázdnit než zobrazit nesmyslný mezisoučet.
+        const hasCurrencyMismatch = parsed.some((item) => item.currency !== currentCurrency);
+        if (hasCurrencyMismatch) {
+          localStorage.removeItem('razitka-cart');
+        } else {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setCartItems(parsed);
+        }
       } catch {
         localStorage.removeItem('razitka-cart');
       }
@@ -110,6 +129,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // takže se nespoléhá na to, co bylo uloženo v localStorage.
       applyDiscountCode(savedCode, { silent: true });
     }
+    // currentCurrency vědomě mimo deps - tohle je jednorázová hydratace při
+    // mountu (viz komentář výše), ne synchronizace při každé změně cesty/locale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

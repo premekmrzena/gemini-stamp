@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import AddToCartButton from '@/components/AddToCartButton';
 import StartCreatingButton from '@/components/StartCreatingButton';
 import { getSalePrice } from '@/lib/pricing';
+import { getOrderCurrency, getLocalizedPrice, formatPrice } from '@/lib/currency';
 import { getLocalizedProductField } from '@/lib/product-i18n';
 import { ProductCategory } from '@/types/database';
 
@@ -25,6 +26,8 @@ export type ProductType = {
   short_description_zh_hant?: string | null;
   price: number;
   sale_price: number | null;
+  price_eur: number | null;
+  sale_price_eur: number | null;
   image_url: string;
   stock_quantity: number;
   category: ProductCategory;
@@ -36,10 +39,13 @@ export type ProductType = {
 
 export default function ProductCard({ product }: { product: ProductType }) {
   const locale = useLocale();
+  const t = useTranslations('cart');
   const isTop = !!product.tag_top;
   const isNovinka = product.tag_new;
   const isJenUNas = !isTop && !isNovinka;
-  const salePrice = getSalePrice(product.price, product.sale_price);
+  const currency = getOrderCurrency(locale);
+  const localizedPrice = getLocalizedPrice(product, currency);
+  const salePrice = localizedPrice ? getSalePrice(localizedPrice.price, localizedPrice.salePrice) : null;
   const isCreativeArch = product.category === 'kreativni-archy';
   const localizedName = getLocalizedProductField(product, locale, 'name');
   const localizedDescription = getLocalizedProductField(product, locale, 'short_description');
@@ -96,23 +102,25 @@ export default function ProductCard({ product }: { product: ProductType }) {
 
       <div className="mt-auto flex flex-col items-center relative z-30">
         <div className="flex flex-col items-center mb-4 pointer-events-none select-none">
-          {salePrice ? (
+          {!localizedPrice ? (
+            <span className="style-product-price text-black300">{t('unavailable')}</span>
+          ) : salePrice ? (
             <span className="style-product-price flex items-center gap-2">
-              <span className="text-black300 line-through">{product.price} Kč</span>
-              <span className="text-success">{salePrice} Kč</span>
+              <span className="text-black300 line-through">{formatPrice(localizedPrice.price, currency)}</span>
+              <span className="text-success">{formatPrice(salePrice, currency)}</span>
             </span>
           ) : (
             <span className="style-product-price text-success">
-              Cena {product.price} Kč
+              {formatPrice(localizedPrice.price, currency)}
             </span>
           )}
         </div>
 
         <div className="w-full flex justify-center pointer-events-auto">
-          {isCreativeArch ? (
+          {!localizedPrice ? null : isCreativeArch ? (
             <StartCreatingButton productId={product.id} />
           ) : (
-            <AddToCartButton product={{ ...product, price: salePrice ?? product.price }} />
+            <AddToCartButton product={{ ...product, name: localizedName, price: salePrice ?? localizedPrice.price }} />
           )}
         </div>
       </div>

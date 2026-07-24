@@ -13,7 +13,8 @@ import Stepper from '@/components/checkout/Stepper';
 import Footer from '@/components/Footer';
 import TrustBadges from '@/components/TrustBadges';
 import { TEMPLATES, Template } from '@/lib/editorConfig';
-import { getSalePrice, getEffectivePrice } from '@/lib/pricing';
+import { getSalePrice } from '@/lib/pricing';
+import { getOrderCurrency, getLocalizedPrice, getLocalizedEffectivePrice, formatPrice, Currency } from '@/lib/currency';
 import { getLocalizedProductField } from '@/lib/product-i18n';
 
 type TemplateInfo = {
@@ -31,6 +32,8 @@ type TemplateInfo = {
   short_description_zh_hant: string | null;
   price: number;
   sale_price: number | null;
+  price_eur: number | null;
+  sale_price_eur: number | null;
   sold_count: number;
   is_active: boolean;
 };
@@ -50,17 +53,17 @@ function descriptionOf(tpl: Template, infos: Record<string, TemplateInfo>, local
 // Popisky (label) žijí v messages/*.json pod checkout.createArch.sortOptions (klíč = stejný jako tady) - tady zůstává jen řadicí logika.
 const SORT_OPTIONS = {
   doporucene: { labelKey: 'recommended', compare: null },
-  price_asc: { labelKey: 'priceAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(a, infos) - priceOf(b, infos) },
-  price_desc: { labelKey: 'priceDesc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => priceOf(b, infos) - priceOf(a, infos) },
+  price_asc: { labelKey: 'priceAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string, currency: Currency) => priceOf(a, infos, currency) - priceOf(b, infos, currency) },
+  price_desc: { labelKey: 'priceDesc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string, currency: Currency) => priceOf(b, infos, currency) - priceOf(a, infos, currency) },
   name_asc: { labelKey: 'nameAsc', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string) => nameOf(a, infos, locale).localeCompare(nameOf(b, infos, locale), locale) },
   bestseller: { labelKey: 'bestseller', compare: (a: Template, b: Template, infos: Record<string, TemplateInfo>) => (infos[b.productId]?.sold_count ?? 0) - (infos[a.productId]?.sold_count ?? 0) },
-} as const satisfies Record<string, { labelKey: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string) => number) | null }>;
+} as const satisfies Record<string, { labelKey: string; compare: ((a: Template, b: Template, infos: Record<string, TemplateInfo>, locale: string, currency: Currency) => number) | null }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
-function priceOf(tpl: Template, infos: Record<string, TemplateInfo>): number {
+function priceOf(tpl: Template, infos: Record<string, TemplateInfo>, currency: Currency): number {
   const info = infos[tpl.productId];
-  return info ? getEffectivePrice(info.price, info.sale_price) : Infinity;
+  return info ? getLocalizedEffectivePrice(info, currency) : Infinity;
 }
 
 function LoadingStudio() {
@@ -75,7 +78,9 @@ const StampEditor = dynamic(() => import('@/components/Editor/StampEditor'), {
 
 export default function EditorPage() {
   const t = useTranslations('checkout.createArch');
+  const tCart = useTranslations('cart');
   const locale = useLocale();
+  const currency = getOrderCurrency(locale);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(TEMPLATES[0].id);
 
@@ -106,7 +111,7 @@ export default function EditorPage() {
       const { data, error } = await supabase
         .from('products')
         .select(
-          'id, name, short_description, name_en, short_description_en, name_ko, short_description_ko, name_ja, short_description_ja, name_zh_hans, short_description_zh_hans, name_zh_hant, short_description_zh_hant, price, sale_price, sold_count, is_active'
+          'id, name, short_description, name_en, short_description_en, name_ko, short_description_ko, name_ja, short_description_ja, name_zh_hans, short_description_zh_hans, name_zh_hant, short_description_zh_hant, price, sale_price, price_eur, sale_price_eur, sold_count, is_active'
         )
         .in('id', TEMPLATES.map((tpl) => tpl.productId));
 
@@ -132,8 +137,8 @@ export default function EditorPage() {
 
   const sortedTemplates = useMemo(() => {
     const compare = SORT_OPTIONS[sortKey].compare;
-    return compare ? [...visibleTemplates].sort((a, b) => compare(a, b, productInfo, locale)) : visibleTemplates;
-  }, [sortKey, productInfo, visibleTemplates, locale]);
+    return compare ? [...visibleTemplates].sort((a, b) => compare(a, b, productInfo, locale, currency)) : visibleTemplates;
+  }, [sortKey, productInfo, visibleTemplates, locale, currency]);
 
   const selectedTemplate = TEMPLATES.find((tpl) => tpl.id === selectedTemplateId);
 
@@ -154,6 +159,7 @@ export default function EditorPage() {
             products (
               name,
               price,
+              price_eur,
               weight_grams
             )
           `)
@@ -163,17 +169,25 @@ export default function EditorPage() {
         if (error) throw error;
 
         if (data && data.products) {
-          const productInfo = Array.isArray(data.products) ? data.products[0] : data.products;
+          const stampProductInfo = Array.isArray(data.products) ? data.products[0] : data.products;
+          // Vlastní archy nemají koncept slevy (products.sale_price se tu odjakživa
+          // nenačítá) - jen zákaznická cena podle měny.
+          const localizedPrice = currency === 'CZK' ? stampProductInfo.price : stampProductInfo.price_eur;
 
-          addToCart({
-            id: data.id,
-            name: `${t('customDesignPrefix')}${productInfo.name}`,
-            price: productInfo.price,
-            image_url: data.preview_url,
-            quantity: 1,
-            weight_grams: productInfo.weight_grams,
-            item_type: 'custom',
-          });
+          if (localizedPrice == null) {
+            console.error('Chybí EUR cena pro produkt vlastního archu:', stampProductInfo.name);
+          } else {
+            addToCart({
+              id: data.id,
+              name: `${t('customDesignPrefix')}${selectedTemplate ? nameOf(selectedTemplate, productInfo, locale) : stampProductInfo.name}`,
+              price: localizedPrice,
+              currency,
+              image_url: data.preview_url,
+              quantity: 1,
+              weight_grams: stampProductInfo.weight_grams,
+              item_type: 'custom',
+            });
+          }
         }
       } catch (err) {
         console.error("Chyba při přidávání archu do košíku:", err);
@@ -233,7 +247,8 @@ export default function EditorPage() {
                 // Slot typu "text" vždy nese i fotku (zákazník do něj vkládá foto i vlastní text zároveň) – počítá se tedy taky.
                 const photoCount = tpl.slots.length;
                 const priceInfo = productInfo[tpl.productId];
-                const salePrice = priceInfo ? getSalePrice(priceInfo.price, priceInfo.sale_price) : null;
+                const localizedPrice = priceInfo ? getLocalizedPrice(priceInfo, currency) : null;
+                const salePrice = localizedPrice ? getSalePrice(localizedPrice.price, localizedPrice.salePrice) : null;
                 const name = nameOf(tpl, productInfo, locale);
                 const description = descriptionOf(tpl, productInfo, locale);
 
@@ -291,25 +306,26 @@ export default function EditorPage() {
 
                       <div className="mt-auto flex flex-col items-center gap-[12px] relative z-30 pointer-events-auto">
                         <div>
-                          {priceInfo ? (
-                            salePrice ? (
-                              <span className="style-product-price flex items-center gap-2">
-                                <span className="text-black300 line-through">{priceInfo.price} Kč</span>
-                                <span className="text-success">{salePrice} Kč</span>
-                              </span>
-                            ) : (
-                              <span className="style-product-price text-success">
-                                {t('priceLabel', { price: priceInfo.price })}
-                              </span>
-                            )
-                          ) : (
+                          {!priceInfo ? (
+                            // Data ještě nedotažená ze Supabase - neviditelný placeholder jen kvůli stabilní výšce karty.
                             <span className="style-product-price text-transparent select-none" aria-hidden="true">
-                              {t('priceLabel', { price: '000' })}
+                              {formatPrice(0, currency)}
+                            </span>
+                          ) : !localizedPrice ? (
+                            <span className="style-product-price text-black300">{tCart('unavailable')}</span>
+                          ) : salePrice ? (
+                            <span className="style-product-price flex items-center gap-2">
+                              <span className="text-black300 line-through">{formatPrice(localizedPrice.price, currency)}</span>
+                              <span className="text-success">{formatPrice(salePrice, currency)}</span>
+                            </span>
+                          ) : (
+                            <span className="style-product-price text-success">
+                              {formatPrice(localizedPrice.price, currency)}
                             </span>
                           )}
                         </div>
                         {/* CTA */}
-                        <Button onClick={() => handleSelectTemplate(tpl.id)}>
+                        <Button onClick={() => handleSelectTemplate(tpl.id)} disabled={!!priceInfo && !localizedPrice}>
                           {t('selectTemplate')}
                         </Button>
                       </div>

@@ -10,6 +10,7 @@ import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal'
 import { ShipmentModal } from '@/components/admin/ShipmentModal';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 import { getEffectivePrice } from '@/lib/pricing';
+import { Currency, formatPrice } from '@/lib/currency';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
@@ -22,6 +23,7 @@ const LOW_STOCK_THRESHOLD = 5;
 type PrintUrlRow = { id: string; print_url: string };
 
 const CURRENCY_LABELS: Record<CurrencyCode, string> = {
+  CZK: 'Česká koruna (CZK)',
   KRW: 'Korejský won (KRW)',
   JPY: 'Japonský jen (JPY)',
   CNY: 'Čínský jüan (CNY)',
@@ -394,6 +396,7 @@ export default function AdminDashboard() {
             orderId: order.id.slice(-6).toUpperCase(),
             customerName: order.billing_first_name,
             totalPrice: order.total_price,
+            currency: order.currency,
           }),
         }).catch((err) => console.error('Chyba při odesílání emailu o změně stavu:', err));
       }
@@ -552,8 +555,15 @@ export default function AdminDashboard() {
   // ========================================================
   // 📊 MAIN DASHBOARD
   // ========================================================
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + (Number(order.total_price) || 0), 0);
-  const averageOrderValue = filteredOrders.length ? totalRevenue / filteredOrders.length : 0;
+  // Tržby se počítají zvlášť po měně - sečíst CZK a EUR objednávky dohromady
+  // by dalo neplatné číslo (přechodné období, kdy existují obě měny zároveň).
+  const revenueByCurrency = filteredOrders.reduce<Partial<Record<Currency, { total: number; count: number }>>>((acc, order) => {
+    const entry = acc[order.currency] ?? { total: 0, count: 0 };
+    entry.total += Number(order.total_price) || 0;
+    entry.count += 1;
+    acc[order.currency] = entry;
+    return acc;
+  }, {});
   const pendingShipmentCount = filteredOrders.filter((o) => ['Zaplaceno', 'Připravujeme'].includes(o.status)).length;
 
   return (
@@ -860,8 +870,9 @@ export default function AdminDashboard() {
         {activeTab === 'kurzy' && (
           <div className="space-y-4">
             <p className="style-body text-black300/70 max-w-2xl">
-              Kurz EUR → cílová měna pro přepočet mezinárodní ceny produktů (pole „Cena (EUR)“ v produktu). Bez
-              napojení na kurzovní API – aktualizuj ručně podle potřeby, orientačně jednou za měsíc.
+              Kurz EUR → cílová měna pro přepočet mezinárodní ceny produktů (pole „Cena (EUR)“ v produktu), plus
+              kurz CZK použitý k přepočtu poštovného (skutečná Kč cena od České pošty) do EUR. Bez napojení na
+              kurzovní API – aktualizuj ručně podle potřeby, orientačně jednou za měsíc.
             </p>
             <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
               {exchangeRatesLoading ? (
@@ -878,7 +889,43 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black300/20">
-                      {exchangeRates.map((rate) => (
+                      {exchangeRates.filter((r) => r.currency_code === 'CZK').map((rate) => (
+                        <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
+                          <td className="p-4 style-body-bold text-secondary">
+                            {CURRENCY_LABELS[rate.currency_code]}
+                            <span className="block style-label text-black300/70 font-normal">pro přepočet poštovného</span>
+                          </td>
+                          <td className="p-4">
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.0001"
+                              placeholder="nenastaveno"
+                              className="bg-black border border-black300/50 rounded-[8px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
+                              value={rateInputs[rate.currency_code] ?? ''}
+                              onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
+                            />
+                          </td>
+                          <td className="p-4 style-body text-black300">
+                            {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => saveExchangeRate(rate.currency_code)}
+                              disabled={savingRate === rate.currency_code}
+                              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[8px] transition-all style-body cursor-pointer"
+                            >
+                              {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <td colSpan={4} className="px-4 pt-4 pb-1 style-label text-black300/70 uppercase tracking-wide bg-black/20">
+                          Budoucí jazykové mutace (KO/JA/ZH)
+                        </td>
+                      </tr>
+                      {exchangeRates.filter((r) => r.currency_code !== 'CZK').map((rate) => (
                         <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
                           <td className="p-4 style-body-bold text-secondary">{CURRENCY_LABELS[rate.currency_code]}</td>
                           <td className="p-4">
@@ -922,7 +969,13 @@ export default function AdminDashboard() {
             <div className="p-3 bg-tag-top/10 rounded-[8px]"><TrendingUp className="text-tag-top" /></div>
             <div>
               <p className="style-product-tag text-black300 mb-1">Obrat (dle filtru)</p>
-              <p className="style-h2 text-secondary">{totalRevenue.toLocaleString('cs-CZ')} Kč</p>
+              <p className="style-h2 text-secondary">
+                {Object.keys(revenueByCurrency).length === 0
+                  ? formatPrice(0, 'CZK')
+                  : Object.entries(revenueByCurrency).map(([cur, stats]) => (
+                      <span key={cur} className="block">{formatPrice(stats.total, cur as Currency)}</span>
+                    ))}
+              </p>
             </div>
           </div>
           <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
@@ -936,7 +989,13 @@ export default function AdminDashboard() {
             <div className="p-3 bg-primary/10 rounded-[8px]"><TrendingUp className="text-primary" /></div>
             <div>
               <p className="style-product-tag text-black300 mb-1">Průměrná hodnota</p>
-              <p className="style-h2 text-secondary">{Math.round(averageOrderValue).toLocaleString('cs-CZ')} Kč</p>
+              <p className="style-h2 text-secondary">
+                {Object.keys(revenueByCurrency).length === 0
+                  ? formatPrice(0, 'CZK')
+                  : Object.entries(revenueByCurrency).map(([cur, stats]) => (
+                      <span key={cur} className="block">{formatPrice(Math.round(stats.total / stats.count), cur as Currency)}</span>
+                    ))}
+              </p>
             </div>
           </div>
           <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
@@ -995,7 +1054,7 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="p-4 text-right style-body-bold text-secondary">
-                        {order.total_price.toLocaleString('cs-CZ')} Kč
+                        {formatPrice(order.total_price, order.currency)}
                       </td>
                     </tr>
                   ))}
@@ -1127,7 +1186,7 @@ export default function AdminDashboard() {
                       <div key={i} className="p-4 border-b border-black300/20 last:border-0 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                         <div className="space-y-1">
                           <p className="style-body-bold text-secondary">{item.name}</p>
-                          <p className="style-product-tag text-black300 lowercase">{item.quantity} x {item.price} Kč</p>
+                          <p className="style-product-tag text-black300 lowercase">{item.quantity} x {formatPrice(item.price, selectedOrder.currency)}</p>
                           
                           {/* DYNAMICKÉ TLAČÍTKO PRO STAŽENÍ TISKOVÉHO SOUBORU */}
                           {isCustomStamp && (
@@ -1149,7 +1208,7 @@ export default function AdminDashboard() {
                             </div>
                           )}
                         </div>
-                        <p className="style-body-bold text-primary sm:text-right shrink-0">{(item.price * item.quantity).toLocaleString('cs-CZ')} Kč</p>
+                        <p className="style-body-bold text-primary sm:text-right shrink-0">{formatPrice(item.price * item.quantity, selectedOrder.currency)}</p>
                       </div>
                     );
                   })}
@@ -1163,7 +1222,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="text-right">
                   <p className="style-product-tag text-black300 mb-1">Celkem k úhradě</p>
-                  <p className="style-product-price text-success">{selectedOrder.total_price.toLocaleString('cs-CZ')} Kč</p>
+                  <p className="style-product-price text-success">{formatPrice(selectedOrder.total_price, selectedOrder.currency)}</p>
                 </div>
               </div>
             </div>

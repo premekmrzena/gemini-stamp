@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from '@/context/CartContext';
+import { getOrderCurrency } from '@/lib/currency';
 
 // Jaká data tlačítko potřebuje
 type AddToCartButtonProps = {
@@ -18,6 +19,8 @@ type AddToCartButtonProps = {
 export default function AddToCartButton({ product }: AddToCartButtonProps) {
   const { addToCart } = useCart();
   const t = useTranslations('cart');
+  const locale = useLocale();
+  const currency = getOrderCurrency(locale);
   // Přidáme stav pro zobrazení úspěšného přidání
   const [isAdded, setIsAdded] = useState(false);
 
@@ -32,6 +35,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
       id: product.id,
       name: product.name,
       price: product.price,
+      currency,
       quantity: 1,
       image_url: product.image_url || '/images/product-image_0001.jpg',
       weight_grams: product.weight_grams,

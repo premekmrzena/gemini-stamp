@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     // Fetch the real amount from the order — never trust client-provided amount
     const { data: order, error } = await supabase
       .from('orders')
-      .select('id, total_price')
+      .select('id, total_price, currency')
       .eq('id', orderId)
       .single();
 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(order.total_price * 100),
-      currency: 'czk',
+      currency: order.currency.toLowerCase(),
       automatic_payment_methods: { enabled: true },
       metadata: { orderId: order.id },
     });

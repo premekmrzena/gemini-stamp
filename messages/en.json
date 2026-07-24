@@ -21,7 +21,8 @@
   "cart": {
     "added": "Added",
     "addToCart": "Add to cart",
-    "addedToCart": "Added to cart"
+    "addedToCart": "Added to cart",
+    "unavailable": "Currently unavailable"
   },
   "cookieConsent": {
     "text": "We use cookies to run the shop and the sheet editor properly, and to understand site traffic.",
@@ -305,7 +306,7 @@
       "international": {
         "title": "International shipping",
         "desc": "You need to select a destination country for the final price. We'll take care of the customs declaration for you, free of charge.",
-        "priceFrom": "from {price} CZK",
+        "priceFrom": "from {price}",
         "noneAvailable": "Unfortunately none of our international services can be shipped to the selected country."
       },
       "options": {
@@ -351,7 +352,7 @@
     },
     "payment": {
       "processing": "Processing payment...",
-      "pay": "Pay {amount} Kč",
+      "pay": "Pay {amount}",
       "error": "An unexpected error occurred during payment.",
       "loadingGateway": "Loading secure payment gateway..."
     },
@@ -372,7 +373,6 @@
       "photoCount": "{count, plural, one {# photo} other {# photos}}",
       "stampCount": "{count, plural, one {# stamp} other {# stamps}}",
       "templateInfo": "Template info",
-      "priceLabel": "Price {price} Kč",
       "selectTemplate": "Choose template",
       "templateDetailAria": "Template details {name}",
       "successTitle": "Your sheet has been added to the cart!",

@@ -2,15 +2,23 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { supabase } from '@/lib/supabase';
 import ProductList from '@/components/ProductList';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TrustBadges from '@/components/TrustBadges';
-import { getEffectivePrice } from '@/lib/pricing';
+import { getOrderCurrency, getLocalizedEffectivePrice, Currency } from '@/lib/currency';
 import { Product, ProductTopic } from '@/types/database';
 import { CATEGORY_CONTENT, CATEGORY_GROUPS } from '@/lib/categoryContent';
 
-type SortableProduct = { name: string; price: number; sale_price: number | null; sold_count: number | null };
+type SortableProduct = {
+  name: string;
+  price: number;
+  sale_price: number | null;
+  price_eur: number | null;
+  sale_price_eur: number | null;
+  sold_count: number | null;
+};
 
 const TOPIC_FILTER_OPTIONS: Record<'vse' | ProductTopic, string> = {
   vse: 'Vše',
@@ -22,19 +30,23 @@ const TOPIC_FILTER_OPTIONS: Record<'vse' | ProductTopic, string> = {
 
 type TopicFilterKey = keyof typeof TOPIC_FILTER_OPTIONS;
 
+// price_asc/price_desc berou currency navíc (getLocalizedEffectivePrice vrací
+// Infinity, když produktu chybí EUR cena, ať spadne na konec řazení).
 const SORT_OPTIONS = {
   doporucene: { label: 'Doporučené', compare: null },
-  price_asc: { label: 'Cena: od nejnižší', compare: (a: SortableProduct, b: SortableProduct) => getEffectivePrice(a.price, a.sale_price) - getEffectivePrice(b.price, b.sale_price) },
-  price_desc: { label: 'Cena: od nejvyšší', compare: (a: SortableProduct, b: SortableProduct) => getEffectivePrice(b.price, b.sale_price) - getEffectivePrice(a.price, a.sale_price) },
+  price_asc: { label: 'Cena: od nejnižší', compare: (a: SortableProduct, b: SortableProduct, currency: Currency) => getLocalizedEffectivePrice(a, currency) - getLocalizedEffectivePrice(b, currency) },
+  price_desc: { label: 'Cena: od nejvyšší', compare: (a: SortableProduct, b: SortableProduct, currency: Currency) => getLocalizedEffectivePrice(b, currency) - getLocalizedEffectivePrice(a, currency) },
   name_asc: { label: 'Název: A–Z', compare: (a: SortableProduct, b: SortableProduct) => a.name.localeCompare(b.name, 'cs') },
   bestseller: { label: 'Nejprodávanější', compare: (a: SortableProduct, b: SortableProduct) => (b.sold_count ?? 0) - (a.sold_count ?? 0) },
-} as const satisfies Record<string, { label: string; compare: ((a: SortableProduct, b: SortableProduct) => number) | null }>;
+} as const satisfies Record<string, { label: string; compare: ((a: SortableProduct, b: SortableProduct, currency: Currency) => number) | null }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
 export default function CategoryPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = useLocale();
+  const currency = getOrderCurrency(locale);
   const slug = typeof params?.slug === 'string' ? params.slug : '';
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -81,8 +93,8 @@ export default function CategoryPage() {
 
   const sortedProducts = useMemo(() => {
     const compare = SORT_OPTIONS[sortKey].compare;
-    return compare ? [...filteredProducts].sort(compare) : filteredProducts;
-  }, [filteredProducts, sortKey]);
+    return compare ? [...filteredProducts].sort((a, b) => compare(a, b, currency)) : filteredProducts;
+  }, [filteredProducts, sortKey, currency]);
 
   if (slug === 'kreativni-archy') return null;
 
