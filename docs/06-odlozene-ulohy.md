@@ -10,7 +10,7 @@
 | **Aktivace ostrého Stripe účtu** | Zatím testovací klíče/testovací karty, plán 2026-07-22 přejít na živý provoz | Přepnout `STRIPE_SECRET_KEY`/`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` z testovacích na live klíče (Vercel env), zaregistrovat live webhook (viz řádek výše, live režim má vlastní `STRIPE_WEBHOOK_SECRET`), reálný end-to-end test platby s malou částkou. |
 | **Napojení na API dopravce naostro** | 2026-07-23: admin tlačítko „Vytvořit zásilku“ skutečně volá nAPI B2B-ZSK České pošty a funguje — ale zatím jen proti **demo** prostředí, viz [sekce 10](10-doprava-a-celni-prohlaseni.md#3-otevřené-body) | Přepnout `CESKA_POSTA_API_ENV` na `live`, doplnit `CESKA_POSTA_LIVE_CUSTOMER_ID`/`POST_CODE`/`LOCATION_NUMBER` (live účet je zatím nemá), reálný end-to-end test s malou zásilkou. |
 | **Zonos Declaration ID pro USA/Portoriko** | Od 1.7.2026 ČP vyžaduje `declarationId` pro zásilky do USA/Portorika, zdokumentováno ale nezapojeno, viz [sekce 10](10-doprava-a-celni-prohlaseni.md#3-otevřené-body) | Založit Zonos účet (vyžaduje platební kartu majitele eshopu), zapojit `declarationCreateWorkflow` GraphQL volání před `parcelService` requestem na zásilky do US/PR. |
-| **Resend e-maily ze sandbox domény** `onboarding@resend.dev` | Vědomě odloženo 2026-06-16 — vlastní doména se bude řešit později | Zverifikovat doménu v Resendu, změnit `from` adresu na obou místech v `src/lib/email.ts` (`sendOrderConfirmation`, `sendShippingNotification`). Dokud se to nezmění, sandbox pravděpodobně pošle jen na ověřenou adresu vlastníka účtu, ne libovolnému zákazníkovi. Detail v [sekci 1](01-technicka-infrastruktura.md#e-maily--resend). |
+| **Vercel produkční `RESEND_API_KEY` na starém klíči** | Doména `mycreativestamp.com` ověřená a `EMAIL_FROM` přepnuté 2026-07-24 (hotovo) — jen produkční env proměnná ještě ukazuje na starší `full_access` klíč "Onboarding", ne na nový `mycreativestamp-production` (`sending_access`) | Ve Vercelu (Project → Settings → Environment Variables) přepsat `RESEND_API_KEY` na nový klíč, redeploy. Pak smazat starý klíč "Onboarding" v Resend dashboardu (do té doby ho nemazat, produkce ho pořád používá). Detail v [sekci 1](01-technicka-infrastruktura.md#e-maily--resend). |
 
 ## Fakturace
 
@@ -25,7 +25,7 @@
 | **Žádná role/oprávnění** | Kdokoli s platným Supabase Auth účtem vidí a může měnit úplně vše (objednávky i produkty) — žádné rozlišení rolí v appce. |
 | **Žádný audit log** | Není vidět, kdo a kdy změnil stav objednávky nebo upravil produkt. |
 | **Žádná validace přechodů stavu objednávky** | Z adminu lze nastavit jakýkoli ze 13 stavů v jakémkoli pořadí (např. `Nová` → `Uzavřeno` přímo). Tlačítko „další krok" v dashboardu jen *navrhuje* logický další stav, nic nevynucuje. Detail v [sekci 2](02-stavy-objednavky.md#otevřené-body). |
-| **Notifikace zákazníkovi jen částečné** | Automaticky se posílá e-mail jen při vytvoření objednávky (`Nová`) a manuálně při zadání sledovacího čísla (typicky u `Odesláno`). Stavy `Doručeno`, `Vyzvednuto`, `Vráceny peníze` atd. zákazníkovi e-mailem nepřijdou. |
+| **Notifikace zákazníkovi ještě ne pro všechny stavy** | Od 2026-07-24 se automaticky posílá e-mail při `Nová`/`Zaplaceno`/`K vyzvednutí`/`Zrušeno`/`Vráceny peníze` a manuálně při zadání sledovacího čísla (typicky u `Odesláno`). Stavy `Připravujeme`, `Doručeno`, `Vyzvednuto`, `Uzavřeno`, `Vráceno`, `Ztracená zásilka`, `Reklamace` zákazníkovi e-mailem nepřijdou — vědomě odloženo, vyžadují buď individuální komunikaci, nebo jsou málo časté. Detail v [sekci 1](01-technicka-infrastruktura.md#e-maily--resend). |
 
 ## Produkty
 

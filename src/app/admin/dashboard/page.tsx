@@ -54,6 +54,11 @@ function getStatusColorClasses(status: OrderStatus | undefined) {
 const PICKUP_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'K vyzvednutí', 'Vyzvednuto', 'Uzavřeno'];
 const SHIPPING_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'Odesláno', 'Doručeno', 'Uzavřeno'];
 
+// Stavy, u kterých změna přes updateOrderStatus() automaticky pošle zákazníkovi email
+// (viz /api/admin/notify-order-status). Odesláno má vlastní tok přes sledovací číslo
+// (handleSaveTrackingNumber), ne přes tenhle dropdown/"Další krok".
+const STATUS_EMAIL_NOTIFICATIONS = new Set<OrderStatus>(['Zaplaceno', 'K vyzvednutí', 'Zrušeno', 'Vráceny peníze']);
+
 // Vrací další stav v "šťastné cestě" objednávky podle způsobu dopravy.
 // Stavy mimo tuto cestu (Zrušeno, Vráceno, Reklamace...) jsou výjimky řešené jen manuálně přes select.
 function getNextStatus(order: { status?: OrderStatus; shipping_method?: string }): OrderStatus | null {
@@ -367,9 +372,31 @@ export default function AdminDashboard() {
 
     if (error) {
       alert('Chyba při aktualizaci stavu');
-    } else {
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      setSelectedOrder((prev) => prev ? { ...prev, status: newStatus } : null);
+      return;
+    }
+
+    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    setSelectedOrder((prev) => prev ? { ...prev, status: newStatus } : null);
+
+    // Jen pro stavy s mapovaným emailem (viz STATUS_EMAIL_NOTIFICATIONS) - "Zaplaceno" u platby
+    // kartou chodí vždy přes Stripe webhook (posílá rovnou plnohodnotné potvrzení objednávky),
+    // tahle cesta v praxi slouží pro ruční potvrzení platby převodem. Fire-and-forget - selhání
+    // emailu nesmí zpochybnit, že se stav objednávky už úspěšně změnil.
+    if (STATUS_EMAIL_NOTIFICATIONS.has(newStatus)) {
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        fetch('/api/admin/notify-order-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            newStatus,
+            email: order.billing_email,
+            orderId: order.id.slice(-6).toUpperCase(),
+            customerName: order.billing_first_name,
+            totalPrice: order.total_price,
+          }),
+        }).catch((err) => console.error('Chyba při odesílání emailu o změně stavu:', err));
+      }
     }
   }
 

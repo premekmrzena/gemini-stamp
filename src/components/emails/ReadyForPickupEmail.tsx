@@ -1,25 +1,23 @@
 import * as React from 'react';
 import { EmailLayout } from './EmailLayout';
 
-interface ShippingEmailProps {
+interface ReadyForPickupEmailProps {
   orderId: string;
   customerName: string;
-  trackingNumber: string;
 }
 
-export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> = ({
+export const ReadyForPickupEmail: React.FC<Readonly<ReadyForPickupEmailProps>> = ({
   orderId,
   customerName,
-  trackingNumber,
 }) => {
   return (
-    <EmailLayout footerNote="Tento e-mail je automatickým oznámením o odeslání objednávky.">
+    <EmailLayout footerNote="Tento e-mail je automatickým oznámením o připravenosti objednávky k vyzvednutí.">
       <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '700' }}>
-        Vaše objednávka je na cestě!
+        Objednávka je připravená k vyzvednutí!
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Ahoj {customerName},<br />
-        objednávka <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> byla právě odeslána.
+        objednávka <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> na vás čeká na naší prodejně.
       </p>
 
       <div style={{
@@ -31,12 +29,16 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
         textAlign: 'center'
       }}>
         <p style={{ margin: '0', fontSize: '13px', color: '#8B95AC', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Sledovací číslo zásilky
+          Místo vyzvednutí
         </p>
-        <p style={{ margin: '8px 0 0 0', fontSize: '20px', fontWeight: '700', color: '#22C55E' }}>
-          {trackingNumber}
+        <p style={{ margin: '8px 0 0 0', fontSize: '18px', fontWeight: '700', color: '#FDFBF7' }}>
+          Jindřišská 126/15, Praha 1
         </p>
       </div>
+
+      <p style={{ fontSize: '13px', color: '#8B95AC', marginTop: '16px', lineHeight: '1.5' }}>
+        S sebou prosím vezměte číslo objednávky nebo tento e-mail.
+      </p>
     </EmailLayout>
   );
 };

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
+import { sendOrderConfirmation } from '@/lib/email';
 import { CartItemSnapshot } from '@/types/database';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -81,6 +82,40 @@ async function reserveStockAfterRecoveredPayment(orderId: string) {
   if (updateError) console.error('Chyba při resetu stock_released po úspěšné platbě:', updateError);
 }
 
+// Potvrzovací email u platby kartou se záměrně neposílá hned při vytvoření objednávky
+// (viz create-order/route.ts) - dřív by ho zákazník dostal i u zamítnuté/nedokončené platby.
+// Tohle je jeho jediné odeslání pro platbu kartou, proto plnohodnotné (položky, částka),
+// ne jen obecná "Zaplaceno" notifikace jako u ručního potvrzení platby převodem v adminu.
+// Volá se PŘED mark_order_paid, aby šlo poznat stav před tranzicí - Stripe umí stejný
+// payment_intent.succeeded event doručit vícekrát, bez týhle pojistky by se email zdvojil.
+async function sendOrderConfirmationForCardPayment(orderId: string) {
+  const { data: order, error } = await supabase
+    .from('orders')
+    .select('id, status, billing_email, billing_first_name, total_price, cart_items')
+    .eq('id', orderId)
+    .single();
+
+  if (error || !order) {
+    console.error('Chyba při načítání objednávky pro potvrzovací email:', error);
+    return;
+  }
+
+  if (order.status === 'Zaplaceno') return;
+
+  try {
+    await sendOrderConfirmation({
+      email: order.billing_email,
+      orderId: order.id.slice(-8).toUpperCase(),
+      customerName: order.billing_first_name,
+      totalPrice: order.total_price,
+      cartItems: order.cart_items as CartItemSnapshot[],
+      isBankTransfer: false,
+    });
+  } catch (err) {
+    console.error('Chyba při odesílání potvrzovacího emailu po platbě kartou:', err);
+  }
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
@@ -108,6 +143,8 @@ export async function POST(request: Request) {
     const orderId = paymentIntent.metadata?.orderId;
 
     if (orderId) {
+      await sendOrderConfirmationForCardPayment(orderId);
+
       const { error } = await supabase.rpc('mark_order_paid', { p_order_id: orderId });
 
       if (error) {

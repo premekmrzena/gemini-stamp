@@ -1,25 +1,25 @@
 import * as React from 'react';
 import { EmailLayout } from './EmailLayout';
 
-interface ShippingEmailProps {
+interface RefundedEmailProps {
   orderId: string;
   customerName: string;
-  trackingNumber: string;
+  refundAmount: number;
 }
 
-export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> = ({
+export const RefundedEmail: React.FC<Readonly<RefundedEmailProps>> = ({
   orderId,
   customerName,
-  trackingNumber,
+  refundAmount,
 }) => {
   return (
-    <EmailLayout footerNote="Tento e-mail je automatickým oznámením o odeslání objednávky.">
+    <EmailLayout footerNote="Tento e-mail je automatickým oznámením o vrácení platby.">
       <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '700' }}>
-        Vaše objednávka je na cestě!
+        Platba vám byla vrácena
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Ahoj {customerName},<br />
-        objednávka <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> byla právě odeslána.
+        platbu za objednávku <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> jsme vám vrátili zpět na váš platební prostředek. V závislosti na bance se peníze mohou objevit na účtu za pár pracovních dní.
       </p>
 
       <div style={{
@@ -31,10 +31,10 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
         textAlign: 'center'
       }}>
         <p style={{ margin: '0', fontSize: '13px', color: '#8B95AC', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Sledovací číslo zásilky
+          Vrácená částka
         </p>
         <p style={{ margin: '8px 0 0 0', fontSize: '20px', fontWeight: '700', color: '#22C55E' }}>
-          {trackingNumber}
+          {refundAmount.toLocaleString('cs-CZ')} Kč
         </p>
       </div>
     </EmailLayout>

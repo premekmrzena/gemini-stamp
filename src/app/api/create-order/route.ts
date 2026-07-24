@@ -194,18 +194,24 @@ export async function POST(req: Request) {
         if (error) console.error('Chyba při uplatnění slevového kódu:', error);
       }
 
-      const shortOrderId = data.id.slice(-8).toUpperCase();
-      try {
-        await sendOrderConfirmation({
-          email: formData.billing_email,
-          orderId: shortOrderId,
-          customerName: formData.billing_first_name,
-          totalPrice,
-          cartItems: validatedItems,
-          isBankTransfer: paymentMethodId === 'prevod',
-        });
-      } catch (err) {
-        console.error('Email error:', err);
+      // Platba kartou: potvrzovací email se pošle až po payment_intent.succeeded ve
+      // stripe-webhook.ts - dřív by ho zákazník dostal i u zamítnuté/nedokončené platby.
+      // Platba převodem nemá žádné automatické potvrzení platby, takže se posílá hned -
+      // obsahuje QR/platební pokyny, které zákazník potřebuje ihned.
+      if (paymentMethodId !== 'karta') {
+        const shortOrderId = data.id.slice(-8).toUpperCase();
+        try {
+          await sendOrderConfirmation({
+            email: formData.billing_email,
+            orderId: shortOrderId,
+            customerName: formData.billing_first_name,
+            totalPrice,
+            cartItems: validatedItems,
+            isBankTransfer: paymentMethodId === 'prevod',
+          });
+        } catch (err) {
+          console.error('Email error:', err);
+        }
       }
     });
 

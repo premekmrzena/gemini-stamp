@@ -46,10 +46,18 @@
 
 ## E-maily – Resend
 - Knihovny: `resend`, `@react-email/components`, `@react-email/render`
-- Šablony: `src/components/emails/OrderConfirmationEmail`, `src/components/emails/ShippingNotificationEmail`
-- Odesílání potvrzení objednávky je zabudované přímo v `POST /api/create-order` (fire-and-forget, chyba se jen loguje, neblokuje vytvoření objednávky) přes `src/lib/email.ts`
-- Notifikaci o odeslání zásilky spouští admin manuálně v dashboardu (zadání sledovacího čísla → `POST /api/send-shipping-notification`), viz [sekce 5](05-administrace.md#2-záložka-objednávky)
-- **Odesílá se z `onboarding@resend.dev`** – to je Resendí sandbox/testovací doména. Pro produkci je nutné ve Resendu zverifikovat vlastní doménu a změnit `from` adresu (na obou místech v `src/lib/email.ts`).
+- Šablony v `src/components/emails/`, všechny sdílí společnou kostru `EmailLayout.tsx` (tmavě modré pozadí, oranžové "My Creative Stamp" H1, patička s adresou):
+  - `OrderConfirmationEmail` – potvrzení objednávky (u platby převodem obsahuje i QR kód/bankovní údaje)
+  - `ShippingNotificationEmail` – odeslání zásilky se sledovacím číslem
+  - `PaymentReceivedEmail` – přijetí platby (stav `Zaplaceno`)
+  - `ReadyForPickupEmail` – připraveno k osobnímu odběru (stav `K vyzvednutí`)
+  - `OrderCancelledEmail` – zrušení objednávky (stav `Zrušeno`)
+  - `RefundedEmail` – vrácení platby (stav `Vráceny peníze`)
+- **Časování potvrzení objednávky** (od 2026-07-24): u platby převodem se posílá hned v `POST /api/create-order` (obsahuje platební pokyny). U platby kartou se **neposílá** při vytvoření objednávky (status `Nová`) – teprve `POST /api/stripe-webhook` po `payment_intent.succeeded` dotáhne objednávku a pošle ho, s pojistkou proti duplicitě při redeliveru stejného Stripe eventu (kontrola `status !== 'Zaplaceno'` před odesláním, viz `sendOrderConfirmationForCardPayment` ve webhooku).
+- **Notifikace podle stavu objednávky** (od 2026-07-24): `PaymentReceivedEmail`/`ReadyForPickupEmail`/`OrderCancelledEmail`/`RefundedEmail` se posílají automaticky, když admin v dashboardu změní stav objednávky na `Zaplaceno`/`K vyzvednutí`/`Zrušeno`/`Vráceny peníze` (`updateOrderStatus()` → `POST /api/admin/notify-order-status`, mapování v `STATUS_EMAIL_NOTIFICATIONS`). `Zaplaceno` u platby kartou touhle cestou v běžném provozu neprojde – tam odchází rovnou plnohodnotné potvrzení objednávky přes webhook (viz výše), aby zákazník nedostal dva podobné e-maily za sebou. Ostatní stavy (`Připravujeme`, `Doručeno`, `Vyzvednuto`, `Uzavřeno`, `Vráceno`, `Ztracená zásilka`, `Reklamace`) zatím žádný automatický e-mail nemají.
+- Notifikaci o odeslání zásilky spouští admin manuálně v dashboardu (zadání sledovacího čísla → `POST /api/send-shipping-notification`), viz [sekce 5](05-administrace.md#2-záložka-objednávky) – nezávislé na stavovém mechanismu výše.
+- **Odesílá se z `objednavky@mycreativestamp.com`** (od 2026-07-24) – vlastní doména ověřená v Resendu (DKIM/SPF/MX, id `eee884ad-735d-4615-a684-eb3df569e5a3`, status `verified`), `EMAIL_FROM` konstanta v `src/lib/email.ts`. Sandbox limit (doručení jen na ověřenou adresu vlastníka účtu) už neplatí.
+- **API klíč** – `mycreativestamp-production`, oprávnění jen `sending_access` (appka jen odesílá, nespravuje domény/klíče). Starší `full_access` klíč "Onboarding" zůstává aktivní ve Vercel produkčním prostředí, dokud tam někdo ručně nepřepne `RESEND_API_KEY` na nový – pak lze "Onboarding" smazat v Resend dashboardu.
 
 ## Proměnné prostředí (`.env.local` / Vercel env)
 | Proměnná | Účel |
@@ -67,8 +75,9 @@
 
 ## Zjištěné nedodělky / otevřené body
 - **Stripe webhook** není zaregistrovaný v Dashboardu – čeká na finální produkční doménu (viz výše)
-- **E-maily jedou ze sandbox domény** `onboarding@resend.dev` – nutno před spuštěním nastavit vlastní ověřenou doménu v Resendu (sandbox typicky umí odeslat jen na ověřenou adresu vlastníka Resend účtu, ne libovolnému zákazníkovi)
+- **Vercel produkční env** `RESEND_API_KEY` pořád ukazuje na starší `full_access` klíč "Onboarding" – funguje (klíč není smazaný), ale je potřeba ho ručně přepnout na nový `sending_access` klíč `mycreativestamp-production` (viz sekce E-maily výše), pak starý smazat
 ## Změny
+- 2026-07-24: Rozšíření e-mailových notifikací o 4 nové šablony (`PaymentReceivedEmail`, `ReadyForPickupEmail`, `OrderCancelledEmail`, `RefundedEmail`) automaticky spouštěné podle změny stavu objednávky v adminu, sdílená `EmailLayout.tsx`. Oprava časování potvrzovacího e-mailu u platby kartou – posílá se až po `payment_intent.succeeded`, ne při vytvoření objednávky. Nalezena a rozpracována verifikace vlastní domény v Resendu, viz sekce [E-maily](#e-maily--resend).
 - 2026-07-23: Napojení na nAPI B2B-ZSK České pošty (doprava + celní prohlášení), zatím proti demo prostředí — nová sekce [10](10-doprava-a-celni-prohlaseni.md).
 - 2026-07-12: `.devcontainer/devcontainer.json` – automatická instalace Claude Code CLI + `npm install` po vytvoření/rebuildu GitHub Codespace, viz výše.
 - 2026-07-10: Vercel Blob dostal jasnou strukturu složek pro nově nahrané soubory – `POST /api/upload-stamp` teď přijímá parametr `folder` (validovaný proti pevnému seznamu). Produktové fotky jdou do `products/{category}/`, zákaznické archy z editoru do `editor-orders/`. Starší soubory nahrané před touto změnou zůstávají ve staré ploché struktuře. Šablony editoru zůstávají jako statické soubory v `public/templates/`, nejsou v Blobu vůbec.
