@@ -7,7 +7,7 @@ interface OrderEmailProps {
   customerName: string;
   totalPrice: number;
   cartItems: CartItemSnapshot[];
-  bankTransfer: { variableSymbol: string; qrCodeDataUrl: string } | null;
+  bankTransfer: { variableSymbol: string; qrCodeCid: string } | null;
 }
 
 export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
@@ -150,7 +150,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
                   <tr>
                     <td style={{ verticalAlign: 'top', width: '132px', paddingBottom: '12px' }}>
                       <img
-                        src={bankTransfer.qrCodeDataUrl}
+                        src={`cid:${bankTransfer.qrCodeCid}`}
                         width={132}
                         height={132}
                         alt="QR platba"

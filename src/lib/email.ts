@@ -4,7 +4,9 @@ import { resend } from '@/lib/resend';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { ShippingNotificationEmail } from '@/components/emails/ShippingNotificationEmail';
 import { CartItemSnapshot } from '@/types/database';
-import { generatePaymentQrCodeDataUrl, getVariableSymbol } from '@/lib/czechQrPayment';
+import { generatePaymentQrCodeBuffer, getVariableSymbol } from '@/lib/czechQrPayment';
+
+const QR_CODE_CONTENT_ID = 'qr-platba';
 
 type SendOrderConfirmationParams = {
   email: string;
@@ -23,15 +25,16 @@ export async function sendOrderConfirmation({
   cartItems,
   isBankTransfer,
 }: SendOrderConfirmationParams) {
+  const qrCodeBuffer = isBankTransfer
+    ? await generatePaymentQrCodeBuffer({
+        amount: totalPrice,
+        orderId,
+        message: `Objednavka ${orderId}`,
+      })
+    : null;
+
   const bankTransfer = isBankTransfer
-    ? {
-        variableSymbol: getVariableSymbol(orderId),
-        qrCodeDataUrl: await generatePaymentQrCodeDataUrl({
-          amount: totalPrice,
-          orderId,
-          message: `Objednavka ${orderId}`,
-        }),
-      }
+    ? { variableSymbol: getVariableSymbol(orderId), qrCodeCid: QR_CODE_CONTENT_ID }
     : null;
 
   const emailHtml = await render(
@@ -43,6 +46,16 @@ export async function sendOrderConfirmation({
     to: [email],
     subject: `Objednávka č. ${orderId} přijata – My Creative Stamp`,
     html: emailHtml,
+    attachments: qrCodeBuffer
+      ? [
+          {
+            filename: 'qr-platba.png',
+            content: qrCodeBuffer,
+            contentType: 'image/png',
+            contentId: QR_CODE_CONTENT_ID,
+          },
+        ]
+      : undefined,
   });
 }
 

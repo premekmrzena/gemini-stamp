@@ -32,16 +32,20 @@ function buildSpdString(params: { amount: number; variableSymbol: string; messag
   return parts.join('*');
 }
 
-/** Vrací QR kód jako base64 PNG data URL - vykresleno lokálně (knihovna `qrcode`), žádná externí služba. */
-export async function generatePaymentQrCodeDataUrl(params: {
+/**
+ * Vrací QR kód jako PNG buffer - vykresleno lokálně (knihovna `qrcode`), žádná externí služba.
+ * Buffer (ne data URL) záměrně - v e-mailu jde jako inline `cid:` příloha, protože Gmail a
+ * další klienti `data:` URI v `<img src>` potichu blokují i při povoleném načítání obrázků.
+ */
+export async function generatePaymentQrCodeBuffer(params: {
   amount: number;
   orderId: string;
   message: string;
-}): Promise<string> {
+}): Promise<Buffer> {
   const spd = buildSpdString({
     amount: params.amount,
     variableSymbol: getVariableSymbol(params.orderId),
     message: params.message,
   });
-  return QRCode.toDataURL(spd, { errorCorrectionLevel: 'M', margin: 1, width: 240 });
+  return QRCode.toBuffer(spd, { errorCorrectionLevel: 'M', margin: 1, width: 240 });
 }
