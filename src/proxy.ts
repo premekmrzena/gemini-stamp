@@ -43,9 +43,9 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Bez gate: Stripe webhook (volá ho Stripe, ne prohlížeč), odemykací endpoint,
-    // Next.js interní statické/image soubory, samotná gate stránka a jakýkoli
-    // soubor s příponou (obrázky, video, favicon, sitemap.xml, robots.txt...).
-    '/((?!api/stripe-webhook|api/site-access|_next/static|_next/image|rekonstrukce|.*\\..*).*)',
+    // Bez gate: Stripe a iDoklad webhooky (volají je Stripe/iDoklad, ne prohlížeč),
+    // odemykací endpoint, Next.js interní statické/image soubory, samotná gate stránka
+    // a jakýkoli soubor s příponou (obrázky, video, favicon, sitemap.xml, robots.txt...).
+    '/((?!api/stripe-webhook|api/idoklad-webhook|api/site-access|_next/static|_next/image|rekonstrukce|.*\\..*).*)',
   ],
 };

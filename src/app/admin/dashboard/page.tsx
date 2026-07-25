@@ -14,7 +14,7 @@ import { Currency, formatPrice } from '@/lib/currency';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -138,6 +138,9 @@ export default function AdminDashboard() {
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
   const [savingTracking, setSavingTracking] = useState(false);
   const [prevSelectedOrderId, setPrevSelectedOrderId] = useState<string | null>(null);
+
+  // --- STAV PRO RUČNÍ VYTVOŘENÍ IDOKLAD FAKTURY (záloha - automatika běží u "Zaplaceno") ---
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
 
   async function fetchOrders() {
     setLoading(true);
@@ -394,6 +397,8 @@ export default function AdminDashboard() {
             newStatus,
             email: order.billing_email,
             orderId: order.id.slice(-6).toUpperCase(),
+            fullOrderId: order.id,
+            idokladProformaId: order.idoklad_proforma_id,
             customerName: order.billing_first_name,
             totalPrice: order.total_price,
             currency: order.currency,
@@ -439,6 +444,32 @@ export default function AdminDashboard() {
       alert('Sledovací číslo bylo uloženo, ale e-mail se nepodařilo odeslat.');
     } finally {
       setSavingTracking(false);
+    }
+  }
+
+  async function handleCreateIdokladInvoice() {
+    if (!selectedOrder) return;
+    setCreatingInvoice(true);
+    try {
+      const res = await fetch('/api/admin/create-idoklad-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrder.id,
+          idokladProformaId: selectedOrder.idoklad_proforma_id,
+          totalPrice: selectedOrder.total_price,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Neznámá chyba');
+
+      const update = { idoklad_invoice_id: json.idokladInvoiceId, idoklad_invoice_number: json.idokladInvoiceNumber };
+      setOrders(orders.map((o) => (o.id === selectedOrder.id ? { ...o, ...update } : o)));
+      setSelectedOrder((prev) => (prev ? { ...prev, ...update } : null));
+    } catch (err) {
+      alert(`Vytvoření faktury v iDokladu selhalo: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setCreatingInvoice(false);
     }
   }
 
@@ -1141,6 +1172,34 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               )}
+
+              {/* FAKTURA (IDOKLAD) */}
+              <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+                <span className="style-product-tag text-black300">Faktura:</span>
+                {selectedOrder.idoklad_invoice_number ? (
+                  <a
+                    href={`/api/admin/idoklad-invoice-pdf?orderId=${selectedOrder.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                  >
+                    <Receipt size={14} /> {selectedOrder.idoklad_invoice_number} - stáhnout PDF
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    {selectedOrder.idoklad_proforma_id && (
+                      <span className="style-body text-black300 italic">Zálohová faktura vystavena, čeká na spárování platby</span>
+                    )}
+                    <button
+                      onClick={handleCreateIdokladInvoice}
+                      disabled={creatingInvoice}
+                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      <Receipt size={14} /> {creatingInvoice ? 'Vystavuji...' : selectedOrder.idoklad_proforma_id ? 'Potvrdit platbu a vystavit fakturu' : 'Vystavit fakturu'}
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* ADRESA A INFO */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">

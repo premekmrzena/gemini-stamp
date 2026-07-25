@@ -44,7 +44,7 @@ export default function ShippingStep({
         <div className="flex-grow flex flex-col gap-1">
           <div className="flex justify-between items-start gap-4">
             <h4 className={`style-h4 ${selectedShipping === option.id ? 'text-primary' : 'text-secondary'}`}>{t(`options.${option.id}.name`)}</h4>
-            <span className="style-body text-secondary">{formatPrice(option.price, currency)}</span>
+            <span className="style-body text-secondary whitespace-nowrap shrink-0">{formatPrice(option.price, currency)}</span>
           </div>
           <p className="style-body text-black200">{desc}</p>
         </div>
@@ -66,7 +66,7 @@ export default function ShippingStep({
           <div className="flex-grow flex flex-col gap-1">
             <div className="flex justify-between items-start gap-4">
               <h4 className={`style-h4 ${isInternationalActive ? 'text-primary' : 'text-secondary'}`}>{t('international.title')}</h4>
-              <span className="style-body text-secondary">{t('international.priceFrom', { price: formatPrice(minInternationalPrice, currency) })}</span>
+              <span className="style-body text-secondary whitespace-nowrap shrink-0">{t('international.priceFrom', { price: formatPrice(minInternationalPrice, currency) })}</span>
             </div>
             <p className="style-body text-black200">{t('international.desc')}</p>
           </div>

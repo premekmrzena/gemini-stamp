@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 import { sendOrderConfirmation } from '@/lib/email';
+import { createInvoiceForOrder, getInvoicePdf } from '@/lib/idoklad';
 import { CartItemSnapshot } from '@/types/database';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -91,7 +92,7 @@ async function reserveStockAfterRecoveredPayment(orderId: string) {
 async function sendOrderConfirmationForCardPayment(orderId: string) {
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, status, billing_email, billing_first_name, total_price, currency, cart_items')
+    .select('id, status, billing_email, billing_first_name, total_price, currency, cart_items, idoklad_invoice_id, idoklad_invoice_number')
     .eq('id', orderId)
     .single();
 
@@ -102,6 +103,18 @@ async function sendOrderConfirmationForCardPayment(orderId: string) {
 
   if (order.status === 'Zaplaceno') return;
 
+  // createInvoiceForOrder se volá dřív (viz POST handler), takže tu už idoklad_invoice_id
+  // bývá vyplněné - PDF je jen "nejlepší snaha", selhání stažení nesmí zablokovat email samotný.
+  let invoicePdf: { buffer: Buffer; filename: string } | undefined;
+  if (order.idoklad_invoice_id) {
+    try {
+      const buffer = await getInvoicePdf(order.idoklad_invoice_id);
+      invoicePdf = { buffer, filename: `faktura-${order.idoklad_invoice_number || order.idoklad_invoice_id}.pdf` };
+    } catch (err) {
+      console.error('Chyba při stahování iDoklad PDF pro potvrzovací email:', err);
+    }
+  }
+
   try {
     await sendOrderConfirmation({
       email: order.billing_email,
@@ -111,6 +124,7 @@ async function sendOrderConfirmationForCardPayment(orderId: string) {
       currency: order.currency,
       cartItems: order.cart_items as CartItemSnapshot[],
       isBankTransfer: false,
+      invoicePdf,
     });
   } catch (err) {
     console.error('Chyba při odesílání potvrzovacího emailu po platbě kartou:', err);
@@ -144,6 +158,11 @@ export async function POST(request: Request) {
     const orderId = paymentIntent.metadata?.orderId;
 
     if (orderId) {
+      // Faktura musí vzniknout PŘED potvrzovacím emailem, aby ho šlo rovnou přiložit jako
+      // PDF (viz sendOrderConfirmationForCardPayment). Idempotentní přes orders.idoklad_invoice_id,
+      // takže volání navíc při redeliveru stejného Stripe eventu nevadí.
+      await createInvoiceForOrder(orderId, { markAsPaid: true, paymentOptionId: 2 });
+
       await sendOrderConfirmationForCardPayment(orderId);
 
       const { error } = await supabase.rpc('mark_order_paid', { p_order_id: orderId });

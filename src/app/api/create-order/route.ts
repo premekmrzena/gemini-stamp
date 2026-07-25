@@ -4,6 +4,7 @@ import { getEffectivePrice, computeDiscountAmount } from '@/lib/pricing';
 import { getOrderCurrency, getLocalizedPrice } from '@/lib/currency';
 import { getShippingOptionsInCurrency, getPaymentOptionsInCurrency } from '@/lib/shippingCurrency';
 import { sendOrderConfirmation } from '@/lib/email';
+import { createProformaForOrder, getProformaPdf } from '@/lib/idoklad';
 import { CartItemSnapshot } from '@/types/database';
 
 type JoinedStampProduct = {
@@ -247,6 +248,23 @@ export async function POST(req: Request) {
       // obsahuje QR/platební pokyny, které zákazník potřebuje ihned.
       if (paymentMethodId !== 'karta') {
         const shortOrderId = data.id.slice(-8).toUpperCase();
+
+        // Zálohová faktura (proforma) vzniká hned tady, s variabilním symbolem shodným s QR
+        // platbou - viz src/lib/idoklad.ts createProformaForOrder(). Až iDoklad platbu spáruje
+        // (webhook /api/idoklad-webhook), automaticky se z ní vystaví finální faktura.
+        let proformaPdf: { buffer: Buffer; filename: string } | undefined;
+        if (paymentMethodId === 'prevod') {
+          const proforma = await createProformaForOrder(data.id);
+          if (proforma) {
+            try {
+              const buffer = await getProformaPdf(proforma.idokladProformaId);
+              proformaPdf = { buffer, filename: `zalohova-faktura-${proforma.idokladProformaId}.pdf` };
+            } catch (err) {
+              console.error('Chyba při stahování PDF zálohové faktury pro potvrzovací email:', err);
+            }
+          }
+        }
+
         try {
           await sendOrderConfirmation({
             email: formData.billing_email,
@@ -256,6 +274,7 @@ export async function POST(req: Request) {
             currency,
             cartItems: validatedItems,
             isBankTransfer: paymentMethodId === 'prevod',
+            invoicePdf: proformaPdf,
           });
         } catch (err) {
           console.error('Email error:', err);

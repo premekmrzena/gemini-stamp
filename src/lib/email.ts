@@ -14,6 +14,8 @@ const QR_CODE_CONTENT_ID = 'qr-platba';
 // Doména mycreativestamp.com ověřená v Resendu 2026-07-24 (DKIM/SPF/MX verified).
 const EMAIL_FROM = 'My Creative Stamp <objednavky@mycreativestamp.com>';
 
+type InvoicePdfAttachment = { buffer: Buffer; filename: string };
+
 type SendOrderConfirmationParams = {
   email: string;
   orderId: string;
@@ -22,6 +24,7 @@ type SendOrderConfirmationParams = {
   currency: Currency;
   cartItems: CartItemSnapshot[];
   isBankTransfer: boolean;
+  invoicePdf?: InvoicePdfAttachment;
 };
 
 export async function sendOrderConfirmation({
@@ -32,6 +35,7 @@ export async function sendOrderConfirmation({
   currency,
   cartItems,
   isBankTransfer,
+  invoicePdf,
 }: SendOrderConfirmationParams) {
   // Bank transfer je dnes jen pro CZK objednávky - create-order odmítá
   // 'prevod' u EUR (žádný EUR bankovní účet), takže isBankTransfer &&
@@ -52,21 +56,17 @@ export async function sendOrderConfirmation({
     React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, currency, cartItems, bankTransfer })
   );
 
+  const attachments = [
+    qrCodeBuffer ? { filename: 'qr-platba.png', content: qrCodeBuffer, contentType: 'image/png', contentId: QR_CODE_CONTENT_ID } : null,
+    invoicePdf ? { filename: invoicePdf.filename, content: invoicePdf.buffer, contentType: 'application/pdf' } : null,
+  ].filter((a): a is NonNullable<typeof a> => a !== null);
+
   return resend.emails.send({
     from: EMAIL_FROM,
     to: [email],
     subject: `Order #${orderId} received – My Creative Stamp`,
     html: emailHtml,
-    attachments: qrCodeBuffer
-      ? [
-          {
-            filename: 'qr-platba.png',
-            content: qrCodeBuffer,
-            contentType: 'image/png',
-            contentId: QR_CODE_CONTENT_ID,
-          },
-        ]
-      : undefined,
+    attachments: attachments.length > 0 ? attachments : undefined,
   });
 }
 
@@ -101,9 +101,10 @@ type SendPaymentReceivedParams = {
   customerName: string;
   totalPrice: number;
   currency: Currency;
+  invoicePdf?: InvoicePdfAttachment;
 };
 
-export async function sendPaymentReceived({ email, orderId, customerName, totalPrice, currency }: SendPaymentReceivedParams) {
+export async function sendPaymentReceived({ email, orderId, customerName, totalPrice, currency, invoicePdf }: SendPaymentReceivedParams) {
   const emailHtml = await render(
     React.createElement(PaymentReceivedEmail, { orderId, customerName, totalPrice, currency })
   );
@@ -113,6 +114,7 @@ export async function sendPaymentReceived({ email, orderId, customerName, totalP
     to: [email],
     subject: `Payment for order #${orderId} received – My Creative Stamp`,
     html: emailHtml,
+    attachments: invoicePdf ? [{ filename: invoicePdf.filename, content: invoicePdf.buffer, contentType: 'application/pdf' }] : undefined,
   });
 }
 

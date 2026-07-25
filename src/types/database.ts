@@ -142,6 +142,9 @@ export type Order = {
   discount_code: string | null;
   discount_amount: number;
   stock_released: boolean;
+  idoklad_invoice_id: number | null;
+  idoklad_invoice_number: string | null;
+  idoklad_proforma_id: number | null;
 };
 
 export type CustomStamp = {

@@ -55,9 +55,30 @@ Bezpečnost: tabulka `discount_codes` má RLS bez policy pro `anon` (veřejný w
 
 ## 5. Fakturace
 
-Fakturace (vystavení daňového dokladu) se řeší mimo appku, plánovaně přes iDoklad API (zatím nenapojeno). Appka už ale sbírá vše, co k tomu iDoklad bude potřebovat: `orders.billing_company_name`/`billing_company_id`/`billing_company_tax_id` (IČO/DIČ, vyplní se jen pokud zákazník zadá firemní údaje v košíku) + plnou fakturační adresu a rozpad položek (`cart_items`). Žádné UI ani API endpoint pro fakturaci v appce zatím není.
+Napojeno na iDoklad API v3 (`src/lib/idoklad.ts`), OAuth2 client_credentials (`IDOKLAD_APPLICATION_ID`/`IDOKLAD_CLIENT_ID`/`IDOKLAD_CLIENT_SECRET` v env — application_id se registruje samostatně na `developer.idoklad.cz`, je jiná hodnota než client_id/secret z Nastavení iDokladu). Účet je neplátce DPH, takže všechny položky faktury jedou bez DPH členění (`VatRateType: Zero`, `VatCodeId: null`) — pro plátce DPH by bylo potřeba doplnit mapování sazeb.
+
+Dvě zcela oddělené cesty podle způsobu platby (rozhodnuto 2026-07-25 po konzultaci s uživatelem, viz [[project_idoklad_invoicing]] v paměti) — platba kartou nejde nikdy spárovat s bankovním výpisem (Stripe posílá výplaty dávkově, ponížené o poplatky), platba převodem naopak jde spárovat přes variabilní symbol:
+
+### Platba kartou (Stripe)
+`createInvoiceForOrder(orderId, { markAsPaid: true, paymentOptionId: 2 })` se volá ve `stripe-webhook/route.ts` hned po `payment_intent.succeeded`, před `mark_order_paid`. Faktura se rovnou označí jako uhrazená (`PUT /IssuedDocumentPayments/FullyPay/{id}`) — jinak by v iDokladu zbytečně visela jako "Neuhrazeno", i když se u nás žádná bankovní platba nikdy nespáruje.
+
+### Platba převodem (jen CZK, jen CZ verze) — zálohová faktura
+1. **Při vytvoření objednávky** (`create-order/route.ts`) se hned vystaví **zálohová faktura** (`createProformaForOrder()`, `ProformaInvoices` API skupina) s variabilním symbolem shodným s tím na QR platbě/v e-mailu (`getVariableSymbol()`, `src/lib/czechQrPayment.ts`). PDF zálohové faktury se přiloží do úvodního potvrzovacího e-mailu spolu s QR kódem.
+2. **Jakmile iDoklad platbu spáruje** (bankovní účet Air Bank připojený na automatické stahování výpisů — zatím nenapojeno, nebo ruční potvrzení přímo v iDokladu), pošle webhook `PaymentCreated`/`ProformaInvoice` na `/api/idoklad-webhook`. Ten zálohovou fakturu vyúčtuje (`PUT /ProformaInvoices/{id}/Account`) — iDoklad z ní automaticky sestaví finální daňový doklad (položky původní faktury MINUS už přijatá záloha = 0 Kč k doplacení, `PaymentStatus: Paid`) — nastaví `orders.status = 'Zaplaceno'` a pošle e-mail s finální fakturou.
+3. **Ruční admin fallback** (dokud Air Bank není napojená, nebo pro jistotu): admin může kliknout na "Zaplaceno" v dashboardu i bez čekání na webhook — `/api/admin/notify-order-status` pak zavolá `payAndFinalizeProforma()` (označí zálohovou fakturu jako uhrazenou + rovnou vyúčtuje), stejný výsledek jako webhook.
+
+**Webhook bezpečnost:** HMAC-SHA256 podpis v hlavičce `X-idoklad-signature`, ověřovaný proti `IDOKLAD_WEBHOOK_SECRET` (`verifyWebhookSignature()`). Route je vyjmutá z pre-launch gate (`src/proxy.ts`, stejně jako `/api/stripe-webhook`), protože ji volá iDoklad, ne prohlížeč s cookie.
+
+**Registrace webhooku (uživatelský krok, ne kód):** 1) na `developer.idoklad.cz` → detail aplikace (`Next-js2-ClientCredentials`) → záložka Webhooks → přidat URL `https://mycreativestamp.com/api/idoklad-webhook` + nastavit stejný secret jako `IDOKLAD_WEBHOOK_SECRET` → získá se `PublicId`. 2) Zavolat `POST /v3/Webhooks` s `{ActionType: 4 (PaymentCreated), EntityType: 1 (ProformaInvoice), PublicId}` pro aktivaci. Funguje jen na živé veřejně dostupné doméně, nejde otestovat lokálně (ověřeno end-to-end simulovaným voláním s platným podpisem, ne reálným iDoklad-originem).
+
+**Idempotence:** `orders.idoklad_invoice_id`/`idoklad_proforma_id` jsou guard proti duplicitě (Stripe i iDoklad webhooky umí stejný event doručit vícekrát). Zápis jde přes RPC (`set_order_idoklad_invoice`/`set_order_idoklad_proforma`, `docs/sql/022`/`023`), ne přímý `.update()` — `orders` nemá anon RLS UPDATE policy (stejný důvod jako `mark_order_paid`/`release_stock`, viz [sekce 2](02-stavy-objednavky.md)).
+
+**Kontakt a položky (společné pro obě cesty):** kontakt odběratele se dohledá/založí v iDokladu (dedup podle IČO u firem, podle e-mailu u fyzických osob — pozor, filtr `~eq~` v iDoklad API se NESMÍ obalovat uvozovkami navzdory příkladu v jejich dokumentaci), země/CountryId se mapuje z `COUNTRY_SHIPPING_INFO` (iso2), položky = `cart_items` + samostatná řádka za dopravu/platbu (pokud > 0) + záporná řádka slevy (pokud byl použit slevový kód).
+
+**E-mail zákazníkovi:** PDF (zálohové i finální) faktury se stahuje z iDokladu (`getInvoicePdf()`/`getProformaPdf()`) a přikládá jako příloha přímo do e-mailu (`sendOrderConfirmation`/`sendPaymentReceived`) — zákazník ho dostane automaticky, bez zásahu admina. Stažení PDF je jen "best effort" — pokud selže, e-mail se stejně odešle bez přílohy (nesmí zablokovat doručení potvrzení).
+
+**Admin UI:** v detailu objednávky panel "Faktura" — pokud existuje `idoklad_invoice_number`, odkaz "Stáhnout PDF" (proxy přes `/api/admin/idoklad-invoice-pdf`, appka PDF neukládá, stahuje ho z iDokladu na vyžádání); pokud je jen rozvystavená zálohová faktura, info hláška + tlačítko "Potvrdit platbu a vystavit fakturu" (ruční fallback výš); jinak "Vystavit fakturu" (úplně bez zálohové faktury, přímá cesta).
 
 ## Otevřené body
 - Žádná role/oprávnění — kdokoli s Supabase Auth účtem vidí a může měnit vše (objednávky i produkty)
 - Žádné notifikace ani audit log akcí admina (kdo a kdy změnil stav/produkt)
-- iDoklad napojení na fakturaci zatím chybí (viz sekce 5 výše)
