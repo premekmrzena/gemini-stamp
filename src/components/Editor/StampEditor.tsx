@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import Button from '@/components/Button';
 import { TEMPLATES, Template, PhotoState, TextState } from '@/lib/editorConfig';
 import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
@@ -46,14 +47,15 @@ function MobileMiniMap({ template, activeSlotId, photos }: MiniMapProps) {
 }
 
 interface StampEditorProps {
-  onComplete: (stampId?: string) => void;
+  onComplete: (stampId?: string) => Promise<boolean> | boolean;
   templateId: string;
   templateName?: string;
 }
 
 export default function StampEditor({ onComplete, templateId, templateName }: StampEditorProps) {
+  const t = useTranslations('checkout.createArch');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const activeTemplate = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
+  const activeTemplate = TEMPLATES.find((tpl) => tpl.id === templateId) ?? TEMPLATES[0];
 
   const [photos, setPhotos] = useState<Record<string, PhotoState>>({});
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
@@ -96,6 +98,13 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
   const isMobileTextStep = currentMobileSlot?.type === 'text';
   const allPhotosFilled = photoSlotsOnly.every((slot) => photos[slot.id]);
 
+  const fontOptions = [
+    { name: t('editor.fonts.modern'), value: 'Poppins' },
+    { name: t('editor.fonts.elegant'), value: 'Playfair Display' },
+    { name: t('editor.fonts.handwritten'), value: 'Dancing Script' },
+    { name: t('editor.fonts.retro'), value: 'Righteous' },
+  ];
+
   const textState: TextState = { mainText, textColor, fontSize, fontFamily, textAlign, textPos, useShadow, shadowColor, shadowBlur };
 
   useEffect(() => {
@@ -120,8 +129,8 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
     };
     updateRatio();
     window.addEventListener('resize', updateRatio);
-    const t = setTimeout(updateRatio, 50);
-    return () => { window.removeEventListener('resize', updateRatio); clearTimeout(t); };
+    const timeout = setTimeout(updateRatio, 50);
+    return () => { window.removeEventListener('resize', updateRatio); clearTimeout(timeout); };
   }, [mobileStep, currentMobileSlot, activeTemplate]);
 
   useEffect(() => {
@@ -249,10 +258,10 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
         .select('id')
         .single();
       if (error) throw error;
-      setShowThankYou(true);
-      onComplete(data.id);
+      const addedToCart = await onComplete(data.id);
+      if (addedToCart) setShowThankYou(true);
     } catch {
-      alert('Chyba při ukládání archu.');
+      alert(t('editor.saveError'));
     } finally {
       setIsUploading(false);
     }
@@ -282,7 +291,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
             }
             onClick={(e) => e.stopPropagation()}
           >
-            <img src={activeTemplate.backgroundImage} className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="Šablona" />
+            <img src={activeTemplate.backgroundImage} className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt={t('editor.templateAlt')} />
             {activeTemplate.slots.map((slot) => (
               <div key={slot.id} data-slot-id={slot.id}
                 className={`absolute border-2 cursor-pointer overflow-hidden group transition-colors ${activeSlotId === slot.id ? 'border-success bg-success/10' : 'border-secondary/30 hover:border-success bg-secondary'}`}
@@ -303,7 +312,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                 ) : slot.type !== 'text' ? (
                   <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary hover:bg-secondary/90 transition-colors">
                     <Image src="/images/add-image-ico.svg" alt="+" width={64} height={64} className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <span className="style-body-bold text-black300 transition-opacity">Vložit fotku</span>
+                    <span className="style-body-bold text-black300 transition-opacity">{t('editor.insertPhoto')}</span>
                   </div>
                 ) : null}
 
@@ -335,7 +344,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                         style={{ height: '42%' }}
                         onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}
                       >
-                        <h2 className="style-h3 text-success">Napište vlastní text</h2>
+                        <h2 className="style-h3 text-success">{t('editor.writeCustomText')}</h2>
                       </div>
                     )}
                   </>
@@ -366,6 +375,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                     textAlign={textAlign} setTextAlign={setTextAlign}
                     useShadow={useShadow} setUseShadow={setUseShadow}
                     checkboxId="shadow-check-desk"
+                    fontOptions={fontOptions}
                   />
                 </div>
               </div>
@@ -373,9 +383,9 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
 
             <footer className="w-full border-t border-black300/30 md:h-[78px] lg:h-[92px] flex items-center justify-center">
               <div className="w-full max-w-[1440px] mx-auto px-[84px] flex justify-between items-center">
-                <Button onClick={() => window.location.href = '/vytvorit-arch'} variant="outlined" arrow="left">Zpět</Button>
+                <Button onClick={() => window.location.href = '/vytvorit-arch'} variant="outlined" arrow="left">{t('editor.back')}</Button>
                 <Button onClick={handleUploadAndComplete} disabled={!allPhotosFilled || isUploading} arrow="right">
-                  {isUploading ? 'Ukládám...' : 'Dokončit'}
+                  {isUploading ? t('editor.saving') : t('editor.finish')}
                 </Button>
               </div>
             </footer>
@@ -390,28 +400,28 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
             <div className="w-[80px] h-[80px] rounded-full border-[3px] border-success flex items-center justify-center mb-[32px]">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
-            <h1 className="style-h1 text-secondary text-center mb-[32px]">Právě jste vytvořili svůj<br />kreativní arch!</h1>
-            <p className="style-body text-secondary text-center mb-[64px] max-w-[300px] opacity-80">Skvělá práce, Váš grafický návrh jsme vložili do košíku a je připraven k tisku.</p>
+            <h1 className="style-h1 text-secondary text-center mb-[32px]">{t.rich('editor.thankYouTitle', { br: () => <br /> })}</h1>
+            <p className="style-body text-secondary text-center mb-[64px] max-w-[300px] opacity-80">{t('editor.thankYouText')}</p>
             <div className="w-full flex flex-col gap-[16px] max-w-[300px]">
-              <Button variant="outlined" onClick={() => window.location.href = '/'}>Na úvodní stránku</Button>
-              <Button onClick={() => window.location.reload()}>Vytvořit další arch</Button>
-              <Button onClick={() => window.location.href = '/kosik'}>Jít do košíku</Button>
+              <Button variant="outlined" onClick={() => window.location.href = '/'}>{t('editor.backToHome')}</Button>
+              <Button onClick={() => window.location.reload()}>{t('createAnother')}</Button>
+              <Button onClick={() => window.location.href = '/kosik'}>{t('goToCart')}</Button>
             </div>
           </div>
         ) : isPreviewStep ? (
           <div className="flex-1 flex flex-col items-center justify-center w-full px-6 py-8">
-            <h1 className="style-h1 text-secondary mb-[32px]">Náhled finálního archu</h1>
+            <h1 className="style-h1 text-secondary mb-[32px]">{t('editor.previewTitle')}</h1>
             <div className="w-full bg-secondary p-1 rounded-[4px] shadow-2xl mb-[32px]">
               {isGeneratingPreview ? (
                 <div className="w-full aspect-[4/3] flex flex-col items-center justify-center bg-black200 animate-pulse">
                   <div className="w-10 h-10 border-4 border-success border-t-transparent rounded-full animate-spin mb-4" />
-                  <span className="style-body-bold text-success">Generuji...</span>
+                  <span className="style-body-bold text-success">{t('editor.generating')}</span>
                 </div>
               ) : (
                 <img src={previewUrl || ''} className="w-full h-auto object-contain rounded-[2px]" alt="Preview" />
               )}
             </div>
-            <p className="style-body text-secondary text-center opacity-80">Náhled můžete přiblížit sevřením dvou prstů.</p>
+            <p className="style-body text-secondary text-center opacity-80">{t('editor.pinchToZoomHint')}</p>
           </div>
         ) : (
           <>
@@ -422,7 +432,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                   {templateName ?? activeTemplate.name}
                 </h2>
                 <span className="style-body text-secondary/70">
-                  Fotografie {mobileStep + 1} z {totalSlotsSteps}
+                  {t('editor.photoStepCounter', { current: mobileStep + 1, total: totalSlotsSteps })}
                 </span>
               </div>
             </div>
@@ -438,8 +448,8 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                     {/* Photo upload placeholder — non-text slots only */}
                     {!photos[currentMobileSlot!.id] && currentMobileSlot?.type !== 'text' && (
                       <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-secondary cursor-pointer">
-                        <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="mb-1 opacity-80" />
-                        <span className="style-body-bold text-black300 text-[20px]">Vložit fotku</span>
+                        <Image src="/images/add-image-ico.svg" alt={t('editor.addPhotoAlt')} width={96} height={96} className="mb-1 opacity-80" />
+                        <span className="style-body-bold text-black300 text-[20px]">{t('editor.insertPhoto')}</span>
                       </div>
                     )}
 
@@ -474,7 +484,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                             style={{ height: '58%' }}
                             onClick={(e) => openPhotoPickerForSlot(currentMobileSlot!.id, e)}
                           >
-                            <Image src="/images/add-image-ico.svg" alt="Přidat" width={96} height={96} className="opacity-80" />
+                            <Image src="/images/add-image-ico.svg" alt={t('editor.addPhotoAlt')} width={96} height={96} className="opacity-80" />
                           </div>
                         )}
                         {!mainText && (
@@ -483,7 +493,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                             style={{ height: '42%' }}
                             onClick={() => setShowTextPanel(true)}
                           >
-                            <h2 className="style-h2 text-success">Napište vlastní text</h2>
+                            <h2 className="style-h2 text-success">{t('editor.writeCustomText')}</h2>
                           </div>
                         )}
                       </>
@@ -502,9 +512,9 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
-                    Upravit text
+                    {t('editor.editText')}
                   </button>
-                  <p className="style-body text-secondary/60 text-center">Text v okně můžete posouvat</p>
+                  <p className="style-body text-secondary/60 text-center">{t('editor.moveTextHint')}</p>
                 </div>
               )}
             </div>
@@ -518,13 +528,13 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                 <Button
                   onClick={() => { if (mobileStep > 0) setMobileStep((prev) => prev - 1); else window.location.href = '/vytvorit-arch'; }}
                   disabled={isUploading} variant="outlined" arrow="left" className="h-[48px] shrink-0"
-                >Zpět</Button>
+                >{t('editor.back')}</Button>
                 <Button
                   onClick={() => { if (isPreviewStep) handleUploadAndComplete(); else if (isLastSlotStep) handleMobilePreview(); else setMobileStep((prev) => prev + 1); }}
                   disabled={isUploading || (!isPreviewStep && !photos[currentMobileSlot?.id || ''])}
                   arrow="right" className="flex-1 h-[48px]"
                 >
-                  {isUploading ? 'Ukládám...' : isPreviewStep ? 'Dokončit' : isLastSlotStep ? 'Vytvořit náhled' : 'Další fotografie'}
+                  {isUploading ? t('editor.saving') : isPreviewStep ? t('editor.finish') : isLastSlotStep ? t('editor.createPreview') : t('editor.nextPhoto')}
                 </Button>
               </div>
             </footer>
@@ -535,7 +545,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
         {isMobileTextStep && !isPreviewStep && !showThankYou && (
           <div className={`fixed inset-x-0 bottom-0 z-[200] bg-black500 transition-transform duration-500 ease-out max-h-[70vh] overflow-y-auto ${showTextPanel ? 'translate-y-0 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]' : 'translate-y-full'}`}>
             <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-black300/20">
-              <span className="style-body-bold text-secondary">Upravit text</span>
+              <span className="style-body-bold text-secondary">{t('editor.editText')}</span>
               <button onClick={() => setShowTextPanel(false)} className="w-8 h-8 flex items-center justify-center text-black200 hover:text-secondary transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -546,7 +556,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
               <div className="flex gap-[16px]">
                 <textarea
                   value={mainText} onChange={(e) => setMainText(e.target.value)}
-                  placeholder="Napište vlastní text"
+                  placeholder={t('editor.writeCustomText')}
                   className="flex-1 bg-secondary text-black rounded-[4px] p-4 style-body outline-none focus:ring-2 focus:ring-success resize-none h-[80px] placeholder:text-black300"
                 />
                 <div className="flex flex-col justify-between py-1">
@@ -558,7 +568,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
               <div className="flex gap-[16px] h-[48px]">
                 <div className="flex-1 relative">
                   <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full h-full bg-secondary text-black rounded-[4px] pl-4 pr-10 style-body appearance-none outline-none focus:ring-2 focus:ring-success">
-                    {[{ name: 'Moderní (Poppins)', value: 'Poppins' }, { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' }, { name: 'Psací (Dancing Script)', value: 'Dancing Script' }, { name: 'Retro (Righteous)', value: 'Righteous' }].map((f) => (
+                    {fontOptions.map((f) => (
                       <option key={f.value} value={f.value}>{f.name}</option>
                     ))}
                   </select>
@@ -573,7 +583,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                 />
                 <div className="flex items-center gap-3">
                   <input type="checkbox" id="mob-shadow" checked={useShadow} onChange={(e) => setUseShadow(e.target.checked)} className="w-5 h-5 accent-success rounded-[4px]" />
-                  <label htmlFor="mob-shadow" className="style-body text-secondary cursor-pointer">Stín</label>
+                  <label htmlFor="mob-shadow" className="style-body text-secondary cursor-pointer">{t('editor.shadow')}</label>
                 </div>
               </div>
             </div>

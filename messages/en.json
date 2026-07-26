@@ -378,7 +378,37 @@
       "successTitle": "Your sheet has been added to the cart!",
       "successText": "Great work. Your design is ready for print and safely saved in your cart. You can adjust the quantity before checkout.",
       "createAnother": "Create another sheet",
-      "goToCart": "Go to cart"
+      "goToCart": "Go to cart",
+      "editor": {
+        "back": "Back",
+        "finish": "Finish",
+        "saving": "Saving...",
+        "nextPhoto": "Next photo",
+        "createPreview": "Create preview",
+        "insertPhoto": "Insert photo",
+        "writeCustomText": "Write your own text",
+        "editText": "Edit text",
+        "enableShadow": "Enable shadow",
+        "shadow": "Shadow",
+        "photoStepCounter": "Photo {current} of {total}",
+        "previewTitle": "Preview of the final sheet",
+        "generating": "Generating...",
+        "pinchToZoomHint": "You can zoom the preview by pinching with two fingers.",
+        "moveTextHint": "You can move the text within the frame",
+        "thankYouTitle": "You've just created your<br></br>creative sheet!",
+        "thankYouText": "Great work, we've added your design to your cart and it's ready for print.",
+        "backToHome": "Back to homepage",
+        "saveError": "Error saving the sheet.",
+        "cartError": "We couldn't add the sheet to your cart. Please try again or contact us.",
+        "templateAlt": "Template",
+        "addPhotoAlt": "Add",
+        "fonts": {
+          "modern": "Modern (Poppins)",
+          "elegant": "Elegant (Playfair Display)",
+          "handwritten": "Handwritten (Dancing Script)",
+          "retro": "Retro (Righteous)"
+        }
+      }
     },
     "thankYou": {
       "title": "Your order has been placed!",

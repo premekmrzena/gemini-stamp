@@ -1,12 +1,8 @@
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import ColorPickerInput from './ColorPickerInput';
 
-const FONT_OPTIONS = [
-  { name: 'Moderní (Poppins)', value: 'Poppins' },
-  { name: 'Elegantní (Playfair Display)', value: 'Playfair Display' },
-  { name: 'Psací (Dancing Script)', value: 'Dancing Script' },
-  { name: 'Retro (Righteous)', value: 'Righteous' },
-];
+export type FontOption = { name: string; value: string };
 
 type Props = {
   mainText: string;
@@ -22,6 +18,7 @@ type Props = {
   useShadow: boolean;
   setUseShadow: (v: boolean) => void;
   checkboxId: string;
+  fontOptions: FontOption[];
 };
 
 export default function TextControls({
@@ -32,7 +29,9 @@ export default function TextControls({
   textAlign, setTextAlign,
   useShadow, setUseShadow,
   checkboxId,
+  fontOptions,
 }: Props) {
+  const t = useTranslations('checkout.createArch.editor');
   const sliderPercent = ((fontSize - 40) / 260) * 100;
 
   return (
@@ -41,7 +40,7 @@ export default function TextControls({
         <textarea
           value={mainText}
           onChange={(e) => setMainText(e.target.value)}
-          placeholder="Napište vlastní text"
+          placeholder={t('writeCustomText')}
           className="bg-secondary text-black rounded-[4px] p-4 style-body outline-none focus:ring-2 focus:ring-success resize-none w-[320px] h-[96px] placeholder:text-black300 placeholder:opacity-50"
         />
         <div className="flex flex-col justify-between py-1 h-[96px]">
@@ -65,7 +64,7 @@ export default function TextControls({
               onChange={(e) => setFontFamily(e.target.value)}
               className="w-full h-full bg-secondary text-black rounded-[4px] pl-4 pr-10 style-body appearance-none outline-none focus:ring-2 focus:ring-success"
             >
-              {FONT_OPTIONS.map((f) => (
+              {fontOptions.map((f) => (
                 <option key={f.value} value={f.value}>{f.name}</option>
               ))}
             </select>
@@ -87,7 +86,7 @@ export default function TextControls({
           />
           <div className="flex items-center gap-3">
             <input type="checkbox" id={checkboxId} checked={useShadow} onChange={(e) => setUseShadow(e.target.checked)} className="w-5 h-5 accent-success rounded-[4px]" />
-            <label htmlFor={checkboxId} className="style-body text-secondary cursor-pointer hover:text-primary transition-colors">Zapnout stín</label>
+            <label htmlFor={checkboxId} className="style-body text-secondary cursor-pointer hover:text-primary transition-colors">{t('enableShadow')}</label>
           </div>
         </div>
       </div>

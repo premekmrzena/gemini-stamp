@@ -378,7 +378,37 @@
       "successTitle": "Váš arch byl vložen do košíku!",
       "successText": "Skvělá práce. Váš grafický návrh je připraven k tisku a bezpečně uložen v košíku. Počet kusů si můžete upravit před zaplacením.",
       "createAnother": "Vytvořit další arch",
-      "goToCart": "Přejít do košíku"
+      "goToCart": "Přejít do košíku",
+      "editor": {
+        "back": "Zpět",
+        "finish": "Dokončit",
+        "saving": "Ukládám...",
+        "nextPhoto": "Další fotografie",
+        "createPreview": "Vytvořit náhled",
+        "insertPhoto": "Vložit fotku",
+        "writeCustomText": "Napište vlastní text",
+        "editText": "Upravit text",
+        "enableShadow": "Zapnout stín",
+        "shadow": "Stín",
+        "photoStepCounter": "Fotografie {current} z {total}",
+        "previewTitle": "Náhled finálního archu",
+        "generating": "Generuji...",
+        "pinchToZoomHint": "Náhled můžete přiblížit sevřením dvou prstů.",
+        "moveTextHint": "Text v okně můžete posouvat",
+        "thankYouTitle": "Právě jste vytvořili svůj<br></br>kreativní arch!",
+        "thankYouText": "Skvělá práce, Váš grafický návrh jsme vložili do košíku a je připraven k tisku.",
+        "backToHome": "Na úvodní stránku",
+        "saveError": "Chyba při ukládání archu.",
+        "cartError": "Nepodařilo se vložit arch do košíku. Zkuste to znovu nebo nás kontaktujte.",
+        "templateAlt": "Šablona",
+        "addPhotoAlt": "Přidat",
+        "fonts": {
+          "modern": "Moderní (Poppins)",
+          "elegant": "Elegantní (Playfair Display)",
+          "handwritten": "Psací (Dancing Script)",
+          "retro": "Retro (Righteous)"
+        }
+      }
     },
     "thankYou": {
       "title": "Objednávka byla úspěšně odeslána!",

@@ -4,6 +4,10 @@ import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
 
 const GATE_COOKIE = 'site_access';
+// next-intl si pamatuje poslední navštívenou mutaci v NEXT_LOCALE - potřebujeme
+// jí umět smazat (viz blokace /cs níže), jinak by středoevropský fanoušek
+// interního náhledu skončil v nekonečné smyčce přesměrování.
+const LOCALE_COOKIE = 'NEXT_LOCALE';
 
 // next-intl řeší detekci/routing jazyka jen pro zákaznické (mezinárodní)
 // stránky pod [locale] segmentem - /admin, /api a samotná gate stránka
@@ -14,28 +18,48 @@ function isLocalizedPath(pathname: string): boolean {
   return !pathname.startsWith('/admin') && !pathname.startsWith('/api') && pathname !== '/rekonstrukce';
 }
 
+// /cs (viz src/i18n/routing.ts) je jen interní pracovní náhled pro srovnání
+// CZ/EN textů, NENÍ to skutečná CZK mutace - ceny tam jen zrcadlí EUR čísla
+// pod jiným symbolem. Zákazník, který by se sem dostal s EUR položkami v
+// košíku, by viděl špatnou měnu u stejné částky (viz CartStep/OrderSummary).
+function isCsPreviewPath(pathname: string): boolean {
+  return pathname === '/cs' || pathname.startsWith('/cs/');
+}
+
 // Pre-launch gate: dokud je MAINTENANCE_MODE=true, celý web (kromě /rekonstrukce
 // a pár výjimek níže) se přepíše na stránku "web se připravuje". Vypnutím
-// MAINTENANCE_MODE v env (bez zásahu do kódu) se gate celý vypne.
+// MAINTENANCE_MODE v env (bez zásahu do kódu) se gate celý vypne. Stejná
+// "site_access" cookie navíc - bez ohledu na MAINTENANCE_MODE, i po ostrém
+// spuštění - odemyká /cs, aby si ho autor mohl dál prohlížet, ale zákazníci
+// se k němu nikdy nedostanou.
 export function proxy(request: NextRequest) {
-  if (process.env.MAINTENANCE_MODE === 'true') {
-    const cookie = request.cookies.get(GATE_COOKIE);
-    const authorized = cookie?.value && cookie.value === process.env.SITE_ACCESS_PASSWORD;
+  const gateCookie = request.cookies.get(GATE_COOKIE);
+  const authorized = !!gateCookie?.value && gateCookie.value === process.env.SITE_ACCESS_PASSWORD;
 
-    if (!authorized) {
-      const { pathname } = request.nextUrl;
+  if (process.env.MAINTENANCE_MODE === 'true' && !authorized) {
+    const { pathname } = request.nextUrl;
 
-      // API volání (fetch z klienta) chceme odmítnout čistou JSON odpovědí,
-      // ne přepsat na HTML stránku, kterou by volající kód nedokázal naparsovat.
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Web se připravuje.' }, { status: 503 });
-      }
-
-      const url = request.nextUrl.clone();
-      url.pathname = '/rekonstrukce';
-      url.search = '';
-      return NextResponse.rewrite(url);
+    // API volání (fetch z klienta) chceme odmítnout čistou JSON odpovědí,
+    // ne přepsat na HTML stránku, kterou by volající kód nedokázal naparsovat.
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Web se připravuje.' }, { status: 503 });
     }
+
+    const url = request.nextUrl.clone();
+    url.pathname = '/rekonstrukce';
+    url.search = '';
+    return NextResponse.rewrite(url);
+  }
+
+  if (isCsPreviewPath(request.nextUrl.pathname) && !authorized) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.search = '';
+    const response = NextResponse.redirect(url);
+    // Bez smazání téhle cookie by next-intl middleware (NEXT_LOCALE nastavená
+    // na "cs" předchozí návštěvou) rovnou přesměroval zpátky na /cs.
+    response.cookies.delete(LOCALE_COOKIE);
+    return response;
   }
 
   return isLocalizedPath(request.nextUrl.pathname) ? handleI18nRouting(request) : NextResponse.next();

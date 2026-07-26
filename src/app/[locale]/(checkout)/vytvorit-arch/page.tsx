@@ -148,53 +148,63 @@ export default function EditorPage() {
   };
 
   // LOGIKA INTEGRACE DO KOŠÍKU
-  const handleEditorComplete = async (stampId?: string) => {
-    if (stampId) {
-      try {
-        const { data, error } = await supabase
-          .from('custom_stamps')
-          .select(`
-            id,
-            preview_url,
-            products (
-              name,
-              price,
-              price_eur,
-              weight_grams
-            )
-          `)
-          .eq('id', stampId)
-          .single();
-
-        if (error) throw error;
-
-        if (data && data.products) {
-          const stampProductInfo = Array.isArray(data.products) ? data.products[0] : data.products;
-          // Vlastní archy nemají koncept slevy (products.sale_price se tu odjakživa
-          // nenačítá) - jen zákaznická cena podle měny.
-          const localizedPrice = currency === 'CZK' ? stampProductInfo.price : stampProductInfo.price_eur;
-
-          if (localizedPrice == null) {
-            console.error('Chybí EUR cena pro produkt vlastního archu:', stampProductInfo.name);
-          } else {
-            addToCart({
-              id: data.id,
-              name: `${t('customDesignPrefix')}${selectedTemplate ? nameOf(selectedTemplate, productInfo, locale) : stampProductInfo.name}`,
-              price: localizedPrice,
-              currency,
-              image_url: data.preview_url,
-              quantity: 1,
-              weight_grams: stampProductInfo.weight_grams,
-              item_type: 'custom',
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Chyba při přidávání archu do košíku:", err);
-      }
+  const handleEditorComplete = async (stampId?: string): Promise<boolean> => {
+    if (!stampId) {
+      setCurrentStep(3);
+      return true;
     }
-    
-    setCurrentStep(3);
+
+    try {
+      const { data, error } = await supabase
+        .from('custom_stamps')
+        .select(`
+          id,
+          preview_url,
+          products (
+            name,
+            price,
+            price_eur,
+            weight_grams
+          )
+        `)
+        .eq('id', stampId)
+        .single();
+
+      if (error) throw error;
+
+      if (data && data.products) {
+        const stampProductInfo = Array.isArray(data.products) ? data.products[0] : data.products;
+        // Vlastní archy nemají koncept slevy (products.sale_price se tu odjakživa
+        // nenačítá) - jen zákaznická cena podle měny.
+        const localizedPrice = currency === 'CZK' ? stampProductInfo.price : stampProductInfo.price_eur;
+
+        if (localizedPrice == null) {
+          console.error('Chybí cena v měně', currency, 'pro produkt vlastního archu:', stampProductInfo.name);
+          alert(t('editor.cartError'));
+          return false;
+        }
+
+        addToCart({
+          id: data.id,
+          name: `${t('customDesignPrefix')}${selectedTemplate ? nameOf(selectedTemplate, productInfo, locale) : stampProductInfo.name}`,
+          price: localizedPrice,
+          currency,
+          image_url: data.preview_url,
+          quantity: 1,
+          weight_grams: stampProductInfo.weight_grams,
+          item_type: 'custom',
+        });
+        setCurrentStep(3);
+        return true;
+      }
+
+      alert(t('editor.cartError'));
+      return false;
+    } catch (err) {
+      console.error("Chyba při přidávání archu do košíku:", err);
+      alert(t('editor.cartError'));
+      return false;
+    }
   };
 
   return (

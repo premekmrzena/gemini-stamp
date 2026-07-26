@@ -33,6 +33,7 @@ type ToastState = {
 
 type CartContextType = {
   cartItems: CartItem[];
+  cartCurrency: Currency;
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -142,13 +143,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (newItem: CartItem) => {
     setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === newItem.id);
+      // Košík smí obsahovat jen jednu měnu najednou (viz cartCurrency níže) -
+      // pokud má nová položka jinou měnu než ty stávající (typicky přeskočení
+      // mezi /cs náhledem a EN při testování), je bezpečnější košík vyprázdnit
+      // a začít znovu, než namíchat CZK a EUR do jednoho součtu.
+      const base = prev.length > 0 && prev[0].currency !== newItem.currency ? [] : prev;
+      const existing = base.find((item) => item.id === newItem.id);
       if (existing) {
-        return prev.map((item) =>
+        return base.map((item) =>
           item.id === newItem.id ? { ...item, quantity: item.quantity + newItem.quantity } : item
         );
       }
-      return [...prev, newItem];
+      return [...base, newItem];
     });
 
     setToast({ visible: true, item: newItem });
@@ -185,11 +191,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discountAmount = computeDiscountAmount(cartTotal, appliedDiscount);
   const cartTotalAfterDiscount = cartTotal - discountAmount;
+  // Měna, ve které košík reálně je - podle položek v něm (addToCart výše
+  // garantuje, že jsou vždy jen v jedné), ne podle stránky/locale, na které
+  // zákazník zrovna je (to by u existujícího košíku ukázalo špatnou měnu ke
+  // stejnému číslu, viz CartStep/OrderSummary). Prázdný košík spadá na
+  // currentCurrency - tam teprve rozhoduje aktuální stránka, protože se s ní
+  // teprve zakládá nová objednávka.
+  const cartCurrency: Currency = cartItems[0]?.currency ?? currentCurrency;
 
   return (
     <CartContext.Provider
       value={{
-        cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, toast, dismissToast,
+        cartItems, cartCurrency, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, toast, dismissToast,
         appliedDiscount, discountAmount, cartTotalAfterDiscount, discountLoading, discountError,
         applyDiscountCode, removeDiscountCode,
       }}

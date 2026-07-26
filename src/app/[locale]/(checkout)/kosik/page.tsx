@@ -7,7 +7,6 @@ import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import StripePaymentForm from '@/components/StripePaymentForm';
 import { PAYMENT_OPTIONS } from '@/lib/constants';
-import { getOrderCurrency } from '@/lib/currency';
 import { getShippingOptionsInCurrency, getMinInternationalPriceInCurrency, getPaymentOptionsInCurrency } from '@/lib/shippingCurrency';
 import { supabase } from '@/lib/supabase';
 import { useCheckout } from '@/hooks/useCheckout';
@@ -33,8 +32,11 @@ const CheckoutPage = () => {
   const t = useTranslations('checkout');
   const router = useRouter();
   const locale = useLocale();
-  const currency = getOrderCurrency(locale);
-  const { cartItems, cartTotal, cartTotalAfterDiscount, discountAmount, appliedDiscount, removeFromCart, updateQuantity } = useCart();
+  const { cartItems, cartCurrency, cartTotal, cartTotalAfterDiscount, discountAmount, appliedDiscount, removeFromCart, updateQuantity } = useCart();
+  // Měna se řídí tím, co skutečně je v košíku (cartCurrency z CartContextu), ne
+  // aktuální stránkou/locale - jinak by např. přechod na /cs přeznačil existující
+  // EUR košík na Kč se stejným číslem (viz CartStep/OrderSummary).
+  const currency = cartCurrency;
   const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedShipping, setSelectedShipping] = useState('osobni');
@@ -125,7 +127,10 @@ const CheckoutPage = () => {
     submitOrder({
       cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent,
       discountCode: appliedDiscount?.code ?? null,
-      locale,
+      // Server (create-order) si z tohohle odvozuje měnu (getOrderCurrency) - musí
+      // odpovídat cartCurrency, ne aktuální stránce, jinak by se objednávka spočítala
+      // v jiné měně, než v jaké byl košík skutečně zobrazený zákazníkovi.
+      locale: currency === 'CZK' ? 'cs' : locale,
     });
   };
 
