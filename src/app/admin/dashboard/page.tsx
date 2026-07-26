@@ -16,7 +16,7 @@ import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
   LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt,
-  Sparkles, Printer, History, FileImage, BarChart3, Info,
+  Sparkles, Printer, History, FileImage, BarChart3, Info, MessageSquare,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip } from 'recharts';
@@ -82,7 +82,7 @@ function isFreshOrder(createdAt: string) {
 
 function NewOrderBadge() {
   return (
-    <span className="inline-flex px-2 py-1 rounded-[4px] style-product-tag border bg-primary/10 text-primary border-primary/20">
+    <span className="inline-flex px-2 py-1 rounded-[4px] style-product-tag border bg-success/10 text-success border-success/20">
       Nová
     </span>
   );
@@ -1714,7 +1714,7 @@ export default function AdminDashboard() {
                   <select
                     value={selectedOrder.status || 'Nová'}
                     onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
-                    className={`px-3 py-2 rounded-[4px] style-body-bold border cursor-pointer outline-none transition-all ${getStatusColorClasses(selectedOrder.status)}`}
+                    className="bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
                   >
                     {ORDER_STATUSES.map(({ value }) => (
                       <option key={value} value={value}>{value}</option>
@@ -1890,6 +1890,16 @@ export default function AdminDashboard() {
                   })()}
                 </div>
               </div>
+
+              {/* POZNÁMKA ZÁKAZNÍKA Z KOŠÍKU */}
+              {selectedOrder.customer_note && (
+                <div className="bg-tag-novinka/5 border border-tag-novinka/20 p-4 rounded-[4px] space-y-1">
+                  <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                    <MessageSquare size={14} className="text-tag-novinka" /> Poznámka zákazníka
+                  </h3>
+                  <p className="style-body text-secondary whitespace-pre-line">{selectedOrder.customer_note}</p>
+                </div>
+              )}
 
               {/* POLOŽKY VČETNĚ STAŽENÍ TISKOVÝCH PODKLADŮ */}
               <div className="space-y-3">
