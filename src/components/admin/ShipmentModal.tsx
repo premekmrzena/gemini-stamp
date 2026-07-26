@@ -98,7 +98,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60] transition-all" {...backdrop}>
       <div
-        className="bg-black400 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]"
+        className="bg-black400 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
@@ -111,7 +111,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="bg-black p-4 rounded-[12px] border border-black300/20 space-y-1">
+          <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-1">
             <h3 className="style-product-tag text-black300 flex items-center gap-2">
               <MapPin size={14} className="text-primary" /> Adresát
             </h3>
@@ -120,7 +120,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
             <p className="style-body text-black200">{recipientZip} {recipientCity}, {recipientCountry}</p>
           </div>
 
-          <div className="bg-black p-4 rounded-[12px] border border-black300/20 flex justify-between items-center">
+          <div className="bg-black p-4 rounded-[4px] border border-black300/20 flex justify-between items-center">
             <span className="style-product-tag text-black300">Doprava</span>
             <span className="style-body-bold text-secondary">{order.shipping_method} · {totalWeightKg.toFixed(3)} kg</span>
           </div>
@@ -133,7 +133,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
               {loadError && <p className="style-body text-tag-posledni-kusy">{loadError}</p>}
               {!items && !loadError && <p className="style-body text-black300 italic">Načítám položky...</p>}
               {items && (
-                <div className="bg-black rounded-[12px] border border-black300/20 overflow-hidden">
+                <div className="bg-black rounded-[4px] border border-black300/20 overflow-hidden">
                   {items.map((item) => (
                     <div key={item.sequence} className="p-4 border-b border-black300/20 last:border-0 flex justify-between items-center gap-4">
                       <div>
@@ -158,7 +158,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
           )}
 
           {!prefix && (
-            <div className="bg-tag-posledni-kusy/10 border border-tag-posledni-kusy/20 p-4 rounded-[12px] flex gap-3 items-start">
+            <div className="bg-tag-posledni-kusy/10 border border-tag-posledni-kusy/20 p-4 rounded-[4px] flex gap-3 items-start">
               <AlertTriangle size={18} className="text-tag-posledni-kusy shrink-0 mt-0.5" />
               <p className="style-body text-black200">
                 Způsob dopravy „{order.shipping_method}“ nemá napojené automatické podání (typicky osobní odběr) - zásilku vyřeš ručně.
@@ -166,7 +166,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
             </div>
           )}
 
-          <div className="bg-primary/5 border border-primary/20 p-4 rounded-[12px] flex gap-3 items-start">
+          <div className="bg-primary/5 border border-primary/20 p-4 rounded-[4px] flex gap-3 items-start">
             <AlertTriangle size={18} className="text-primary shrink-0 mt-0.5" />
             <p className="style-body text-black200">
               Podává se zatím jen proti <span className="text-secondary">demo</span> prostředí České pošty - žádná reálná zásilka
@@ -181,14 +181,14 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
           )}
 
           {parcelCode ? (
-            <div className="w-full bg-success/10 text-success border border-success/20 py-3 rounded-[8px] style-body-bold flex items-center justify-center gap-2">
+            <div className="w-full bg-success/10 text-success border border-success/20 py-3 rounded-[4px] style-body-bold flex items-center justify-center gap-2">
               <CheckCircle2 size={16} /> Podáno, číslo zásilky: {parcelCode}
             </div>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 disabled:hover:bg-primary/10 disabled:hover:text-primary border border-primary/20 py-3 rounded-[8px] style-body-bold transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 disabled:hover:bg-primary/10 disabled:hover:text-primary border border-primary/20 py-3 rounded-[4px] style-body-bold transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

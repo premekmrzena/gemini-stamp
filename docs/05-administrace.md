@@ -1,31 +1,50 @@
 # 5. Administrace
 
-> Pohled admina, který zpracovává objednávky a správu produktů. Popis odpovídá skutečnému stavu kódu k 2026-06-16, doplněno o slevu k 2026-07-01, o slevové kódy k 2026-07-08, o formátovaný detailní popis k 2026-07-11 a o vyhledávání/filtr/řazení produktů a přejmenování záložky k 2026-07-12, o pole „Téma (filtr Známky)“ k 2026-07-14, o pole „Ruční pořadí“ (`sort_order`) k 2026-07-15, o tlačítko „Vytvořit zásilku“ (nAPI B2B-ZSK) k 2026-07-23 — `src/app/admin/dashboard/page.tsx` je jediná admin obrazovka v aplikaci, formulář na produkty žije v `src/components/admin/ProductFormModal.tsx`, formulář na slevové kódy v `src/components/admin/DiscountCodeFormModal.tsx`.
+> Pohled admina, který zpracovává objednávky a správu produktů. Popis odpovídá skutečnému stavu kódu k 2026-06-16, doplněno o slevu k 2026-07-01, o slevové kódy k 2026-07-08, o formátovaný detailní popis k 2026-07-11 a o vyhledávání/filtr/řazení produktů a přejmenování záložky k 2026-07-12, o pole „Téma (filtr Známky)“ k 2026-07-14, o pole „Ruční pořadí“ (`sort_order`) k 2026-07-15, o tlačítko „Vytvořit zásilku“ (nAPI B2B-ZSK) k 2026-07-23, o UX/vizuální audit + záložky Kurzy měn a Statistika k 2026-07-26 — `src/app/admin/dashboard/page.tsx` je jediná admin obrazovka v aplikaci, formulář na produkty žije v `src/components/admin/ProductFormModal.tsx`, formulář na slevové kódy v `src/components/admin/DiscountCodeFormModal.tsx`.
 
 ## 1. Přístup
 
 `/admin/dashboard` je chráněný přihlášením přes Supabase Auth (e-mail + heslo, `supabase.auth.signInWithPassword`). Žádná samoregistrace ani role/oprávnění v aplikaci — kdokoli s platným Supabase Auth účtem se po přihlášení dostane do celého dashboardu. Účty se vytvářejí přímo v Supabase (Authentication), ne v appce.
 
-Dashboard má tři záložky: **Objednávky**, **Produkty** (do 2026-07-12 „Homepage produkty“ – tabulka odjakživa zobrazovala úplně všechny produkty, ne jen homepage výběr, jen název neodpovídal) a **Slevové kódy**.
+Dashboard má pět záložek: **Objednávky**, **Produkty** (do 2026-07-12 „Homepage produkty“ – tabulka odjakživa zobrazovala úplně všechny produkty, ne jen homepage výběr, jen název neodpovídal), **Slevové kódy**, **Kurzy měn** (ruční kurzy pro mezinárodní ceny, viz [sekce 9](09-jazykove-mutace.md)) a od 2026-07-26 **Statistika** (viz níže).
+
+**Vizuální audit 2026-07-26:** logo `creative-stamp_logo.svg` nahradilo textový nadpis „E-shop Dashboard“ (stejný soubor jako v `Header.tsx`), zaoblení rohů sjednoceno na `rounded-[4px]` napříč dashboardem i modaly (`ProductFormModal`/`DiscountCodeFormModal`/`ShipmentModal`) — stejná konvence jako zbytek e-shopu. Lišta záložek je vodorovně scrollovatelná na mobilu (`overflow-x-auto` + `.scrollbar-hide`). Všechny čtyři starší tabulky (Objednávky, Produkty, Slevové kódy, Kurzy měn) mají teď i mobilní variantu — nad `md` breakpointem klasická `<table>`, pod ním svislé karty se stejnými daty a akcemi.
 
 ## 2. Záložka Objednávky
 
 Nahoře čtyři souhrnné karty — obrat, počet objednávek, průměrná hodnota objednávky a počet objednávek „čeká na odeslání“ (stav `Zaplaceno` nebo `Připravujeme`). Všechny se počítají jen z objednávek odpovídajících aktuálnímu filtru data (filtr nad tabulkou, datum se porovnává podle `created_at`).
 
-Nad tabulkou je tlačítko **„Stáhnout tiskové archy (ZIP)“** — vezme všechny položky s „vlastní“ v názvu napříč aktuálně filtrovanými objednávkami, stáhne jejich `print_url` z `custom_stamps`, zabalí do jednoho ZIP (`jszip`, klientsky) a spustí stažení. Pojmenování souborů v ZIPu: `{posledních6znakůID objednávky}_{pořadí položky}.png`.
+Nad tabulkou je tlačítko **„Stáhnout tiskové archy (ZIP)“** — vezme všechny položky s `item_type === 'custom'` napříč aktuálně filtrovanými objednávkami, stáhne jejich `print_url` z `custom_stamps` (dávkově, viz níže) a zabalí do jednoho ZIP (`jszip`, klientsky). Pojmenování souborů v ZIPu: `{posledních6znakůID objednávky}_{pořadí položky}.png`.
 
-Tabulka objednávek (řazená od nejnovější): zákazník, stav (barevný štítek podle skupiny `neutral`/`success`/`danger` z `ORDER_STATUSES`, viz [sekce 2](02-stavy-objednavky.md)) a částka. Klik na řádek otevře detail v modálu.
+**Detekce Kreativního archu (`isCustomStampItem`, oprava 2026-07-26):** dřív se hledalo slovo „vlastní“ v názvu položky — u anglických objednávek (fáze 4a/4b i18n) se ale ukládá název `"Custom design: ..."`, takže tahle detekce od zavedení EN checkoutu tiše selhávala a anglické objednávky s archem neměly žádné tlačítko na stažení. Teď se používá spolehlivý, jazykově nezávislý sloupec `item_type: 'product' | 'custom'` (`CartItemSnapshot`), stejný jako v checkoutu/`create-order`/Stripe webhooku.
+
+Tabulka objednávek (řazená od nejnovější): zákazník + ID, **datum** (`created_at`), stav (barevný štítek podle skupiny `neutral`/`success`/`danger` z `ORDER_STATUSES`, viz [sekce 2](02-stavy-objednavky.md)), částka a sloupec Archy. Objednávky obsahující Kreativní arch mají levý oranžový accent border + badge „Kreativní arch“; pokud má objednávka přesně jednu takovou položku, řádek (i mobilní karta) nese rovnou dvě ikonová tlačítka pro rychlé stažení tiskového PNG a náhledu, bez nutnosti otevírat detail. Klik kamkoli jinam na řádek otevře detail v modálu.
+
+Tiskové URL (`custom_stamps.print_url`) se dotahují **dávkově pro všechny objednávky najednou** hned po načtení seznamu (ne až při otevření konkrétního detailu) — jedna mapa `itemId → print_url` sdílená seznamem, detailem i hromadným ZIP exportem. Náhled (`item.image_url` v `cart_items`) je shodný s `custom_stamps.preview_url` uloženým v okamžiku vytvoření objednávky, takže se stahuje bez jakéhokoli dalšího DB dotazu.
 
 ### Detail objednávky
-- **Změna stavu** — vedle selectu se všemi 13 stavy je tlačítko „Další krok“ s návrhem následujícího stavu v typické cestě objednávky (`getNextStatus`, dvě varianty podle `shipping_method`: osobní odběr → `Nová→Zaplaceno→Připravujeme→K vyzvednutí→Vyzvednuto→Uzavřeno`, doprava → `...→Odesláno→Doručeno→Uzavřeno`). Mimo tuto cestu (Zrušeno, Vráceno, Reklamace...) tlačítko nic nenabízí, jde jen přes select. Uložení je okamžité (`updateOrderStatus`), bez potvrzení a bez validace přechodu (lze přeskočit libovolně přes select)
-- **Sledovací číslo zásilky** — pole + tlačítko „Uložit a poslat e-mail“: uloží `orders.tracking_number` a zavolá `/api/send-shipping-notification`, který e-mailem (Resend, šablona `ShippingNotificationEmail`) pošle zákazníkovi číslo zásilky. Vyžaduje migraci `docs/sql/002_orders_tracking_number.sql` (sloupec `tracking_number` v `orders`)
-- **Vytvořit zásilku** (od 2026-07-23, skryté pro osobní odběr) — tlačítko otevře `ShipmentModal`, náhled adresáta/váhy/dopravy a u mezinárodních zásilek i celního prohlášení (HS kódy dle kategorie produktu). Tlačítko „Podat u České pošty (demo)“ skutečně zavolá nAPI B2B-ZSK (zatím jen demo prostředí) a po úspěchu zapíše vrácené číslo zásilky do stejného pole `tracking_number` jako ruční zadání výše. Detail v [sekci 10](10-doprava-a-celni-prohlaseni.md)
+- **Změna stavu** — vedle selectu se všemi 13 stavy (od 2026-07-26 seřazenými podle skutečného toku objednávky, ne náhodně) je tlačítko „Další krok“ s návrhem následujícího stavu v typické cestě objednávky (`getNextStatus`, dvě varianty podle `shipping_method`: osobní odběr → `Nová→Zaplaceno→Připravujeme→K vyzvednutí→Vyzvednuto→Uzavřeno`, doprava → `...→Odesláno→Doručeno→Uzavřeno`). Mimo tuto cestu (Zrušeno, Vráceno, Reklamace...) tlačítko nic nenabízí, jde jen přes select. Uložení je okamžité (`updateOrderStatus`), bez potvrzení a bez validace přechodu (lze přeskočit libovolně přes select)
+- **Historie stavů** (od 2026-07-26) — svislá časová osa se všemi dosavadními stavy objednávky a přesným časem změny. Plní se DB triggerem na `orders` (`docs/sql/021_order_status_history.sql`, tabulka `order_status_history`) — loguje se každá změna `status` bez ohledu na to, jestli ji vyvolá dashboard, Stripe webhook (`mark_order_paid`) nebo cokoli budoucího, takže časová osa nemůže "zapomenout" na změnu udělanou mimo dashboard. Objednávky vytvořené před spuštěním migrace nemají zpětnou historii.
+- **Sledovací číslo zásilky** (přepracováno 2026-07-26) — primárně jen ke čtení. Skutečný zdroj čísla je tlačítko „Vytvořit zásilku“ níže (ČP ho vygeneruje samo); po úspěšném podání appka teď navíc rovnou pošle e-mail se sledovacím číslem (dřív to fungovalo jen přes ruční zadání, podání přes ČP e-mail neposílalo vůbec). Ruční textové pole zůstává jen jako fallback za odkazem „Zadat ručně“ (přeprava mimo ČP, historické objednávky, oprava překlepu) — uloží `orders.tracking_number` a zavolá stejnou sdílenou funkci pro `/api/send-shipping-notification` (Resend, šablona `ShippingNotificationEmail`). Vyžaduje migraci `docs/sql/002_orders_tracking_number.sql` (sloupec `tracking_number` v `orders`)
+- **Vytvořit zásilku** (od 2026-07-23, skryté pro osobní odběr) — tlačítko otevře `ShipmentModal`, náhled adresáta/váhy/dopravy a u mezinárodních zásilek i celního prohlášení (HS kódy dle kategorie produktu). Tlačítko „Podat u České pošty (demo)“ skutečně zavolá nAPI B2B-ZSK (zatím jen demo prostředí) a po úspěchu zapíše vrácené číslo zásilky do stejného pole `tracking_number` jako ruční zadání výše, a rovnou pošle zákazníkovi e-mail se sledovacím číslem. Detail v [sekci 10](10-doprava-a-celni-prohlaseni.md)
+- **Vytisknout štítek** (od 2026-07-26, zobrazí se jakmile existuje `tracking_number`) — `GET /api/admin/print-shipping-label?orderId=...` zavolá `POST /parcelPrinting` (nAPI B2B-ZSK) s už podaným číslem zásilky a vrátí PDF štítku k přímému tisku (`idForm: 101` = běžný A4 tisk, ne štítková/Zebra tiskárna — snadno změnitelné, viz komentář u `LABEL_FORM_ID`)
+- **Tiskový arch** (od 2026-07-26, zobrazí se jen u objednávek s Kreativním archem) — přímé tlačítko na stažení tiskového PNG přímo v horní akční sekci detailu, vedle Faktury a Sledovacího čísla — navíc k tlačítku u konkrétní položky níže (stejný vzor zdvojení jako u Faktury)
 - Kontaktní údaje zákazníka a doručovací adresa
 - **Položky objednávky** — u každé položky název, množství × cena, mezisoučet
-- **Stažení tiskových podkladů** — pokud název položky obsahuje „vlastní“ (= vlastní kreativní arch z editoru), zobrazí se tlačítko „Stáhnout tiskové PNG“. Odkazuje na `print_url` z `custom_stamps` (plné rozlišení 4130×2550 px, bez šablony na pozadí — viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy)). URL se dotahuje samostatným dotazem do `custom_stamps` při otevření detailu (`customStampsData`), do té doby je u tlačítka jen text „Načítám tiskové podklady z cloudu...“
+- **Stažení tiskových podkladů** — u položek s `item_type === 'custom'` (Kreativní arch) tlačítko „Stáhnout tiskové PNG“ (odkazuje na `print_url` z `custom_stamps`, plné rozlišení 4130×2550 px bez šablony na pozadí — viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy)) a od 2026-07-26 i „Stáhnout náhled“ (`item.image_url` ze snapshotu objednávky, bez DB dotazu)
 - Platební metoda a celková cena k úhradě
 
 Admin jednotlivý tiskový soubor stáhne a pošle do tiskárny manuálně, nebo použije hromadný ZIP export výše — appka ale stále nepředává soubory tiskárně automaticky.
+
+## 2a. Záložka Statistika (od 2026-07-26)
+
+Vlastní filtr rozsahu dat (7/30/90 dní, Letos, Vše — nezávislý na jednodenním filtru v Objednávkách), tři KPI karty (obrat po měnách, počet objednávek, průměrná hodnota) a čtyři grafy postavené na `recharts`:
+- **Tržby v čase** — samostatný liniový graf pro každou měnu přítomnou v období (nikdy ne dvě osy v jednom grafu — CZK a EUR mají řádově jiné hodnoty).
+- **Objednávky v čase** — sloupcový graf, počet objednávek po dnech.
+- **Prodej podle produktu** — top 8 podle tržby, agregováno podle názvu položky v košíku. Zjednodušení v1: nejde přes `custom_stamps.product_id` na skutečný produkt, takže CZ a EN název stejné šablony Kreativního archu vyjdou jako dva různé řádky.
+- **Objednávky podle země** — top 8 podle skutečné doručovací adresy (`getDeliveryAddress()`, ne rovnou `billing_country`).
+
+Barvy grafů: oranžová (`primary`) pro peněžní metriky, modrá (`tag-top`) pro počty — čistě konvence pro rychlou orientaci, žádná kategoriální paleta (každý graf je jednosériový).
 
 ## 3. Záložka Produkty
 
@@ -81,4 +100,5 @@ Dvě zcela oddělené cesty podle způsobu platby (rozhodnuto 2026-07-25 po konz
 
 ## Otevřené body
 - Žádná role/oprávnění — kdokoli s Supabase Auth účtem vidí a může měnit vše (objednávky i produkty)
-- Žádné notifikace ani audit log akcí admina (kdo a kdy změnil stav/produkt)
+- Audit log od 2026-07-26 existuje jen pro **změny stavu objednávky** (`order_status_history`) — úpravy produktů, slevových kódů a kurzů se pořád nikam nezaznamenávají (kdo a kdy je změnil)
+- Statistika „Prodej podle produktu“ agreguje podle názvu položky v košíku, ne podle skutečného `product_id` — CZ/EN název stejné šablony Kreativního archu se počítá jako dva různé produkty (viz sekce 2a)

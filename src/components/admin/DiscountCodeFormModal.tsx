@@ -61,13 +61,13 @@ export function DiscountCodeFormModal({ discountCode, onClose, onSaved }: Discou
     }
   }
 
-  const inputClass = 'w-full bg-black border border-black300/50 rounded-[8px] px-4 h-[44px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all';
+  const inputClass = 'w-full bg-black border border-black300/50 rounded-[4px] px-4 h-[44px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all';
   const labelClass = 'style-product-tag text-black300 block mb-2';
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" {...backdropHandlers}>
       <div
-        className="bg-black400 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl"
+        className="bg-black400 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
@@ -79,7 +79,7 @@ export function DiscountCodeFormModal({ discountCode, onClose, onSaved }: Discou
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <p className="text-tag-posledni-kusy style-body-bold bg-tag-posledni-kusy/10 p-3 rounded-[8px] border border-tag-posledni-kusy/20">
+            <p className="text-tag-posledni-kusy style-body-bold bg-tag-posledni-kusy/10 p-3 rounded-[4px] border border-tag-posledni-kusy/20">
               {error}
             </p>
           )}
@@ -144,11 +144,11 @@ export function DiscountCodeFormModal({ discountCode, onClose, onSaved }: Discou
           </label>
 
           <div className="pt-4 border-t border-black300/30 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 h-[44px] rounded-[8px] style-body-bold text-black300 hover:text-secondary transition-all cursor-pointer">
+            <button type="button" onClick={onClose} className="px-4 h-[44px] rounded-[4px] style-body-bold text-black300 hover:text-secondary transition-all cursor-pointer">
               Zrušit
             </button>
             <button type="submit" disabled={saving}
-              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-6 h-[44px] rounded-[8px] transition-all style-body cursor-pointer">
+              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-6 h-[44px] rounded-[4px] transition-all style-body cursor-pointer">
               {saving ? 'Ukládám...' : discountCode ? 'Uložit změny' : 'Vytvořit kód'}
             </button>
           </div>

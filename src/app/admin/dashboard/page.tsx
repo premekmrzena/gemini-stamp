@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { ORDER_STATUSES } from '@/lib/constants';
-import { OrderStatus, Order, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate } from '@/types/database';
+import { OrderStatus, Order, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate, CartItemSnapshot, OrderStatusHistoryEntry } from '@/types/database';
 import { ProductFormModal, CATEGORY_LABELS } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
 import { ShipmentModal } from '@/components/admin/ShipmentModal';
@@ -14,13 +15,22 @@ import { Currency, formatPrice } from '@/lib/currency';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
-  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt
+  LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt,
+  Sparkles, Printer, History, FileImage, BarChart3,
 } from 'lucide-react';
 import JSZip from 'jszip';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip } from 'recharts';
 
 const LOW_STOCK_THRESHOLD = 5;
 
 type PrintUrlRow = { id: string; print_url: string };
+
+// Jediný zdroj pravdy pro "obsahuje tahle položka Kreativní arch" - `item_type` je
+// jazykově nezávislé (na rozdíl od dřívějšího hledání slova "vlastní" v názvu, které
+// selhávalo u anglických objednávek: EN název je "Custom design: ...", bez "vlastní").
+function isCustomStampItem(item: CartItemSnapshot) {
+  return item.item_type === 'custom';
+}
 
 const CURRENCY_LABELS: Record<CurrencyCode, string> = {
   CZK: 'Česká koruna (CZK)',
@@ -53,12 +63,20 @@ function getStatusColorClasses(status: OrderStatus | undefined) {
   return STATUS_COLOR_CLASSES[group];
 }
 
+function OrderStatusBadge({ status }: { status: OrderStatus | undefined }) {
+  return (
+    <span className={`inline-flex px-2 py-1 rounded-[4px] style-product-tag border ${getStatusColorClasses(status)}`}>
+      {status || 'Nová'}
+    </span>
+  );
+}
+
 const PICKUP_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'K vyzvednutí', 'Vyzvednuto', 'Uzavřeno'];
 const SHIPPING_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'Odesláno', 'Doručeno', 'Uzavřeno'];
 
 // Stavy, u kterých změna přes updateOrderStatus() automaticky pošle zákazníkovi email
 // (viz /api/admin/notify-order-status). Odesláno má vlastní tok přes sledovací číslo
-// (handleSaveTrackingNumber), ne přes tenhle dropdown/"Další krok".
+// (ShipmentModal / handleSaveTrackingNumber), ne přes tenhle dropdown/"Další krok".
 const STATUS_EMAIL_NOTIFICATIONS = new Set<OrderStatus>(['Zaplaceno', 'K vyzvednutí', 'Zrušeno', 'Vráceny peníze']);
 
 // Vrací další stav v "šťastné cestě" objednávky podle způsobu dopravy.
@@ -85,6 +103,88 @@ function getDeliveryAddress(order: Order) {
   };
 }
 
+// Malý badge pro objednávky obsahující Kreativní arch - stejný vzhled v tabulce,
+// mobilní kartě i detailu.
+function CustomStampBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-[4px] style-product-tag border bg-primary/10 text-primary border-primary/20 whitespace-nowrap">
+      <Sparkles size={12} /> Kreativní arch
+    </span>
+  );
+}
+
+// Kompaktní ikonová tlačítka pro rychlé stažení tiskového PNG (custom_stamps.print_url,
+// dotažené dávkově pro všechny objednávky) a náhledu (item.image_url je shodný s
+// custom_stamps.preview_url uloženým při vytvoření objednávky - bez dalšího DB dotazu).
+function CustomStampQuickActions({ item, printUrl }: { item: CartItemSnapshot; printUrl: string | undefined }) {
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      {printUrl && (
+        <a
+          href={printUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Stáhnout tiskové PNG"
+          className="p-1.5 text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
+        >
+          <Download size={14} />
+        </a>
+      )}
+      <a
+        href={item.image_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Stáhnout náhled"
+        className="p-1.5 text-black300 hover:text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
+      >
+        <FileImage size={14} />
+      </a>
+    </div>
+  );
+}
+
+function ProductStockBadge({ product }: { product: Product }) {
+  if (product.stock_quantity <= 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">
+        <AlertTriangle size={12} /> Vyprodáno
+      </span>
+    );
+  }
+  if (product.stock_quantity <= LOW_STOCK_THRESHOLD) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-top/10 text-tag-top border-tag-top/30">
+        <AlertTriangle size={12} /> {product.stock_quantity} ks
+      </span>
+    );
+  }
+  return <span className="style-body text-black300">{product.stock_quantity} ks</span>;
+}
+
+// --- BAREVNÁ PALETA GRAFŮ (Statistika) ---
+// Jednosériové grafy (magnitude) -> jedna barva na graf, žádná kategoriální paleta
+// potřeba. Oranžová (primary) pro peněžní metriky, modrá (tag-top) pro počty -
+// čistě konvence pro rychlou orientaci, ne kategoriální identita.
+const CHART_MONEY_COLOR = '#FF6B35';
+const CHART_COUNT_COLOR = '#62BBE2';
+const CHART_GRID_COLOR = 'rgba(139, 149, 172, 0.2)';
+const CHART_AXIS_COLOR = '#8B95AC';
+const CHART_TOOLTIP_STYLE = {
+  backgroundColor: '#2B3755',
+  border: '1px solid rgba(139, 149, 172, 0.3)',
+  borderRadius: 4,
+  fontSize: 13,
+};
+
+const STATS_PRESET_OPTIONS: { value: '7' | '30' | '90' | 'year' | 'all'; label: string }[] = [
+  { value: '7', label: '7 dní' },
+  { value: '30', label: '30 dní' },
+  { value: '90', label: '90 dní' },
+  { value: 'year', label: 'Letos' },
+  { value: 'all', label: 'Vše' },
+];
+type StatsPreset = typeof STATS_PRESET_OPTIONS[number]['value'];
+
 export default function AdminDashboard() {
   // --- STAVY PRO AUTENTIZACI ---
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -95,7 +195,7 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // --- STAVY PRO DASHBOARD ---
-  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty' | 'slevy' | 'kurzy'>('objednavky');
+  const [activeTab, setActiveTab] = useState<'objednavky' | 'produkty' | 'slevy' | 'kurzy' | 'statistika'>('objednavky');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -130,17 +230,27 @@ export default function AdminDashboard() {
   const [rateInputs, setRateInputs] = useState<Record<string, string>>({});
   const [savingRate, setSavingRate] = useState<CurrencyCode | null>(null);
 
-  // --- STAVY PRO TISKOVÁ DATA ARCHŮ ---
-  const [customStampsData, setCustomStampsData] = useState<Record<string, string>>({});
+  // --- STAV PRO TISKOVÁ DATA ARCHŮ (dávkově pro VŠECHNY objednávky, ne jen otevřenou) ---
+  const [printUrlsByItemId, setPrintUrlsByItemId] = useState<Record<string, string>>({});
   const [bulkDownloading, setBulkDownloading] = useState(false);
 
-  // --- STAV PRO SLEDOVACÍ ČÍSLO ZÁSILKY ---
+  // --- STAV PRO SLEDOVACÍ ČÍSLO ZÁSILKY (ruční vstup je jen fallback pro okrajové
+  // případy - primární cesta je ShipmentModal, který číslo dostane přímo od ČP) ---
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
   const [savingTracking, setSavingTracking] = useState(false);
+  const [showManualTracking, setShowManualTracking] = useState(false);
   const [prevSelectedOrderId, setPrevSelectedOrderId] = useState<string | null>(null);
+
+  // --- STAV PRO HISTORII ZMĚN STAVU OBJEDNÁVKY ---
+  const [orderStatusHistory, setOrderStatusHistory] = useState<OrderStatusHistoryEntry[]>([]);
 
   // --- STAV PRO RUČNÍ VYTVOŘENÍ IDOKLAD FAKTURY (záloha - automatika běží u "Zaplaceno") ---
   const [creatingInvoice, setCreatingInvoice] = useState(false);
+
+  // --- STAVY PRO STATISTIKU ---
+  const [statsPreset, setStatsPreset] = useState<StatsPreset>('30');
+  const [statsCustomFrom, setStatsCustomFrom] = useState('');
+  const [statsCustomTo, setStatsCustomTo] = useState('');
 
   async function fetchOrders() {
     setLoading(true);
@@ -303,50 +413,56 @@ export default function AdminDashboard() {
     );
   }, [dateFilter, orders]);
 
+  // Dávkové načtení tiskových URL pro VŠECHNY objednávky (ne jen otevřenou v modalu) -
+  // potřeba jak pro badge/quick-download v seznamu, tak pro detail a hromadný ZIP.
   useEffect(() => {
-    async function loadCustomStampsPrintUrls() {
-      if (!selectedOrder || !selectedOrder.cart_items) {
-        setCustomStampsData({});
+    async function loadCustomStampPrintUrls() {
+      const customItemIds = orders.flatMap((o) => (o.cart_items || []).filter(isCustomStampItem).map((item) => item.id));
+      if (customItemIds.length === 0) {
+        setPrintUrlsByItemId({});
         return;
       }
-
-      const customStampIds = selectedOrder.cart_items
-        .filter((item) => item.name.toLowerCase().includes('vlastní'))
-        .map((item) => item.id);
-
-      if (customStampIds.length === 0) {
-        setCustomStampsData({});
-        return;
-      }
-
       const { data, error } = await supabase
         .from('custom_stamps')
         .select('id, print_url')
-        .in('id', customStampIds);
-
+        .in('id', customItemIds);
       if (error) {
         console.error('Chyba při načítání tiskových URL:', error);
         return;
       }
-
       if (data) {
         const printUrlRows = data as PrintUrlRow[];
-        const urlMapping = printUrlRows.reduce((acc: Record<string, string>, curr) => {
-          acc[curr.id] = curr.print_url;
-          return acc;
-        }, {});
-        setCustomStampsData(urlMapping);
+        setPrintUrlsByItemId(Object.fromEntries(printUrlRows.map((row) => [row.id, row.print_url])));
       }
     }
+    loadCustomStampPrintUrls();
+  }, [orders]);
 
-    loadCustomStampsPrintUrls();
-  }, [selectedOrder]);
+  // Historie stavů otevřené objednávky (docs/sql/021_order_status_history.sql) - klíčuje
+  // se na id+status, ne na celý objekt, ať se znovu nedotahuje třeba jen kvůli sledovacímu číslu.
+  useEffect(() => {
+    async function loadOrderStatusHistory() {
+      if (!selectedOrder) {
+        setOrderStatusHistory([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('order_status_history')
+        .select('*')
+        .eq('order_id', selectedOrder.id)
+        .order('changed_at', { ascending: true });
+      if (!error) setOrderStatusHistory(data || []);
+    }
+    loadOrderStatusHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOrder?.id, selectedOrder?.status]);
 
   // "Adjustování" stavu při změně vybrané objednávky - dělá se přímo v renderu
   // (ne v efektu), viz https://react.dev/learn/you-might-not-need-an-effect
   if ((selectedOrder?.id ?? null) !== prevSelectedOrderId) {
     setPrevSelectedOrderId(selectedOrder?.id ?? null);
     setTrackingNumberInput(selectedOrder?.tracking_number || '');
+    setShowManualTracking(false);
   }
 
   async function handleLogin(e: React.SubmitEvent) {
@@ -408,6 +524,26 @@ export default function AdminDashboard() {
     }
   }
 
+  // Sdílené odeslání "zásilka odeslána" emailu - volá se jak z ručního zadání sledovacího
+  // čísla (fallback), tak automaticky po úspěšném podání zásilky přes ShipmentModal/ČP.
+  async function sendShippingNotificationEmail(order: Order, trackingNumber: string): Promise<boolean> {
+    try {
+      const res = await fetch('/api/send-shipping-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: order.billing_email,
+          orderId: order.id.slice(-6).toUpperCase(),
+          customerName: order.billing_first_name,
+          trackingNumber,
+        }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async function handleSaveTrackingNumber() {
     if (!selectedOrder || !trackingNumberInput.trim()) return;
     const trimmed = trackingNumberInput.trim();
@@ -419,7 +555,7 @@ export default function AdminDashboard() {
       .eq('id', selectedOrder.id);
 
     if (error) {
-      alert('Uložení sledovacího čísla selhalo. (Pozor: je potřeba mít spuštěnou migraci docs/sql/002_orders_tracking_number.sql.)');
+      alert('Uložení sledovacího čísla selhalo.');
       setSavingTracking(false);
       return;
     }
@@ -427,24 +563,10 @@ export default function AdminDashboard() {
     setOrders(orders.map((o) => (o.id === selectedOrder.id ? { ...o, tracking_number: trimmed } : o)));
     setSelectedOrder((prev) => (prev ? { ...prev, tracking_number: trimmed } : null));
 
-    try {
-      const res = await fetch('/api/send-shipping-notification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: selectedOrder.billing_email,
-          orderId: selectedOrder.id.slice(-6).toUpperCase(),
-          customerName: selectedOrder.billing_first_name,
-          trackingNumber: trimmed,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      alert('Sledovací číslo uloženo a e-mail zákazníkovi odeslán.');
-    } catch {
-      alert('Sledovací číslo bylo uloženo, ale e-mail se nepodařilo odeslat.');
-    } finally {
-      setSavingTracking(false);
-    }
+    const sent = await sendShippingNotificationEmail(selectedOrder, trimmed);
+    alert(sent ? 'Sledovací číslo uloženo a e-mail zákazníkovi odeslán.' : 'Sledovací číslo bylo uloženo, ale e-mail se nepodařilo odeslat.');
+    setSavingTracking(false);
+    setShowManualTracking(false);
   }
 
   async function handleCreateIdokladInvoice() {
@@ -476,7 +598,7 @@ export default function AdminDashboard() {
   async function handleBulkPrintDownload() {
     const itemsToDownload = filteredOrders.flatMap((order) =>
       (order.cart_items || [])
-        .filter((item) => item.name.toLowerCase().includes('vlastní'))
+        .filter(isCustomStampItem)
         .map((item, idx) => ({ orderShort: order.id.slice(-6).toUpperCase(), itemId: item.id, itemIndex: idx + 1 }))
     );
 
@@ -487,17 +609,9 @@ export default function AdminDashboard() {
 
     setBulkDownloading(true);
     try {
-      const { data, error } = await supabase
-        .from('custom_stamps')
-        .select('id, print_url')
-        .in('id', itemsToDownload.map((i) => i.itemId));
-      if (error || !data) throw error || new Error('Žádná data');
-
-      const urlById = new Map((data as PrintUrlRow[]).map((d) => [d.id, d.print_url]));
       const zip = new JSZip();
-
       for (const item of itemsToDownload) {
-        const printUrl = urlById.get(item.itemId);
+        const printUrl = printUrlsByItemId[item.itemId];
         if (!printUrl) continue;
         const res = await fetch(printUrl);
         const blob = await res.blob();
@@ -519,6 +633,16 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleShipmentCreated(orderId: string, parcelCode: string) {
+    setOrders(orders.map((o) => (o.id === orderId ? { ...o, tracking_number: parcelCode } : o)));
+    setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, tracking_number: parcelCode } : prev));
+    const order = orders.find((o) => o.id === orderId);
+    if (order) {
+      const sent = await sendShippingNotificationEmail(order, parcelCode);
+      if (!sent) alert('Zásilka byla podána, ale e-mail se zákazníkovi nepodařilo odeslat - sledovací číslo najdeš v detailu objednávky.');
+    }
+  }
+
   if (authLoading) return <div className="p-10 text-secondary bg-black min-h-screen font-sans flex items-center justify-center style-body">Ověřuji přístup...</div>;
 
   // ========================================================
@@ -527,24 +651,24 @@ export default function AdminDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black text-secondary flex items-center justify-center p-4">
-        <div className="bg-black400 w-full max-w-md p-8 rounded-[16px] border border-black300/30 shadow-2xl space-y-6 animate-[fadeIn_0.2s_ease-out]">
+        <div className="bg-black400 w-full max-w-md p-8 rounded-[4px] border border-black300/30 shadow-2xl space-y-6 animate-[fadeIn_0.2s_ease-out]">
           <div className="text-center">
-            <h1 className="style-h2 text-secondary">My Creative Stamp</h1>
+            <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={220} height={61} className="h-[44px] w-auto mx-auto mb-3" />
             <p className="style-body text-black300 mt-1">Vstup do administrace e-shopu</p>
           </div>
-          
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label className="style-product-tag text-black300 block">E-mail</label>
               <div className="relative flex items-center">
                 <Mail size={16} className="absolute left-4 text-black300" />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@mycreativestamp.com"
-                  className="w-full bg-black border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  className="w-full bg-black border border-black300/50 rounded-[4px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                 />
               </div>
             </div>
@@ -553,27 +677,27 @@ export default function AdminDashboard() {
               <label className="style-product-tag text-black300 block">Heslo</label>
               <div className="relative flex items-center">
                 <Lock size={16} className="absolute left-4 text-black300" />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-black border border-black300/50 rounded-[8px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  className="w-full bg-black border border-black300/50 rounded-[4px] pl-11 pr-4 h-[48px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                 />
               </div>
             </div>
 
             {loginError && (
-              <p className="text-tag-posledni-kusy style-body-bold bg-tag-posledni-kusy/10 p-3 rounded-[8px] border border-tag-posledni-kusy/20">
+              <p className="text-tag-posledni-kusy style-body-bold bg-tag-posledni-kusy/10 p-3 rounded-[4px] border border-tag-posledni-kusy/20">
                 {loginError}
               </p>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoggingIn}
-              className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold h-[48px] rounded-[8px] transition-all style-body mt-2 flex items-center justify-center cursor-pointer"
+              className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold h-[48px] rounded-[4px] transition-all style-body mt-2 flex items-center justify-center cursor-pointer"
             >
               {isLoggingIn ? 'Ověřuji...' : 'Přihlásit se'}
             </button>
@@ -597,21 +721,98 @@ export default function AdminDashboard() {
   }, {});
   const pendingShipmentCount = filteredOrders.filter((o) => ['Zaplaceno', 'Připravujeme'].includes(o.status)).length;
 
+  // --- STATISTIKA: rozsah dat + agregace (obyčejné consty, ne hooky - přepočet při
+  // každém renderu je pro řádově stovky objednávek malé firmy zanedbatelný) ---
+  const nowForStats = new Date();
+  const endOfToday = new Date(nowForStats.getFullYear(), nowForStats.getMonth(), nowForStats.getDate(), 23, 59, 59, 999);
+  const statsRange: { from: Date | null; to: Date } = (() => {
+    if (statsPreset === 'all') return { from: null, to: endOfToday };
+    if (statsPreset === 'year') return { from: new Date(nowForStats.getFullYear(), 0, 1), to: endOfToday };
+    const days = Number(statsPreset);
+    const from = new Date(endOfToday);
+    from.setDate(from.getDate() - days + 1);
+    from.setHours(0, 0, 0, 0);
+    return { from, to: endOfToday };
+  })();
+
+  const statsOrders = orders.filter((o) => {
+    const created = new Date(o.created_at);
+    if (statsRange.from && created < statsRange.from) return false;
+    if (created > statsRange.to) return false;
+    return true;
+  });
+
+  const statsRevenueByCurrency = statsOrders.reduce<Partial<Record<Currency, { total: number; count: number }>>>((acc, order) => {
+    const entry = acc[order.currency] ?? { total: 0, count: 0 };
+    entry.total += Number(order.total_price) || 0;
+    entry.count += 1;
+    acc[order.currency] = entry;
+    return acc;
+  }, {});
+
+  const dayKey = (iso: string) => new Date(iso).toLocaleDateString('en-CA');
+  const dayLabel = (key: string) => new Date(key).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
+
+  const revenueByDayAndCurrency = new Map<string, Partial<Record<Currency, number>>>();
+  const ordersByDay = new Map<string, number>();
+  for (const order of statsOrders) {
+    const key = dayKey(order.created_at);
+    const dayEntry = revenueByDayAndCurrency.get(key) ?? {};
+    dayEntry[order.currency] = (dayEntry[order.currency] ?? 0) + (Number(order.total_price) || 0);
+    revenueByDayAndCurrency.set(key, dayEntry);
+    ordersByDay.set(key, (ordersByDay.get(key) ?? 0) + 1);
+  }
+  const sortedDayKeys = Array.from(new Set([...revenueByDayAndCurrency.keys(), ...ordersByDay.keys()])).sort();
+  const ordersOverTimeData = sortedDayKeys.map((key) => ({ day: dayLabel(key), count: ordersByDay.get(key) ?? 0 }));
+  const currenciesInRange = Array.from(new Set(statsOrders.map((o) => o.currency)));
+  const revenueOverTimeByCurrency: Record<string, { day: string; revenue: number }[]> = {};
+  for (const currency of currenciesInRange) {
+    revenueOverTimeByCurrency[currency] = sortedDayKeys.map((key) => ({
+      day: dayLabel(key),
+      revenue: revenueByDayAndCurrency.get(key)?.[currency] ?? 0,
+    }));
+  }
+
+  // Prodej podle produktu (top 8 podle tržby) - agreguje podle názvu položky v košíku.
+  // V1: EN a CZ název stejné šablony Kreativního archu vyjdou jako dva různé řádky
+  // (nejde přes custom_stamps.product_id join na skutečný produkt) - vědomé zjednodušení.
+  const revenueByItemName = new Map<string, number>();
+  for (const order of statsOrders) {
+    for (const item of order.cart_items || []) {
+      revenueByItemName.set(item.name, (revenueByItemName.get(item.name) ?? 0) + item.price * item.quantity);
+    }
+  }
+  const topProductsData = Array.from(revenueByItemName.entries())
+    .map(([name, revenue]) => ({ name: name.length > 28 ? `${name.slice(0, 27)}…` : name, revenue }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 8);
+
+  // Objednávky podle skutečné doručovací země (ne rovnou billing_country).
+  const ordersByCountry = new Map<string, number>();
+  for (const order of statsOrders) {
+    const country = getDeliveryAddress(order).country || 'Neuvedeno';
+    ordersByCountry.set(country, (ordersByCountry.get(country) ?? 0) + 1);
+  }
+  const ordersByCountryData = Array.from(ordersByCountry.entries())
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
   return (
     <div className="min-h-screen bg-black text-secondary p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        
+
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="style-h1 text-secondary">E-shop Dashboard</h1>
-            <p className="style-body text-black300">Správa objednávek My Creative Stamp</p>
+            <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={220} height={61} className="h-[36px] md:h-[40px] w-auto" />
+            <p className="style-body text-black300 mt-2">Správa objednávek My Creative Stamp</p>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-3 bg-black400 p-2 px-4 rounded-[8px] border border-black300/30">
+            <div className="flex items-center gap-3 bg-black400 p-2 px-4 rounded-[4px] border border-black300/30">
               <Calendar size={18} className="text-primary" />
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
                 className="bg-transparent style-body outline-none cursor-pointer border-none focus:ring-0 text-secondary"
@@ -623,9 +824,9 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            <button 
+            <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-tag-posledni-kusy/10 hover:bg-tag-posledni-kusy border border-tag-posledni-kusy/20 hover:text-secondary text-tag-posledni-kusy px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-tag-posledni-kusy/10 hover:bg-tag-posledni-kusy border border-tag-posledni-kusy/20 hover:text-secondary text-tag-posledni-kusy px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer"
             >
               <LogOut size={16} /> Odhlásit se
             </button>
@@ -633,30 +834,36 @@ export default function AdminDashboard() {
         </header>
 
         {/* ZÁLOŽKY */}
-        <div className="flex gap-2 mb-8 border-b border-black300/20 pb-0">
+        <div className="flex gap-2 mb-8 border-b border-black300/20 pb-0 overflow-x-auto scrollbar-hide">
           <button
             onClick={() => setActiveTab('objednavky')}
-            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'objednavky' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 'objednavky' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
           >
             <ShoppingBag size={16} /> Objednávky
           </button>
           <button
             onClick={() => setActiveTab('produkty')}
-            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'produkty' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 'produkty' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
           >
             <Home size={16} /> Produkty
           </button>
           <button
             onClick={() => setActiveTab('slevy')}
-            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'slevy' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 'slevy' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
           >
             <Tag size={16} /> Slevové kódy
           </button>
           <button
             onClick={() => setActiveTab('kurzy')}
-            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer ${activeTab === 'kurzy' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 'kurzy' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
           >
             <Coins size={16} /> Kurzy měn
+          </button>
+          <button
+            onClick={() => setActiveTab('statistika')}
+            className={`flex items-center gap-2 px-4 py-2.5 style-body-bold transition-all border-b-2 -mb-px cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 'statistika' ? 'border-primary text-primary' : 'border-transparent text-black300 hover:text-secondary'}`}
+          >
+            <BarChart3 size={16} /> Statistika
           </button>
         </div>
 
@@ -672,13 +879,13 @@ export default function AdminDashboard() {
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     placeholder="Hledat produkt..."
-                    className="bg-black400 border border-black300/30 rounded-[8px] pl-9 pr-4 h-[40px] style-body text-secondary placeholder:text-black300/50 focus:border-primary outline-none transition-all w-[220px]"
+                    className="bg-black400 border border-black300/30 rounded-[4px] pl-9 pr-4 h-[40px] style-body text-secondary placeholder:text-black300/50 focus:border-primary outline-none transition-all w-[220px]"
                   />
                 </div>
                 <select
                   value={productCategoryFilter}
                   onChange={(e) => setProductCategoryFilter(e.target.value as ProductCategory | 'all')}
-                  className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                  className="bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
                 >
                   <option value="all">Všechny kategorie</option>
                   {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
@@ -688,7 +895,7 @@ export default function AdminDashboard() {
                 <select
                   value={productSortKey}
                   onChange={(e) => setProductSortKey(e.target.value as ProductSortKey)}
-                  className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                  className="bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
                 >
                   {Object.entries(PRODUCT_SORT_OPTIONS).map(([value, { label }]) => (
                     <option key={value} value={value}>{label}</option>
@@ -697,121 +904,179 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={() => setProductFormTarget('new')}
-                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer"
+                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer"
               >
                 <Plus size={16} /> Nový produkt
               </button>
             </div>
-            <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+            <div className="bg-black400 rounded-[4px] border border-black300/20 overflow-hidden shadow-xl">
             {productsLoading ? (
               <div className="p-10 text-center text-black300 style-body">Načítám produkty...</div>
             ) : filteredSortedProducts.length === 0 ? (
               <div className="p-10 text-center text-black300 style-body">Žádné produkty neodpovídají filtru.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-black/50 text-black300 style-product-tag">
-                    <tr>
-                      <th className="p-4 font-normal">Produkt</th>
-                      <th className="p-4 font-normal">Kategorie</th>
-                      <th className="p-4 font-normal text-center">Sklad</th>
-                      <th className="p-4 font-normal text-center">TOP rank</th>
-                      <th className="p-4 font-normal text-center">Poslední kusy</th>
-                      <th className="p-4 font-normal text-right">Homepage</th>
-                      <th className="p-4 font-normal text-right">Akce</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black300/20">
-                    {filteredSortedProducts.map((product) => (
-                      <tr key={product.id} className="hover:bg-black/30 transition-colors">
-                        <td className="p-4">
+              <>
+                {/* Desktop tabulka */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-black/50 text-black300 style-product-tag">
+                      <tr>
+                        <th className="p-4 font-normal">Produkt</th>
+                        <th className="p-4 font-normal">Kategorie</th>
+                        <th className="p-4 font-normal text-center">Sklad</th>
+                        <th className="p-4 font-normal text-center">TOP rank</th>
+                        <th className="p-4 font-normal text-center">Poslední kusy</th>
+                        <th className="p-4 font-normal text-right">Homepage</th>
+                        <th className="p-4 font-normal text-right">Akce</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black300/20">
+                      {filteredSortedProducts.map((product) => (
+                        <tr key={product.id} className="hover:bg-black/30 transition-colors">
+                          <td className="p-4">
+                            <p className="style-body-bold text-secondary">{product.name}</p>
+                            {product.sale_price != null && product.sale_price > 0 && product.sale_price < product.price ? (
+                              <p className="style-product-tag mt-1">
+                                <span className="text-black300 line-through">{product.price} Kč</span>{' '}
+                                <span className="text-success">{product.sale_price} Kč</span>
+                              </p>
+                            ) : (
+                              <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
+                            )}
+                          </td>
+                          <td className="p-4 style-body text-black300">{product.category ? CATEGORY_LABELS[product.category] : '—'}</td>
+                          <td className="p-4 text-center"><ProductStockBadge product={product} /></td>
+                          <td className="p-4 text-center">
+                            <select
+                              value={product.tag_top ?? ''}
+                              onChange={(e) => setTopRank(product.id, e.target.value ? Number(e.target.value) : null)}
+                              className={`px-2 py-1.5 rounded-[4px] style-body-bold border cursor-pointer outline-none transition-all ${
+                                product.tag_top
+                                  ? 'bg-tag-top/10 text-tag-top border-tag-top/30'
+                                  : 'bg-black300/10 text-black300 border-black300/20'
+                              }`}
+                            >
+                              <option value="">–</option>
+                              {[1,2,3,4,5,6].map(n => (
+                                <option key={n} value={n}>TOP {n}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="p-4 text-center">
+                            <button
+                              onClick={() => toggleLastPieces(product.id, product.tag_last_pieces)}
+                              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] style-body-bold transition-all cursor-pointer border ${
+                                product.tag_last_pieces
+                                  ? 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20 hover:bg-tag-posledni-kusy/20'
+                                  : 'bg-black300/10 text-black300 border-black300/20 hover:bg-black300/20'
+                              }`}
+                            >
+                              {product.tag_last_pieces ? 'Ano' : 'Ne'}
+                            </button>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => toggleHomepage(product.id, !!product.show_on_homepage)}
+                              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] style-body-bold transition-all cursor-pointer border ${
+                                product.show_on_homepage
+                                  ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
+                                  : 'bg-black300/10 text-black300 border-black300/20 hover:bg-black300/20'
+                              }`}
+                            >
+                              {product.show_on_homepage ? <><Eye size={14} /> Zobrazeno</> : <><EyeOff size={14} /> Skryto</>}
+                            </button>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => setProductFormTarget(product)}
+                                className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
+                                title="Upravit produkt"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                              <button
+                                onClick={() => deleteProduct(product)}
+                                className="p-2 text-black300 hover:text-tag-posledni-kusy hover:bg-tag-posledni-kusy/10 rounded-[4px] transition-all cursor-pointer"
+                                title="Smazat produkt"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobilní karty */}
+                <div className="md:hidden divide-y divide-black300/20">
+                  {filteredSortedProducts.map((product) => (
+                    <div key={product.id} className="p-4 space-y-3">
+                      <div className="flex justify-between items-start gap-3">
+                        <div>
                           <p className="style-body-bold text-secondary">{product.name}</p>
+                          <p className="style-product-tag text-black300 mt-1">{product.category ? CATEGORY_LABELS[product.category] : '—'}</p>
+                        </div>
+                        <div className="text-right shrink-0">
                           {product.sale_price != null && product.sale_price > 0 && product.sale_price < product.price ? (
-                            <p className="style-product-tag mt-1">
-                              <span className="text-black300 line-through">{product.price} Kč</span>{' '}
+                            <p className="style-product-tag">
+                              <span className="text-black300 line-through block">{product.price} Kč</span>
                               <span className="text-success">{product.sale_price} Kč</span>
                             </p>
                           ) : (
-                            <p className="style-product-tag text-black300 mt-1">{product.price} Kč</p>
+                            <p className="style-product-tag text-black300">{product.price} Kč</p>
                           )}
-                        </td>
-                        <td className="p-4 style-body text-black300">{product.category ? CATEGORY_LABELS[product.category] : '—'}</td>
-                        <td className="p-4 text-center">
-                          {product.stock_quantity <= 0 ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">
-                              <AlertTriangle size={12} /> Vyprodáno
-                            </span>
-                          ) : product.stock_quantity <= LOW_STOCK_THRESHOLD ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-top/10 text-tag-top border-tag-top/30">
-                              <AlertTriangle size={12} /> {product.stock_quantity} ks
-                            </span>
-                          ) : (
-                            <span className="style-body text-black300">{product.stock_quantity} ks</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-center">
-                          <select
-                            value={product.tag_top ?? ''}
-                            onChange={(e) => setTopRank(product.id, e.target.value ? Number(e.target.value) : null)}
-                            className={`px-2 py-1.5 rounded-[6px] style-body-bold border cursor-pointer outline-none transition-all ${
-                              product.tag_top
-                                ? 'bg-tag-top/10 text-tag-top border-tag-top/30'
-                                : 'bg-black300/10 text-black300 border-black300/20'
-                            }`}
-                          >
-                            <option value="">–</option>
-                            {[1,2,3,4,5,6].map(n => (
-                              <option key={n} value={n}>TOP {n}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="p-4 text-center">
-                          <button
-                            onClick={() => toggleLastPieces(product.id, product.tag_last_pieces)}
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[6px] style-body-bold transition-all cursor-pointer border ${
-                              product.tag_last_pieces
-                                ? 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20 hover:bg-tag-posledni-kusy/20'
-                                : 'bg-black300/10 text-black300 border-black300/20 hover:bg-black300/20'
-                            }`}
-                          >
-                            {product.tag_last_pieces ? 'Ano' : 'Ne'}
-                          </button>
-                        </td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => toggleHomepage(product.id, !!product.show_on_homepage)}
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[6px] style-body-bold transition-all cursor-pointer border ${
-                              product.show_on_homepage
-                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
-                                : 'bg-black300/10 text-black300 border-black300/20 hover:bg-black300/20'
-                            }`}
-                          >
-                            {product.show_on_homepage ? <><Eye size={14} /> Zobrazeno</> : <><EyeOff size={14} /> Skryto</>}
-                          </button>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => setProductFormTarget(product)}
-                              className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[6px] transition-all cursor-pointer"
-                              title="Upravit produkt"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button
-                              onClick={() => deleteProduct(product)}
-                              className="p-2 text-black300 hover:text-tag-posledni-kusy hover:bg-tag-posledni-kusy/10 rounded-[6px] transition-all cursor-pointer"
-                              title="Smazat produkt"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ProductStockBadge product={product} />
+                        <select
+                          value={product.tag_top ?? ''}
+                          onChange={(e) => setTopRank(product.id, e.target.value ? Number(e.target.value) : null)}
+                          className={`px-2 py-1.5 rounded-[4px] style-body-bold border cursor-pointer outline-none transition-all ${
+                            product.tag_top ? 'bg-tag-top/10 text-tag-top border-tag-top/30' : 'bg-black300/10 text-black300 border-black300/20'
+                          }`}
+                        >
+                          <option value="">TOP –</option>
+                          {[1,2,3,4,5,6].map(n => (
+                            <option key={n} value={n}>TOP {n}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => toggleLastPieces(product.id, product.tag_last_pieces)}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] style-body-bold transition-all cursor-pointer border ${
+                            product.tag_last_pieces
+                              ? 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20'
+                              : 'bg-black300/10 text-black300 border-black300/20'
+                          }`}
+                        >
+                          Poslední kusy: {product.tag_last_pieces ? 'Ano' : 'Ne'}
+                        </button>
+                        <button
+                          onClick={() => toggleHomepage(product.id, !!product.show_on_homepage)}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] style-body-bold transition-all cursor-pointer border ${
+                            product.show_on_homepage
+                              ? 'bg-success/10 text-success border-success/20'
+                              : 'bg-black300/10 text-black300 border-black300/20'
+                          }`}
+                        >
+                          {product.show_on_homepage ? <><Eye size={14} /> Homepage</> : <><EyeOff size={14} /> Skryto</>}
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-end gap-1 pt-1 border-t border-black300/10">
+                        <button onClick={() => setProductFormTarget(product)} className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer">
+                          <Pencil size={16} />
+                        </button>
+                        <button onClick={() => deleteProduct(product)} className="p-2 text-black300 hover:text-tag-posledni-kusy hover:bg-tag-posledni-kusy/10 rounded-[4px] transition-all cursor-pointer">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
             </div>
           </div>
@@ -823,75 +1088,111 @@ export default function AdminDashboard() {
             <div className="flex justify-end">
               <button
                 onClick={() => setDiscountFormTarget('new')}
-                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer"
+                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer"
               >
                 <Plus size={16} /> Nový kód
               </button>
             </div>
-            <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+            <div className="bg-black400 rounded-[4px] border border-black300/20 overflow-hidden shadow-xl">
             {discountCodesLoading ? (
               <div className="p-10 text-center text-black300 style-body">Načítám slevové kódy...</div>
             ) : discountCodes.length === 0 ? (
               <div className="p-10 text-center text-black300 style-body">Zatím žádné slevové kódy.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-black/50 text-black300 style-product-tag">
-                    <tr>
-                      <th className="p-4 font-normal">Kód</th>
-                      <th className="p-4 font-normal">Sleva</th>
-                      <th className="p-4 font-normal">Platnost</th>
-                      <th className="p-4 font-normal text-center">Použití</th>
-                      <th className="p-4 font-normal text-center">Stav</th>
-                      <th className="p-4 font-normal text-right">Akce</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black300/20">
-                    {discountCodes.map((dc) => {
-                      const isExpired = new Date(dc.valid_until) < new Date();
-                      return (
-                        <tr key={dc.id} className="hover:bg-black/30 transition-colors">
-                          <td className="p-4 style-body-bold text-secondary font-mono">{dc.code}</td>
-                          <td className="p-4 style-body text-black300">
-                            {dc.type === 'percentage' ? `${dc.value} %` : `${dc.value} Kč`}
-                          </td>
-                          <td className="p-4 style-body text-black300">
-                            {dc.valid_from ? `${new Date(dc.valid_from).toLocaleDateString('cs-CZ')} – ` : ''}
-                            {new Date(dc.valid_until).toLocaleDateString('cs-CZ')}
-                          </td>
-                          <td className="p-4 text-center style-body text-black300">
-                            {dc.used_count} / {dc.max_uses ?? '∞'}
-                          </td>
-                          <td className="p-4 text-center">
-                            {isExpired ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">
-                                Vypršel
-                              </span>
-                            ) : dc.is_active ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-success/10 text-success border-success/20">
-                                Aktivní
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-black300/10 text-black300 border-black300/20">
-                                Neaktivní
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-4 text-right">
-                            <button
-                              onClick={() => setDiscountFormTarget(dc)}
-                              className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[6px] transition-all cursor-pointer"
-                              title="Upravit kód"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {/* Desktop tabulka */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-black/50 text-black300 style-product-tag">
+                      <tr>
+                        <th className="p-4 font-normal">Kód</th>
+                        <th className="p-4 font-normal">Sleva</th>
+                        <th className="p-4 font-normal">Platnost</th>
+                        <th className="p-4 font-normal text-center">Použití</th>
+                        <th className="p-4 font-normal text-center">Stav</th>
+                        <th className="p-4 font-normal text-right">Akce</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black300/20">
+                      {discountCodes.map((dc) => {
+                        const isExpired = new Date(dc.valid_until) < new Date();
+                        return (
+                          <tr key={dc.id} className="hover:bg-black/30 transition-colors">
+                            <td className="p-4 style-body-bold text-secondary font-mono">{dc.code}</td>
+                            <td className="p-4 style-body text-black300">
+                              {dc.type === 'percentage' ? `${dc.value} %` : `${dc.value} Kč`}
+                            </td>
+                            <td className="p-4 style-body text-black300">
+                              {dc.valid_from ? `${new Date(dc.valid_from).toLocaleDateString('cs-CZ')} – ` : ''}
+                              {new Date(dc.valid_until).toLocaleDateString('cs-CZ')}
+                            </td>
+                            <td className="p-4 text-center style-body text-black300">
+                              {dc.used_count} / {dc.max_uses ?? '∞'}
+                            </td>
+                            <td className="p-4 text-center">
+                              {isExpired ? (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">
+                                  Vypršel
+                                </span>
+                              ) : dc.is_active ? (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-success/10 text-success border-success/20">
+                                  Aktivní
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-black300/10 text-black300 border-black300/20">
+                                  Neaktivní
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => setDiscountFormTarget(dc)}
+                                className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
+                                title="Upravit kód"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobilní karty */}
+                <div className="md:hidden divide-y divide-black300/20">
+                  {discountCodes.map((dc) => {
+                    const isExpired = new Date(dc.valid_until) < new Date();
+                    return (
+                      <div key={dc.id} className="p-4 space-y-2">
+                        <div className="flex justify-between items-start gap-3">
+                          <span className="style-body-bold text-secondary font-mono">{dc.code}</span>
+                          {isExpired ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20">Vypršel</span>
+                          ) : dc.is_active ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-success/10 text-success border-success/20">Aktivní</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] style-product-tag border bg-black300/10 text-black300 border-black300/20">Neaktivní</span>
+                          )}
+                        </div>
+                        <p className="style-body text-black300">
+                          {dc.type === 'percentage' ? `${dc.value} %` : `${dc.value} Kč`} · použito {dc.used_count} / {dc.max_uses ?? '∞'}
+                        </p>
+                        <p className="style-body text-black300">
+                          {dc.valid_from ? `${new Date(dc.valid_from).toLocaleDateString('cs-CZ')} – ` : ''}
+                          {new Date(dc.valid_until).toLocaleDateString('cs-CZ')}
+                        </p>
+                        <div className="flex justify-end pt-1 border-t border-black300/10">
+                          <button onClick={() => setDiscountFormTarget(dc)} className="p-2 text-black300 hover:text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer">
+                            <Pencil size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
             </div>
           </div>
@@ -905,90 +1206,271 @@ export default function AdminDashboard() {
               kurz CZK použitý k přepočtu poštovného (skutečná Kč cena od České pošty) do EUR. Bez napojení na
               kurzovní API – aktualizuj ručně podle potřeby, orientačně jednou za měsíc.
             </p>
-            <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+            <div className="bg-black400 rounded-[4px] border border-black300/20 overflow-hidden shadow-xl">
               {exchangeRatesLoading ? (
                 <div className="p-10 text-center text-black300 style-body">Načítám kurzy...</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-black/50 text-black300 style-product-tag">
-                      <tr>
-                        <th className="p-4 font-normal">Měna</th>
-                        <th className="p-4 font-normal">Kurz (1 EUR =)</th>
-                        <th className="p-4 font-normal">Naposledy upraveno</th>
-                        <th className="p-4 font-normal text-right">Akce</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-black300/20">
-                      {exchangeRates.filter((r) => r.currency_code === 'CZK').map((rate) => (
-                        <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
-                          <td className="p-4 style-body-bold text-secondary">
-                            {CURRENCY_LABELS[rate.currency_code]}
-                            <span className="block style-label text-black300/70 font-normal">pro přepočet poštovného</span>
-                          </td>
-                          <td className="p-4">
-                            <input
-                              type="number"
-                              min={0}
-                              step="0.0001"
-                              placeholder="nenastaveno"
-                              className="bg-black border border-black300/50 rounded-[8px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
-                              value={rateInputs[rate.currency_code] ?? ''}
-                              onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
-                            />
-                          </td>
-                          <td className="p-4 style-body text-black300">
-                            {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
-                          </td>
-                          <td className="p-4 text-right">
-                            <button
-                              onClick={() => saveExchangeRate(rate.currency_code)}
-                              disabled={savingRate === rate.currency_code}
-                              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[8px] transition-all style-body cursor-pointer"
-                            >
-                              {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
-                            </button>
+                <>
+                  {/* Desktop tabulka */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="bg-black/50 text-black300 style-product-tag">
+                        <tr>
+                          <th className="p-4 font-normal">Měna</th>
+                          <th className="p-4 font-normal">Kurz (1 EUR =)</th>
+                          <th className="p-4 font-normal">Naposledy upraveno</th>
+                          <th className="p-4 font-normal text-right">Akce</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black300/20">
+                        {exchangeRates.filter((r) => r.currency_code === 'CZK').map((rate) => (
+                          <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
+                            <td className="p-4 style-body-bold text-secondary">
+                              {CURRENCY_LABELS[rate.currency_code]}
+                              <span className="block style-label text-black300/70 font-normal">pro přepočet poštovného</span>
+                            </td>
+                            <td className="p-4">
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.0001"
+                                placeholder="nenastaveno"
+                                className="bg-black border border-black300/50 rounded-[4px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
+                                value={rateInputs[rate.currency_code] ?? ''}
+                                onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
+                              />
+                            </td>
+                            <td className="p-4 style-body text-black300">
+                              {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => saveExchangeRate(rate.currency_code)}
+                                disabled={savingRate === rate.currency_code}
+                                className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[4px] transition-all style-body cursor-pointer"
+                              >
+                                {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <td colSpan={4} className="px-4 pt-4 pb-1 style-label text-black300/70 uppercase tracking-wide bg-black/20">
+                            Budoucí jazykové mutace (KO/JA/ZH)
                           </td>
                         </tr>
-                      ))}
-                      <tr>
-                        <td colSpan={4} className="px-4 pt-4 pb-1 style-label text-black300/70 uppercase tracking-wide bg-black/20">
-                          Budoucí jazykové mutace (KO/JA/ZH)
-                        </td>
-                      </tr>
-                      {exchangeRates.filter((r) => r.currency_code !== 'CZK').map((rate) => (
-                        <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
-                          <td className="p-4 style-body-bold text-secondary">{CURRENCY_LABELS[rate.currency_code]}</td>
-                          <td className="p-4">
-                            <input
-                              type="number"
-                              min={0}
-                              step="0.0001"
-                              placeholder="nenastaveno"
-                              className="bg-black border border-black300/50 rounded-[8px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
-                              value={rateInputs[rate.currency_code] ?? ''}
-                              onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
-                            />
-                          </td>
-                          <td className="p-4 style-body text-black300">
-                            {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
-                          </td>
-                          <td className="p-4 text-right">
-                            <button
-                              onClick={() => saveExchangeRate(rate.currency_code)}
-                              disabled={savingRate === rate.currency_code}
-                              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[8px] transition-all style-body cursor-pointer"
-                            >
-                              {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                        {exchangeRates.filter((r) => r.currency_code !== 'CZK').map((rate) => (
+                          <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
+                            <td className="p-4 style-body-bold text-secondary">{CURRENCY_LABELS[rate.currency_code]}</td>
+                            <td className="p-4">
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.0001"
+                                placeholder="nenastaveno"
+                                className="bg-black border border-black300/50 rounded-[4px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
+                                value={rateInputs[rate.currency_code] ?? ''}
+                                onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
+                              />
+                            </td>
+                            <td className="p-4 style-body text-black300">
+                              {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => saveExchangeRate(rate.currency_code)}
+                                disabled={savingRate === rate.currency_code}
+                                className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[4px] transition-all style-body cursor-pointer"
+                              >
+                                {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobilní karty */}
+                  <div className="md:hidden divide-y divide-black300/20">
+                    {exchangeRates.map((rate) => (
+                      <div key={rate.currency_code} className="p-4 space-y-2">
+                        <p className="style-body-bold text-secondary">
+                          {CURRENCY_LABELS[rate.currency_code]}
+                          {rate.currency_code === 'CZK' && <span className="block style-label text-black300/70 font-normal">pro přepočet poštovného</span>}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.0001"
+                            placeholder="nenastaveno"
+                            className="flex-1 bg-black border border-black300/50 rounded-[4px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                            value={rateInputs[rate.currency_code] ?? ''}
+                            onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
+                          />
+                          <button
+                            onClick={() => saveExchangeRate(rate.currency_code)}
+                            disabled={savingRate === rate.currency_code}
+                            className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[4px] transition-all style-body cursor-pointer whitespace-nowrap"
+                          >
+                            {savingRate === rate.currency_code ? '...' : 'Uložit'}
+                          </button>
+                        </div>
+                        <p className="style-body text-black300">
+                          Naposledy: {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
+          </div>
+        )}
+
+        {/* STATISTIKA */}
+        {activeTab === 'statistika' && (
+          <div className="space-y-6">
+            {/* Filtr rozsahu dat - jeden řádek nad vším, škáluje všechny karty i grafy pod sebou */}
+            <div className="flex flex-wrap items-center gap-2">
+              {STATS_PRESET_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setStatsPreset(opt.value)}
+                  className={`px-3 h-[36px] rounded-[4px] style-body-bold border transition-all cursor-pointer ${
+                    statsPreset === opt.value
+                      ? 'bg-primary/10 text-primary border-primary/30'
+                      : 'bg-black400 text-black300 border-black300/20 hover:text-secondary'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* KPI karty za zvolené období */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+                <div className="p-3 bg-tag-top/10 rounded-[4px]"><TrendingUp className="text-tag-top" /></div>
+                <div>
+                  <p className="style-product-tag text-black300 mb-1">Obrat v období</p>
+                  <p className="style-h2 text-secondary">
+                    {Object.keys(statsRevenueByCurrency).length === 0
+                      ? formatPrice(0, 'CZK')
+                      : Object.entries(statsRevenueByCurrency).map(([cur, stats]) => (
+                          <span key={cur} className="block">{formatPrice(stats.total, cur as Currency)}</span>
+                        ))}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+                <div className="p-3 bg-primary/10 rounded-[4px]"><ShoppingBag className="text-primary" /></div>
+                <div>
+                  <p className="style-product-tag text-black300 mb-1">Objednávek v období</p>
+                  <p className="style-h2 text-secondary">{statsOrders.length}</p>
+                </div>
+              </div>
+              <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+                <div className="p-3 bg-primary/10 rounded-[4px]"><TrendingUp className="text-primary" /></div>
+                <div>
+                  <p className="style-product-tag text-black300 mb-1">Průměrná hodnota</p>
+                  <p className="style-h2 text-secondary">
+                    {Object.keys(statsRevenueByCurrency).length === 0
+                      ? formatPrice(0, 'CZK')
+                      : Object.entries(statsRevenueByCurrency).map(([cur, stats]) => (
+                          <span key={cur} className="block">{formatPrice(Math.round(stats.total / stats.count), cur as Currency)}</span>
+                        ))}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {statsOrders.length === 0 ? (
+              <div className="bg-black400 rounded-[4px] border border-black300/20 p-10 text-center text-black300 style-body">
+                V tomto období nejsou žádné objednávky.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Tržby v čase - zvlášť graf na měnu (různé řády veličin, nikdy ne dvě osy v jednom grafu) */}
+                {currenciesInRange.map((currency) => (
+                  <div key={currency} className="bg-black400 p-6 rounded-[4px] border border-black300/20 shadow-lg">
+                    <h3 className="style-h4 text-secondary mb-4">Tržby v čase ({currency})</h3>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <LineChart data={revenueOverTimeByCurrency[currency]} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid stroke={CHART_GRID_COLOR} strokeDasharray="0" vertical={false} />
+                        <XAxis dataKey="day" tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={{ stroke: CHART_GRID_COLOR }} tickLine={false} />
+                        <YAxis tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={false} tickLine={false} width={48} />
+                        <ChartTooltip
+                          contentStyle={CHART_TOOLTIP_STYLE}
+                          labelStyle={{ color: '#8B95AC' }}
+                          itemStyle={{ color: '#FDFBF7', fontWeight: 600 }}
+                          formatter={(value) => [formatPrice(Number(value), currency as Currency), 'Tržby']}
+                        />
+                        <Line type="monotone" dataKey="revenue" stroke={CHART_MONEY_COLOR} strokeWidth={2} dot={{ r: 4, fill: CHART_MONEY_COLOR, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ))}
+
+                {/* Objednávky v čase */}
+                <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 shadow-lg">
+                  <h3 className="style-h4 text-secondary mb-4">Objednávky v čase</h3>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={ordersOverTimeData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid stroke={CHART_GRID_COLOR} strokeDasharray="0" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={{ stroke: CHART_GRID_COLOR }} tickLine={false} />
+                      <YAxis tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={false} tickLine={false} width={32} allowDecimals={false} />
+                      <ChartTooltip
+                        contentStyle={CHART_TOOLTIP_STYLE}
+                        labelStyle={{ color: '#8B95AC' }}
+                        itemStyle={{ color: '#FDFBF7', fontWeight: 600 }}
+                        formatter={(value) => [Number(value), 'Objednávky']}
+                      />
+                      <Bar dataKey="count" fill={CHART_COUNT_COLOR} radius={[4, 4, 0, 0]} maxBarSize={24} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Prodej podle produktu */}
+                <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 shadow-lg">
+                  <h3 className="style-h4 text-secondary mb-4">Prodej podle produktu (top 8 podle tržby)</h3>
+                  <ResponsiveContainer width="100%" height={Math.max(240, topProductsData.length * 34)}>
+                    <BarChart data={topProductsData} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
+                      <CartesianGrid stroke={CHART_GRID_COLOR} strokeDasharray="0" horizontal={false} />
+                      <XAxis type="number" tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="name" tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={false} tickLine={false} width={140} />
+                      <ChartTooltip
+                        contentStyle={CHART_TOOLTIP_STYLE}
+                        labelStyle={{ color: '#8B95AC' }}
+                        itemStyle={{ color: '#FDFBF7', fontWeight: 600 }}
+                        formatter={(value) => [Number(value).toLocaleString('cs-CZ'), 'Tržby']}
+                      />
+                      <Bar dataKey="revenue" fill={CHART_MONEY_COLOR} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Objednávky podle země */}
+                <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 shadow-lg">
+                  <h3 className="style-h4 text-secondary mb-4">Objednávky podle země (top 8)</h3>
+                  <ResponsiveContainer width="100%" height={Math.max(240, ordersByCountryData.length * 34)}>
+                    <BarChart data={ordersByCountryData} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
+                      <CartesianGrid stroke={CHART_GRID_COLOR} strokeDasharray="0" horizontal={false} />
+                      <XAxis type="number" tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                      <YAxis type="category" dataKey="country" tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }} axisLine={false} tickLine={false} width={140} />
+                      <ChartTooltip
+                        contentStyle={CHART_TOOLTIP_STYLE}
+                        labelStyle={{ color: '#8B95AC' }}
+                        itemStyle={{ color: '#FDFBF7', fontWeight: 600 }}
+                        formatter={(value) => [Number(value), 'Objednávky']}
+                      />
+                      <Bar dataKey="count" fill={CHART_COUNT_COLOR} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -996,8 +1478,8 @@ export default function AdminDashboard() {
         {activeTab === 'objednavky' && (
         <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
-            <div className="p-3 bg-tag-top/10 rounded-[8px]"><TrendingUp className="text-tag-top" /></div>
+          <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+            <div className="p-3 bg-tag-top/10 rounded-[4px]"><TrendingUp className="text-tag-top" /></div>
             <div>
               <p className="style-product-tag text-black300 mb-1">Obrat (dle filtru)</p>
               <p className="style-h2 text-secondary">
@@ -1009,15 +1491,15 @@ export default function AdminDashboard() {
               </p>
             </div>
           </div>
-          <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
-            <div className="p-3 bg-primary/10 rounded-[8px]"><ShoppingBag className="text-primary" /></div>
+          <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+            <div className="p-3 bg-primary/10 rounded-[4px]"><ShoppingBag className="text-primary" /></div>
             <div>
               <p className="style-product-tag text-black300 mb-1">Objednávek</p>
               <p className="style-h2 text-secondary">{filteredOrders.length}</p>
             </div>
           </div>
-          <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
-            <div className="p-3 bg-primary/10 rounded-[8px]"><TrendingUp className="text-primary" /></div>
+          <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+            <div className="p-3 bg-primary/10 rounded-[4px]"><TrendingUp className="text-primary" /></div>
             <div>
               <p className="style-product-tag text-black300 mb-1">Průměrná hodnota</p>
               <p className="style-h2 text-secondary">
@@ -1029,8 +1511,8 @@ export default function AdminDashboard() {
               </p>
             </div>
           </div>
-          <div className="bg-black400 p-6 rounded-[16px] border border-black300/20 flex items-center gap-4 shadow-lg">
-            <div className="p-3 bg-tag-posledni-kusy/10 rounded-[8px]"><Package className="text-tag-posledni-kusy" /></div>
+          <div className="bg-black400 p-6 rounded-[4px] border border-black300/20 flex items-center gap-4 shadow-lg">
+            <div className="p-3 bg-tag-posledni-kusy/10 rounded-[4px]"><Package className="text-tag-posledni-kusy" /></div>
             <div>
               <p className="style-product-tag text-black300 mb-1">Čeká na odeslání</p>
               <p className="style-h2 text-secondary">{pendingShipmentCount}</p>
@@ -1042,56 +1524,104 @@ export default function AdminDashboard() {
           <button
             onClick={handleBulkPrintDownload}
             disabled={bulkDownloading}
-            className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 disabled:opacity-50 text-secondary px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer border border-black300/20"
+            className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 disabled:opacity-50 text-secondary px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer border border-black300/20"
           >
             <Archive size={16} /> {bulkDownloading ? 'Stahuji a balím...' : 'Stáhnout tiskové archy (ZIP)'}
           </button>
         </div>
 
         {/* TABULKA */}
-        <div className="bg-black400 rounded-[16px] border border-black300/20 overflow-hidden shadow-xl">
+        <div className="bg-black400 rounded-[4px] border border-black300/20 overflow-hidden shadow-xl">
           {loading ? (
             <div className="p-10 text-center text-black300 style-body">Načítám čerstvá data...</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-black/50 text-black300 style-product-tag">
-                  <tr>
-                    <th className="p-4 font-normal">Zákazník / ID</th>
-                    <th className="p-4 font-normal">Stav</th>
-                    <th className="p-4 font-normal text-right">Částka</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-black300/20">
-                  {filteredOrders.length === 0 ? (
+            <>
+              {/* Desktop tabulka */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-black/50 text-black300 style-product-tag">
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-black300 style-body">Žádné objednávky neodpovídají filtru.</td>
+                      <th className="p-4 font-normal">Zákazník / ID</th>
+                      <th className="p-4 font-normal">Datum</th>
+                      <th className="p-4 font-normal">Stav</th>
+                      <th className="p-4 font-normal text-right">Částka</th>
+                      <th className="p-4 font-normal text-right">Archy</th>
                     </tr>
-                  ) : filteredOrders.map((order) => (
-                    <tr 
-                      key={order.id} 
+                  </thead>
+                  <tbody className="divide-y divide-black300/20">
+                    {filteredOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-black300 style-body">Žádné objednávky neodpovídají filtru.</td>
+                      </tr>
+                    ) : filteredOrders.map((order) => {
+                      const customItems = (order.cart_items || []).filter(isCustomStampItem);
+                      const hasCustomStamp = customItems.length > 0;
+                      return (
+                        <tr
+                          key={order.id}
+                          onClick={() => setSelectedOrder(order)}
+                          className={`hover:bg-black/40 cursor-pointer transition-colors group ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
+                        >
+                          <td className="p-4">
+                            <div className="style-body-bold text-secondary group-hover:text-primary transition-colors">
+                              {order.billing_first_name} {order.billing_last_name}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[11px] font-mono text-black300 uppercase">#{order.id.slice(-6)}</span>
+                              {hasCustomStamp && <CustomStampBadge />}
+                            </div>
+                          </td>
+                          <td className="p-4 style-body text-black300">{new Date(order.created_at).toLocaleDateString('cs-CZ')}</td>
+                          <td className="p-4"><OrderStatusBadge status={order.status} /></td>
+                          <td className="p-4 text-right style-body-bold text-secondary">
+                            {formatPrice(order.total_price, order.currency)}
+                          </td>
+                          <td className="p-4 text-right">
+                            {customItems.length === 1 && (
+                              <CustomStampQuickActions item={customItems[0]} printUrl={printUrlsByItemId[customItems[0].id]} />
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobilní karty */}
+              <div className="md:hidden divide-y divide-black300/20">
+                {filteredOrders.length === 0 ? (
+                  <div className="p-8 text-center text-black300 style-body">Žádné objednávky neodpovídají filtru.</div>
+                ) : filteredOrders.map((order) => {
+                  const customItems = (order.cart_items || []).filter(isCustomStampItem);
+                  const hasCustomStamp = customItems.length > 0;
+                  return (
+                    <div
+                      key={order.id}
                       onClick={() => setSelectedOrder(order)}
-                      className="hover:bg-black/40 cursor-pointer transition-colors group"
+                      className={`p-4 space-y-2 active:bg-black/40 cursor-pointer transition-colors ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
                     >
-                      <td className="p-4">
-                        <div className="style-body-bold text-secondary group-hover:text-primary transition-colors">
-                          {order.billing_first_name} {order.billing_last_name}
+                      <div className="flex justify-between items-start gap-3">
+                        <div>
+                          <p className="style-body-bold text-secondary">{order.billing_first_name} {order.billing_last_name}</p>
+                          <p className="text-[11px] font-mono text-black300 uppercase mt-1">#{order.id.slice(-6)} · {new Date(order.created_at).toLocaleDateString('cs-CZ')}</p>
                         </div>
-                        <div className="text-[11px] font-mono text-black300 uppercase mt-1">#{order.id.slice(-6)}</div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded-[4px] style-product-tag border ${getStatusColorClasses(order.status)}`}>
-                          {order.status || 'Nová'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right style-body-bold text-secondary">
-                        {formatPrice(order.total_price, order.currency)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <p className="style-body-bold text-secondary shrink-0">{formatPrice(order.total_price, order.currency)}</p>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <OrderStatusBadge status={order.status} />
+                          {hasCustomStamp && <CustomStampBadge />}
+                        </div>
+                        {customItems.length === 1 && (
+                          <CustomStampQuickActions item={customItems[0]} printUrl={printUrlsByItemId[customItems[0].id]} />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
         </>
@@ -1101,7 +1631,7 @@ export default function AdminDashboard() {
       {/* DETAIL OBJEDNÁVKY MODAL */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all" {...orderModalBackdrop}>
-          <div className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
               <div>
                 <h2 className="style-h3 text-secondary flex items-center gap-2">
@@ -1116,13 +1646,13 @@ export default function AdminDashboard() {
 
             <div className="p-6 space-y-8">
               {/* AKCE STAVU */}
-              <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+              <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
                 <span className="style-product-tag text-black300">Změnit stav:</span>
                 <div className="flex items-center gap-3">
                   {getNextStatus(selectedOrder) && (
                     <button
                       onClick={() => updateOrderStatus(selectedOrder.id, getNextStatus(selectedOrder)!)}
-                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
                     >
                       Další krok: {getNextStatus(selectedOrder)}
                     </button>
@@ -1130,7 +1660,7 @@ export default function AdminDashboard() {
                   <select
                     value={selectedOrder.status || 'Nová'}
                     onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
-                    className={`px-3 py-2 rounded-[6px] style-body-bold border cursor-pointer outline-none transition-all ${getStatusColorClasses(selectedOrder.status)}`}
+                    className={`px-3 py-2 rounded-[4px] style-body-bold border cursor-pointer outline-none transition-all ${getStatusColorClasses(selectedOrder.status)}`}
                   >
                     {ORDER_STATUSES.map(({ value }) => (
                       <option key={value} value={value}>{value}</option>
@@ -1139,49 +1669,125 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* SLEDOVACÍ ČÍSLO ZÁSILKY */}
-              <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                <span className="style-product-tag text-black300">Sledovací číslo:</span>
-                <div className="flex items-center gap-3 flex-1 min-w-[220px]">
-                  <input
-                    type="text"
-                    value={trackingNumberInput}
-                    onChange={(e) => setTrackingNumberInput(e.target.value)}
-                    placeholder="např. CP123456789CZ"
-                    className="flex-1 bg-black300/10 border border-black300/30 rounded-[6px] px-3 py-2 style-body text-secondary placeholder:text-black300/50 outline-none focus:border-primary transition-all"
-                  />
-                  <button
-                    onClick={handleSaveTrackingNumber}
-                    disabled={savingTracking || !trackingNumberInput.trim()}
-                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    <Mail size={14} /> {savingTracking ? 'Odesílám...' : 'Uložit a poslat e-mail'}
-                  </button>
-                </div>
-              </div>
-
-              {/* VYTVOŘIT ZÁSILKU */}
-              {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && (
-                <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                  <span className="style-product-tag text-black300">Podání u dopravce:</span>
-                  <button
-                    onClick={() => setShipmentOrder(selectedOrder)}
-                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
-                  >
-                    <Truck size={14} /> Vytvořit zásilku
-                  </button>
+              {/* HISTORIE STAVŮ */}
+              {orderStatusHistory.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                    <History size={14} className="text-primary" /> Historie stavů
+                  </h3>
+                  <div className="bg-black rounded-[4px] border border-black300/20 divide-y divide-black300/20">
+                    {orderStatusHistory.map((entry) => (
+                      <div key={entry.id} className="p-3 flex items-center justify-between gap-4">
+                        <OrderStatusBadge status={entry.status} />
+                        <span className="style-body text-black300">{new Date(entry.changed_at).toLocaleString('cs-CZ')}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
+              {/* SLEDOVACÍ ČÍSLO ZÁSILKY - primárně jen ke čtení, ruční zadání je fallback */}
+              <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+                <span className="style-product-tag text-black300">Sledovací číslo:</span>
+                <div className="flex items-center gap-3">
+                  {selectedOrder.tracking_number ? (
+                    <span className="style-body-bold text-secondary font-mono">{selectedOrder.tracking_number}</span>
+                  ) : (
+                    <span className="style-body text-black300 italic">Zatím nepřiděleno – vytvoř zásilku u České pošty níže.</span>
+                  )}
+                  <button
+                    onClick={() => setShowManualTracking((v) => !v)}
+                    className="style-label text-black300 hover:text-primary underline decoration-dotted cursor-pointer whitespace-nowrap"
+                  >
+                    Zadat ručně
+                  </button>
+                </div>
+              </div>
+              {showManualTracking && (
+                <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20 -mt-4">
+                  <span className="style-product-tag text-black300">Ruční zadání (okrajové případy):</span>
+                  <div className="flex items-center gap-3 flex-1 min-w-[220px]">
+                    <input
+                      type="text"
+                      value={trackingNumberInput}
+                      onChange={(e) => setTrackingNumberInput(e.target.value)}
+                      placeholder="např. CP123456789CZ"
+                      className="flex-1 bg-black300/10 border border-black300/30 rounded-[4px] px-3 py-2 style-body text-secondary placeholder:text-black300/50 outline-none focus:border-primary transition-all"
+                    />
+                    <button
+                      onClick={handleSaveTrackingNumber}
+                      disabled={savingTracking || !trackingNumberInput.trim()}
+                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      <Mail size={14} /> {savingTracking ? 'Odesílám...' : 'Uložit a poslat e-mail'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* VYTVOŘIT ZÁSILKU + TISK ŠTÍTKU */}
+              {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && (
+                <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+                  <span className="style-product-tag text-black300">Podání u dopravce:</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShipmentOrder(selectedOrder)}
+                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                    >
+                      <Truck size={14} /> Vytvořit zásilku
+                    </button>
+                    {selectedOrder.tracking_number && (
+                      <a
+                        href={`/api/admin/print-shipping-label?orderId=${selectedOrder.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                      >
+                        <Printer size={14} /> Vytisknout štítek
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TISKOVÝ ARCH (Kreativní arch) */}
+              {(() => {
+                const customItems = (selectedOrder.cart_items || []).filter(isCustomStampItem);
+                if (customItems.length === 0) return null;
+                return (
+                  <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+                    <span className="style-product-tag text-black300 flex items-center gap-1.5"><Sparkles size={14} className="text-primary" /> Tiskový arch:</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {customItems.map((item, idx) => {
+                        const printUrl = printUrlsByItemId[item.id];
+                        return printUrl ? (
+                          <a
+                            key={item.id}
+                            href={printUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                          >
+                            <Download size={14} /> {customItems.length > 1 ? `Stáhnout arch ${idx + 1}` : 'Stáhnout tiskové PNG'}
+                          </a>
+                        ) : (
+                          <span key={item.id} className="style-body text-black300 italic animate-pulse">Načítám...</span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* FAKTURA (IDOKLAD) */}
-              <div className="bg-black p-4 rounded-[12px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
+              <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
                 <span className="style-product-tag text-black300">Faktura:</span>
                 {selectedOrder.idoklad_invoice_number ? (
                   <a
                     href={`/api/admin/idoklad-invoice-pdf?orderId=${selectedOrder.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
                   >
                     <Receipt size={14} /> {selectedOrder.idoklad_invoice_number} - stáhnout PDF
                   </a>
@@ -1193,7 +1799,7 @@ export default function AdminDashboard() {
                     <button
                       onClick={handleCreateIdokladInvoice}
                       disabled={creatingInvoice}
-                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[6px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
+                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
                     >
                       <Receipt size={14} /> {creatingInvoice ? 'Vystavuji...' : selectedOrder.idoklad_proforma_id ? 'Potvrdit platbu a vystavit fakturu' : 'Vystavit fakturu'}
                     </button>
@@ -1236,26 +1842,26 @@ export default function AdminDashboard() {
                 <h3 className="style-product-tag text-black300 flex items-center gap-2">
                   <ShoppingBag size={14} className="text-primary" /> Položky objednávky
                 </h3>
-                <div className="bg-black rounded-[12px] border border-black300/20 overflow-hidden">
+                <div className="bg-black rounded-[4px] border border-black300/20 overflow-hidden">
                   {selectedOrder.cart_items?.map((item, i) => {
-                    const isCustomStamp = item.name.toLowerCase().includes('vlastní');
-                    const printUrl = customStampsData[item.id];
+                    const isCustomStamp = isCustomStampItem(item);
+                    const printUrl = printUrlsByItemId[item.id];
 
                     return (
                       <div key={i} className="p-4 border-b border-black300/20 last:border-0 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                         <div className="space-y-1">
                           <p className="style-body-bold text-secondary">{item.name}</p>
                           <p className="style-product-tag text-black300 lowercase">{item.quantity} x {formatPrice(item.price, selectedOrder.currency)}</p>
-                          
-                          {/* DYNAMICKÉ TLAČÍTKO PRO STAŽENÍ TISKOVÉHO SOUBORU */}
+
+                          {/* DYNAMICKÁ TLAČÍTKA PRO STAŽENÍ TISKOVÉHO A NÁHLEDOVÉHO SOUBORU */}
                           {isCustomStamp && (
-                            <div className="pt-2">
+                            <div className="pt-2 flex flex-wrap items-center gap-2">
                               {printUrl ? (
-                                <a 
+                                <a
                                   href={printUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[6px] style-body transition-all cursor-pointer"
+                                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
                                 >
                                   <Download size={14} /> Stáhnout tiskové PNG
                                 </a>
@@ -1264,6 +1870,14 @@ export default function AdminDashboard() {
                                   Načítám tiskové podklady z cloudu...
                                 </span>
                               )}
+                              <a
+                                href={item.image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 bg-black300/10 hover:bg-black300/20 text-secondary px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer border border-black300/20"
+                              >
+                                <FileImage size={14} /> Stáhnout náhled
+                              </a>
                             </div>
                           )}
                         </div>
@@ -1294,10 +1908,7 @@ export default function AdminDashboard() {
         <ShipmentModal
           order={shipmentOrder}
           onClose={() => setShipmentOrder(null)}
-          onShipped={(orderId, parcelCode) => {
-            setOrders(orders.map((o) => (o.id === orderId ? { ...o, tracking_number: parcelCode } : o)));
-            setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, tracking_number: parcelCode } : prev));
-          }}
+          onShipped={handleShipmentCreated}
         />
       )}
 

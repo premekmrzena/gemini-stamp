@@ -103,6 +103,16 @@ RLS: `anon` k tabulce nemá žádný přístup (ani čtení), `authenticated` (p
 | print_url | text | ano | – |
 | created_at | timestamptz | ano | `now()` |
 
+## `order_status_history`
+| Sloupec | Typ | Povinné při insertu | Default |
+|---|---|---|---|
+| id | bigint (PK, identity) | ne | auto |
+| order_id | uuid (FK → `orders.id`, `on delete cascade`) | ano | – |
+| status | text | ano | – |
+| changed_at | timestamptz | ne | `now()` |
+
+Plní se výhradně triggerem (`orders_log_status_change`, funkce `log_order_status_change()`, `SECURITY DEFINER`) na `orders` – `AFTER INSERT OR UPDATE`, loguje počáteční stav při vytvoření objednávky a každou další změnu `status` (bez ohledu na to, jestli ji provede dashboard, Stripe webhook přes `mark_order_paid`, nebo cokoli budoucího). RLS: `anon` bez přístupu, `authenticated` jen `SELECT` (zápis dělá jen trigger). Existující objednávky před spuštěním migrace nemají zpětnou historii. Zobrazuje se jako časová osa v detailu objednávky v dashboardu, viz [sekce 5](05-administrace.md).
+
 ## Nalezené nesrovnalosti kód ↔ DB
 Opraveno přímo v `src/types/database.ts`:
 - **`tag_top`** byl typovaný jako `boolean`, ve skutečnosti je to `integer` (TOP rank 1–6, používá se v adminu jako `tag_top: 1..6 | null`) → opraveno na `number | null`
@@ -134,3 +144,4 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/017_orders_webhook_rpc.sql` – napsáno 2026-07-22, **čeká na spuštění v Supabase SQL editoru**. Opravuje nález ze stejného dne: `orders` nemá pro `anon` žádnou `UPDATE` RLS policy, takže webhook (běží pod anon klíčem) při zápisu `status`/`stock_released` přímo přes `.update()` potichu neuspěl (PostgREST u UPDATE bez shody nehází chybu). Zavádí dvě `SECURITY DEFINER` RPC – `mark_order_paid(p_order_id)` a `set_order_stock_released(p_order_id, p_released)` – ať nejde přidávat širokou anon `UPDATE` policy (bezpečnostní riziko přes `orderId` v URL). `/api/stripe-webhook` teď volá tyhle RPC místo přímého `.update()`.
 - `docs/sql/019_orders_currency.sql` – napsáno 2026-07-24, **čeká na spuštění v Supabase SQL editoru**. Doplňuje `orders.currency` (text, `CHECK` na `CZK`/`EUR`, default `'CZK'` – dobackfilluje historické řádky automaticky), viz [sekce 9](09-jazykove-mutace.md) krok 4a.
 - `docs/sql/020_exchange_rates_czk.sql` – napsáno 2026-07-24, **čeká na spuštění v Supabase SQL editoru**. Rozšiřuje `exchange_rates_currency_code_check` o `CZK` a seedne řádek `('CZK', null)` – kurz pro přepočet Kč poštovného do EUR (`src/lib/shippingCurrency.ts`), nutné ručně nastavit v adminu po spuštění migrace, jinak EUR objednávky nepůjdou dokončit (`RATE_MISSING`).
+- `docs/sql/021_order_status_history.sql` – napsáno 2026-07-26, **čeká na spuštění v Supabase SQL editoru**. Zavádí tabulku `order_status_history` + trigger `orders_log_status_change` (`AFTER INSERT OR UPDATE ON orders`), aby admin dashboard uměl zobrazit časovou osu změn stavu objednávky, viz [sekce 5](05-administrace.md) a audit dashboardu popsaný výše.

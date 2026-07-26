@@ -1,19 +1,21 @@
 import { OrderStatus, ProductCategory } from '@/types/database';
 
+// Pořadí odpovídá skutečnému toku objednávky (viz PICKUP_FLOW/SHIPPING_FLOW v adminu) -
+// nejdřív společná část, pak větev doprava/osobní odběr, na konci mimořádné/terminální stavy.
 export const ORDER_STATUSES: { value: OrderStatus; group: 'neutral' | 'success' | 'danger' }[] = [
   { value: 'Nová', group: 'neutral' },
-  { value: 'Připravujeme', group: 'neutral' },
   { value: 'Zaplaceno', group: 'neutral' },
+  { value: 'Připravujeme', group: 'neutral' },
   { value: 'Odesláno', group: 'neutral' },
-  { value: 'K vyzvednutí', group: 'neutral' },
   { value: 'Doručeno', group: 'success' },
+  { value: 'K vyzvednutí', group: 'neutral' },
   { value: 'Vyzvednuto', group: 'success' },
+  { value: 'Uzavřeno', group: 'success' },
   { value: 'Zrušeno', group: 'danger' },
   { value: 'Vráceno', group: 'danger' },
   { value: 'Vráceny peníze', group: 'success' },
-  { value: 'Ztracená zásilka', group: 'danger' },
   { value: 'Reklamace', group: 'danger' },
-  { value: 'Uzavřeno', group: 'success' },
+  { value: 'Ztracená zásilka', group: 'danger' },
 ];
 
 export type ShippingOption = {

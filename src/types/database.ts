@@ -154,3 +154,10 @@ export type CustomStamp = {
   print_url: string;
   created_at: string;
 };
+
+export type OrderStatusHistoryEntry = {
+  id: number;
+  order_id: string;
+  status: OrderStatus;
+  changed_at: string;
+};

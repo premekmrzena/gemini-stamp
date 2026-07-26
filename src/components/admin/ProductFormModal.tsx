@@ -188,14 +188,14 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
     }
   }
 
-  const inputClass = 'w-full bg-black border border-black300/50 rounded-[8px] px-4 h-[44px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all';
-  const textareaClass = 'w-full bg-black border border-black300/50 rounded-[8px] px-4 py-3 style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all min-h-[80px]';
+  const inputClass = 'w-full bg-black border border-black300/50 rounded-[4px] px-4 h-[44px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all';
+  const textareaClass = 'w-full bg-black border border-black300/50 rounded-[4px] px-4 py-3 style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all min-h-[80px]';
   const labelClass = 'style-product-tag text-black300 block mb-2';
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" {...backdropHandlers}>
       <div
-        className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] border border-black300/30 shadow-2xl"
+        className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
@@ -207,7 +207,7 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <p className="text-tag-posledni-kusy style-body-bold bg-tag-posledni-kusy/10 p-3 rounded-[8px] border border-tag-posledni-kusy/20">
+            <p className="text-tag-posledni-kusy style-body-bold bg-tag-posledni-kusy/10 p-3 rounded-[4px] border border-tag-posledni-kusy/20">
               {error}
             </p>
           )}
@@ -464,7 +464,7 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
             <p className="style-body text-black300/70 mb-2">
               Zobrazí se na detailu produktu. Když nevybereš žádné, appka sama doplní 3 nejnovější jiné produkty.
             </p>
-            <div className="max-h-[180px] overflow-y-auto flex flex-wrap gap-2 bg-black border border-black300/50 rounded-[8px] p-3">
+            <div className="max-h-[180px] overflow-y-auto flex flex-wrap gap-2 bg-black border border-black300/50 rounded-[4px] p-3">
               {allProducts.filter((p) => p.id !== product?.id).map((p) => {
                 const selected = (form.related_stamp_id || []).includes(p.id);
                 return (
@@ -492,9 +492,9 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
               <div className="flex items-center gap-4">
                 {form.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={form.image_url} alt="" className="w-20 h-20 object-cover rounded-[8px] border border-black300/30" />
+                  <img src={form.image_url} alt="" className="w-20 h-20 object-cover rounded-[4px] border border-black300/30" />
                 )}
-                <label className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 text-secondary px-4 h-[40px] rounded-[8px] style-body-bold transition-all cursor-pointer border border-black300/20">
+                <label className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 text-secondary px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer border border-black300/20">
                   {uploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                   {form.image_url ? 'Nahradit' : 'Nahrát obrázek'}
                   <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingImage}
@@ -509,14 +509,14 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
                 {(form.gallery_images || []).map((url) => (
                   <div key={url} className="relative group">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="w-20 h-20 object-cover rounded-[8px] border border-black300/30" />
+                    <img src={url} alt="" className="w-20 h-20 object-cover rounded-[4px] border border-black300/30" />
                     <button type="button" onClick={() => removeGalleryImage(url)}
                       className="absolute -top-2 -right-2 bg-tag-posledni-kusy text-secondary rounded-full p-1 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 size={12} />
                     </button>
                   </div>
                 ))}
-                <label className="w-20 h-20 flex items-center justify-center bg-black300/10 hover:bg-black300/20 rounded-[8px] border border-dashed border-black300/30 cursor-pointer transition-all">
+                <label className="w-20 h-20 flex items-center justify-center bg-black300/10 hover:bg-black300/20 rounded-[4px] border border-dashed border-black300/30 cursor-pointer transition-all">
                   {uploadingGallery ? <Loader2 size={18} className="animate-spin text-black300" /> : <ImagePlus size={18} className="text-black300" />}
                   <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingGallery}
                     onChange={(e) => e.target.files?.[0] && handleGalleryUpload(e.target.files[0])} />
@@ -526,11 +526,11 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
           </div>
 
           <div className="pt-4 border-t border-black300/30 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 h-[44px] rounded-[8px] style-body-bold text-black300 hover:text-secondary transition-all cursor-pointer">
+            <button type="button" onClick={onClose} className="px-4 h-[44px] rounded-[4px] style-body-bold text-black300 hover:text-secondary transition-all cursor-pointer">
               Zrušit
             </button>
             <button type="submit" disabled={saving || uploadingImage || uploadingGallery}
-              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-6 h-[44px] rounded-[8px] transition-all style-body cursor-pointer">
+              className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-6 h-[44px] rounded-[4px] transition-all style-body cursor-pointer">
               {saving ? 'Ukládám...' : product ? 'Uložit změny' : 'Vytvořit produkt'}
             </button>
           </div>
