@@ -16,7 +16,7 @@ import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search,
   LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt,
-  Sparkles, Printer, History, FileImage, BarChart3,
+  Sparkles, Printer, History, FileImage, BarChart3, Info,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip } from 'recharts';
@@ -71,8 +71,36 @@ function OrderStatusBadge({ status }: { status: OrderStatus | undefined }) {
   );
 }
 
-const PICKUP_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'K vyzvednutí', 'Vyzvednuto', 'Uzavřeno'];
-const SHIPPING_FLOW: OrderStatus[] = ['Nová', 'Zaplaceno', 'Připravujeme', 'Odesláno', 'Doručeno', 'Uzavřeno'];
+// 'Nová' už není samostatný stav v toku objednávky (viz ORDER_STATUSES komentář) - je to
+// dočasný badge vedle skutečného stavu ("Čekáme na platbu" nebo "Zaplaceno"), zobrazený
+// jen prvních 24 hodin od vytvoření objednávky.
+const NEW_ORDER_BADGE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function isFreshOrder(createdAt: string) {
+  return Date.now() - new Date(createdAt).getTime() < NEW_ORDER_BADGE_WINDOW_MS;
+}
+
+function NewOrderBadge() {
+  return (
+    <span className="inline-flex px-2 py-1 rounded-[4px] style-product-tag border bg-primary/10 text-primary border-primary/20">
+      Nová
+    </span>
+  );
+}
+
+// Jemné podbarvení řádku/karty podle stavu - rychlá vizuální orientace "čeká na peníze"
+// vs. "už zaplaceno", nezávislé na barvě samotného badge (ta zůstává podle `group`).
+function getOrderRowBg(status: OrderStatus | undefined) {
+  if (status === 'Zaplaceno') return 'bg-success/5';
+  if (status === 'Čekáme na platbu') return 'bg-tag-novinka/5';
+  return '';
+}
+
+// 'Nová' na začátku obou toků je jen pro historické objednávky, které ještě mají tenhle
+// starý status v DB (appka ho od 2026-07-26 sama nezapisuje) - ať jim "Další krok"
+// pořád nabídne rozumné pokračování.
+const PICKUP_FLOW: OrderStatus[] = ['Nová', 'Čekáme na platbu', 'Zaplaceno', 'Připravujeme', 'K vyzvednutí', 'Vyzvednuto', 'Uzavřeno'];
+const SHIPPING_FLOW: OrderStatus[] = ['Nová', 'Čekáme na platbu', 'Zaplaceno', 'Připravujeme', 'Odesláno', 'Doručeno', 'Uzavřeno'];
 
 // Stavy, u kterých změna přes updateOrderStatus() automaticky pošle zákazníkovi email
 // (viz /api/admin/notify-order-status). Odesláno má vlastní tok přes sledovací číslo
@@ -201,6 +229,7 @@ export default function AdminDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [shipmentOrder, setShipmentOrder] = useState<Order | null>(null);
   const [dateFilter, setDateFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const orderModalBackdrop = useBackdropClose(() => setSelectedOrder(null));
 
   // --- STAVY PRO PRODUKTY ---
@@ -407,11 +436,10 @@ export default function AdminDashboard() {
   }
 
   const filteredOrders = useMemo(() => {
-    if (!dateFilter) return orders;
-    return orders.filter((order) =>
-      new Date(order.created_at).toLocaleDateString('en-CA') === dateFilter
-    );
-  }, [dateFilter, orders]);
+    return orders
+      .filter((order) => !dateFilter || new Date(order.created_at).toLocaleDateString('en-CA') === dateFilter)
+      .filter((order) => statusFilter === 'all' || (order.status || 'Nová') === statusFilter);
+  }, [dateFilter, statusFilter, orders]);
 
   // Dávkové načtení tiskových URL pro VŠECHNY objednávky (ne jen otevřenou v modalu) -
   // potřeba jak pro badge/quick-download v seznamu, tak pro detail a hromadný ZIP.
@@ -1520,14 +1548,33 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleBulkPrintDownload}
-            disabled={bulkDownloading}
-            className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 disabled:opacity-50 text-secondary px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer border border-black300/20"
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as OrderStatus | 'all')}
+            className="bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
           >
-            <Archive size={16} /> {bulkDownloading ? 'Stahuji a balím...' : 'Stáhnout tiskové archy (ZIP)'}
-          </button>
+            <option value="all">Všechny stavy</option>
+            {ORDER_STATUSES.map(({ value }) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+
+          <div className="flex items-center gap-2">
+            <span
+              title="Stáhne tiskové PNG všech Kreativních archů napříč aktuálně filtrovanými objednávkami (podle datumového a stavového filtru nahoře) jako jeden ZIP - pro hromadný tisk najednou, bez otevírání jednotlivých objednávek. Liší se od ikon u řádku objednávky, které stahují jen arch z té jedné objednávky."
+              className="text-black300 hover:text-primary cursor-help"
+            >
+              <Info size={16} />
+            </span>
+            <button
+              onClick={handleBulkPrintDownload}
+              disabled={bulkDownloading}
+              className="flex items-center gap-2 bg-black300/10 hover:bg-black300/20 disabled:opacity-50 text-secondary px-4 h-[40px] rounded-[4px] style-body-bold transition-all cursor-pointer border border-black300/20"
+            >
+              <Archive size={16} /> {bulkDownloading ? 'Stahuji a balím...' : 'Stáhnout tiskové archy (ZIP)'}
+            </button>
+          </div>
         </div>
 
         {/* TABULKA */}
@@ -1560,7 +1607,7 @@ export default function AdminDashboard() {
                         <tr
                           key={order.id}
                           onClick={() => setSelectedOrder(order)}
-                          className={`hover:bg-black/40 cursor-pointer transition-colors group ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
+                          className={`hover:bg-black/40 cursor-pointer transition-colors group ${getOrderRowBg(order.status)} ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
                         >
                           <td className="p-4">
                             <div className="style-body-bold text-secondary group-hover:text-primary transition-colors">
@@ -1572,7 +1619,12 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="p-4 style-body text-black300">{new Date(order.created_at).toLocaleDateString('cs-CZ')}</td>
-                          <td className="p-4"><OrderStatusBadge status={order.status} /></td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <OrderStatusBadge status={order.status} />
+                              {isFreshOrder(order.created_at) && <NewOrderBadge />}
+                            </div>
+                          </td>
                           <td className="p-4 text-right style-body-bold text-secondary">
                             {formatPrice(order.total_price, order.currency)}
                           </td>
@@ -1599,7 +1651,7 @@ export default function AdminDashboard() {
                     <div
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
-                      className={`p-4 space-y-2 active:bg-black/40 cursor-pointer transition-colors ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
+                      className={`p-4 space-y-2 active:bg-black/40 cursor-pointer transition-colors ${getOrderRowBg(order.status)} ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
                     >
                       <div className="flex justify-between items-start gap-3">
                         <div>
@@ -1611,6 +1663,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <OrderStatusBadge status={order.status} />
+                          {isFreshOrder(order.created_at) && <NewOrderBadge />}
                           {hasCustomStamp && <CustomStampBadge />}
                         </div>
                         {customItems.length === 1 && (
@@ -1636,6 +1689,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="style-h3 text-secondary flex items-center gap-2">
                   <Package className="text-primary" size={20} /> Detail #{selectedOrder.id.slice(-6).toUpperCase()}
+                  {isFreshOrder(selectedOrder.created_at) && <NewOrderBadge />}
                 </h2>
                 <p className="text-[11px] text-black300 mt-1">{new Date(selectedOrder.created_at).toLocaleString('cs-CZ')}</p>
               </div>

@@ -57,13 +57,13 @@ Seednuto 4 řádky (`KRW`, `JPY`, `CNY`, `TWD`) s `rate_to_eur = null`, `CZK` ř
 |---|---|---|---|
 | id | uuid (PK) | ano | `gen_random_uuid()` |
 | created_at | timestamptz | ano | `now()` |
-| status | text, `CHECK` na 13 platných hodnot (`orders_status_check`, od 2026-06-16) | ano | `'Nová'` |
+| status | text, `CHECK` na 14 platných hodnot (`orders_status_check`, od 2026-06-16, rozšířeno o `Čekáme na platbu` 2026-07-26, `docs/sql/025_orders_status_waiting_payment.sql`) | ano | `'Čekáme na platbu'` (od 2026-07-26, dřív `'Nová'`) |
 | currency | text, `CHECK` na `CZK`/`EUR` (od 2026-07-24, `docs/sql/019_orders_currency.sql`, **připraveno, čeká na spuštění**) – měna, ve které byla objednávka vytvořena/zaplacena, viz [sekce 9](09-jazykove-mutace.md) krok 4a | ano | `'CZK'` (`ADD COLUMN` dobackfilluje historické řádky) |
-| total_price | integer | ano | – |
+| total_price | numeric (do 2026-07-26 `integer` – EUR částky mají centy, viz "Nalezené nesrovnalosti" níže) | ano | – |
 | shipping_method | text | ano | – |
-| shipping_cost | integer | ano | – |
+| shipping_cost | numeric (do 2026-07-26 `integer`) | ano | – |
 | payment_method | text | ano | – |
-| payment_cost | integer | ano | – |
+| payment_cost | numeric (do 2026-07-26 `integer`) | ano | – |
 | cart_items | jsonb | ano | – |
 | customer_note | text | ne (nullable) | – |
 | billing_first_name / billing_last_name / billing_email / billing_phone | text | ano | – |
@@ -124,6 +124,9 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - **`orders.status`** dříve nemělo žádné omezení hodnot (čistý `text`) – teď má `CHECK` constraint `orders_status_check` na 13 platných hodnot z `OrderStatus`. Přímý zápis libovolného stringu (SQL editor, jiný klient) už DB odmítne.
 - **`custom_stamps.product_id`** dříve bylo nullable, teď má `NOT NULL` – odpovídá tomu, že appkód (`StampEditor.tsx`) ho vždy vyplňuje.
 
+Opraveno přímo v DB (migrace `docs/sql/026_orders_numeric_price_columns.sql`, nalezeno 2026-07-26):
+- **`orders.total_price`/`shipping_cost`/`payment_cost`** byly `integer` z doby, kdy eshop uměl jen celé Kč – EUR fáze 4a (`docs/sql/019_orders_currency.sql`) přidala `convertToEur()` s centovým zaokrouhlením (`src/lib/pricing.ts`), ale tyhle 3 sloupce se nezměnily, takže EUR checkout spadal na `invalid input syntax for type integer`. Opraveno na `numeric`.
+
 ## Provedené SQL migrace
 - `docs/sql/001_orders_status_check.sql` – provedeno 2026-06-16 v Supabase SQL editoru, bez dopadu na stávající data.
 - `docs/sql/002_orders_tracking_number.sql` – provedeno 2026-06-16, doplnil `orders.tracking_number` (text, nullable) pro sledovací číslo zásilky, viz [sekce 5](05-administrace.md#2-záložka-objednávky).
@@ -144,4 +147,6 @@ Opraveno přímo v DB (migrace `docs/sql/001_orders_status_check.sql`, provedeno
 - `docs/sql/017_orders_webhook_rpc.sql` – napsáno 2026-07-22, **čeká na spuštění v Supabase SQL editoru**. Opravuje nález ze stejného dne: `orders` nemá pro `anon` žádnou `UPDATE` RLS policy, takže webhook (běží pod anon klíčem) při zápisu `status`/`stock_released` přímo přes `.update()` potichu neuspěl (PostgREST u UPDATE bez shody nehází chybu). Zavádí dvě `SECURITY DEFINER` RPC – `mark_order_paid(p_order_id)` a `set_order_stock_released(p_order_id, p_released)` – ať nejde přidávat širokou anon `UPDATE` policy (bezpečnostní riziko přes `orderId` v URL). `/api/stripe-webhook` teď volá tyhle RPC místo přímého `.update()`.
 - `docs/sql/019_orders_currency.sql` – napsáno 2026-07-24, **čeká na spuštění v Supabase SQL editoru**. Doplňuje `orders.currency` (text, `CHECK` na `CZK`/`EUR`, default `'CZK'` – dobackfilluje historické řádky automaticky), viz [sekce 9](09-jazykove-mutace.md) krok 4a.
 - `docs/sql/020_exchange_rates_czk.sql` – napsáno 2026-07-24, **čeká na spuštění v Supabase SQL editoru**. Rozšiřuje `exchange_rates_currency_code_check` o `CZK` a seedne řádek `('CZK', null)` – kurz pro přepočet Kč poštovného do EUR (`src/lib/shippingCurrency.ts`), nutné ručně nastavit v adminu po spuštění migrace, jinak EUR objednávky nepůjdou dokončit (`RATE_MISSING`).
-- `docs/sql/021_order_status_history.sql` – napsáno 2026-07-26, **čeká na spuštění v Supabase SQL editoru**. Zavádí tabulku `order_status_history` + trigger `orders_log_status_change` (`AFTER INSERT OR UPDATE ON orders`), aby admin dashboard uměl zobrazit časovou osu změn stavu objednávky, viz [sekce 5](05-administrace.md) a audit dashboardu popsaný výše.
+- `docs/sql/024_order_status_history.sql` – napsáno 2026-07-26, **provedeno**. Zavádí tabulku `order_status_history` + trigger `orders_log_status_change` (`AFTER INSERT OR UPDATE ON orders`), aby admin dashboard uměl zobrazit časovou osu změn stavu objednávky, viz [sekce 5](05-administrace.md) a audit dashboardu popsaný výše.
+- `docs/sql/025_orders_status_waiting_payment.sql` – napsáno 2026-07-26, **provedeno**. Rozšiřuje `orders_status_check` o novou hodnotu `Čekáme na platbu` a mění default sloupce `status` z `'Nová'` na `'Čekáme na platbu'`. Viz [sekce 2](02-stavy-objednavky.md).
+- `docs/sql/026_orders_numeric_price_columns.sql` – napsáno 2026-07-26, **čeká na spuštění v Supabase SQL editoru, blokuje EUR checkout**. Mění `orders.total_price`/`shipping_cost`/`payment_cost` z `integer` na `numeric` – nalezeno živým testem: EUR poštovné/platba se počítá přes `convertToEur()` (`src/lib/pricing.ts`, zaokrouhlení na centy), takže hodnota jako `164.7` spadla na `integer` sloupci s `invalid input syntax for type integer`. CZK objednávky bug nepotkal (skutečné Kč ceny jsou vždy celé číslo).

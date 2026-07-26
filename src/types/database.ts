@@ -79,6 +79,7 @@ export type Product = {
 
 export type OrderStatus =
   | 'Nová'
+  | 'Čekáme na platbu'
   | 'Připravujeme'
   | 'Zaplaceno'
   | 'Odesláno'

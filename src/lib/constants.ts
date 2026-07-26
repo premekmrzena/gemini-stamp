@@ -2,8 +2,12 @@ import { OrderStatus, ProductCategory } from '@/types/database';
 
 // Pořadí odpovídá skutečnému toku objednávky (viz PICKUP_FLOW/SHIPPING_FLOW v adminu) -
 // nejdřív společná část, pak větev doprava/osobní odběr, na konci mimořádné/terminální stavy.
+// 'Nová' už appka nikdy sama nezapisuje (od 2026-07-26 nahrazeno "Čekáme na platbu" hned
+// při vytvoření objednávky) - v seznamu zůstává jen kvůli historickým objednávkám, v adminu
+// se z reálného stavu přeměnila na dočasný badge "čerstvá objednávka" (viz isFreshOrder).
 export const ORDER_STATUSES: { value: OrderStatus; group: 'neutral' | 'success' | 'danger' }[] = [
   { value: 'Nová', group: 'neutral' },
+  { value: 'Čekáme na platbu', group: 'neutral' },
   { value: 'Zaplaceno', group: 'neutral' },
   { value: 'Připravujeme', group: 'neutral' },
   { value: 'Odesláno', group: 'neutral' },

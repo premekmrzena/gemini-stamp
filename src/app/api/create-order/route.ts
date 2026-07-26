@@ -197,7 +197,9 @@ export async function POST(req: Request) {
     }
 
     const orderData = {
-      status: 'Nová',
+      // U karty tohle Stripe webhook (payment_intent.succeeded) obvykle během okamžiku
+      // přepíše na 'Zaplaceno'; u bankovního převodu tu zůstává, dokud platba nedorazí.
+      status: 'Čekáme na platbu',
       currency,
       total_price: totalPrice,
       shipping_method: shippingOption.name,
