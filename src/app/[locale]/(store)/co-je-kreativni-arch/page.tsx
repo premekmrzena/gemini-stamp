@@ -1,62 +1,58 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import StampCategoriesSection from '@/components/StampCategoriesSection';
 
-const processSteps = [
-  {
-    id: 1,
-    title: 'Nahrajte své fotky',
-    text: 'Přidejte svoje fotografie z mobilu nebo počítače. Klidně ty, které jste vyfotili právě dnes.',
-  },
-  {
-    id: 2,
-    title: 'Napište vlastní text',
-    text: 'Doplňte datum, jméno, vzkaz nebo cokoliv, co arch učiní skutečně originálním.',
-  },
-  {
-    id: 3,
-    title: 'Tisk a výroba',
-    text: 'Vaše fotky dotiskneme k šabloně a doplníme skutečnými poštovními známkami.',
-  },
-  {
-    id: 4,
-    title: 'Odeslání na adresu',
-    text: 'Hotový arch pečlivě zabalíme a doručíme přímo k vám domů. Nebo si ho vyzvednete osobně v Praze.',
-  },
-];
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata.whatIsCreativeArch' });
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: { canonical: '/co-je-kreativni-arch' },
+  };
+}
 
-export const metadata = {
-  title: 'Co je Kreativní arch?',
-  description: 'Unikátní sběratelský produkt spojující krásu poštovních známek s vašimi vlastními fotografiemi a vzpomínkami.',
-  alternates: { canonical: '/co-je-kreativni-arch' },
-};
+export default async function CoJeKreativniArch() {
+  const t = await getTranslations('whatIsCreativeArch');
 
-export default function CoJeKreativniArch() {
+  const processSteps = [
+    { id: 1, title: t('howItWorks.step1.title'), text: t('howItWorks.step1.text') },
+    { id: 2, title: t('howItWorks.step2.title'), text: t('howItWorks.step2.text') },
+    { id: 3, title: t('howItWorks.step3.title'), text: t('howItWorks.step3.text') },
+    { id: 4, title: t('howItWorks.step4.title'), text: t('howItWorks.step4.text') },
+  ];
+
+  const touristItems = [
+    { num: '01', text: t('forTourists.item1') },
+    { num: '02', text: t('forTourists.item2') },
+    { num: '03', text: t('forTourists.item3') },
+  ];
+
   return (
     <main className="bg-[#0F172A] text-secondary w-full">
-      <Breadcrumbs items={[{ label: 'Co je Kreativní arch?' }]} />
+      <Breadcrumbs items={[{ label: t('breadcrumb') }]} />
 
       {/* ——— HERO ——— */}
       <section className="layout-container py-8 md:py-12 text-center">
         <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">
-          Co je Kreativní arch?
+          {t('hero.title')}
         </h1>
         <p className="style-perex text-secondary/70 max-w-[580px] mx-auto mb-10">
-          Jedinečný dárek i sběratelský poklad. Vybrané poštovní známky se světovými umělci, českou a evropskou historií nebo
-          památkami, doplněný o vaše vlastní fotografie a text. 
+          {t('hero.perex')}
         </p>
         <Link href="/vytvorit-arch">
-          <Button arrow="right">Vybrat šablonu a začít tvořit</Button>
+          <Button arrow="right">{t('hero.cta')}</Button>
         </Link>
       </section>
 
       {/* ——— JAK TO FUNGUJE ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Jak si vytořit vlastní Kreativní arch?</h2>
+          <h2 className="style-h2 text-center mb-4">{t('howItWorks.title')}</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Nejprve si vyberte šablonu a pak můžete v našem on-line editoru začít tvořit.
+            {t('howItWorks.perex')}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -81,18 +77,13 @@ export default function CoJeKreativniArch() {
       {/* ——— PRO TURISTY ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-4">Přijedete, vyfotíte, odnesete si kus Česka</h2>
+          <h2 className="style-h2 text-center mb-4">{t('forTourists.title')}</h2>
           <p className="style-body text-secondary/50 text-center max-w-[43rem] mx-auto mb-12 md:mb-16">
-            Kreativní arch je ideální památka pro turisty, kteří chtějí domů přivézt víc než magnetku.
-            Nahrajte fotky přímo z výletu a vyprávějte svůj vlastní příběh.
+            {t('forTourists.perex')}
           </p>
 
           <div className="grid grid-cols-1 gap-4 max-w-[640px] mx-auto">
-            {[
-              { num: '01', text: 'Vyfotíte Pražský hrad — my ho doplníme známkami s českou historií.' },
-              { num: '02', text: 'Navštívíte galerii s Muchou — my přidáme jeho díla ze sbírek na známkách.' },
-              { num: '03', text: 'Okouzlí vás Český Krumlov? — máme připravené památky z Krumlova a okolí.' },
-            ].map((item) => (
+            {touristItems.map((item) => (
               <div key={item.num} className="flex gap-4 items-start p-5 rounded-[4px] border border-white/5 bg-[#0B1120]">
                 <span className="style-h2 text-primary/40 font-semibold shrink-0 leading-none">{item.num}</span>
                 <p className="style-body text-secondary/70 mt-1">{item.text}</p>
@@ -105,12 +96,12 @@ export default function CoJeKreativniArch() {
       {/* ——— CTA ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[56px] md:py-[80px] text-center">
-          <h2 className="style-h2 mb-4">Připraveni vytvořit svůj arch?</h2>
+          <h2 className="style-h2 mb-4">{t('cta.title')}</h2>
           <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
-            Vyberte šablonu, nahrajte fotky a my se postaráme o tisk a doručení.
+            {t('cta.text')}
           </p>
           <Link href="/vytvorit-arch">
-            <Button arrow="right">Vybrat šablonu a začít tvořit</Button>
+            <Button arrow="right">{t('cta.button')}</Button>
           </Link>
         </div>
       </section>

@@ -1,54 +1,18 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { BANK_ACCOUNT_NUMBER, BANK_NAME, BANK_IBAN, BANK_SWIFT } from '@/lib/czechQrPayment';
 
-const contactRows = [
-  {
-    title: 'Odběrné místo',
-    text: 'Jindřišská 126/15, 110 00 Praha 1',
-    map: true,
-    icon: 'home',
-  },
-  {
-    title: 'Kontaktní údaje',
-    lines: [
-      { label: 'E-mail', value: 'info@mycreativestamp.com', href: 'mailto:info@mycreativestamp.com' },
-      { label: 'Web', value: 'mycreativestamp.com', href: '/' },
-      { label: 'Telefon', value: '+420 123 456 789', href: 'tel:+420123456789' },
-    ],
-    icon: 'mail',
-  },
-  {
-    title: 'Fakturační údaje',
-    text: 'DVKS s.r.o., Nad Studánkou 393, 251 01 Světice, IČ: 14248328',
-    icon: 'invoice',
-  },
-  {
-    title: 'Bankovní spojení',
-    text: `Číslo účtu: ${BANK_ACCOUNT_NUMBER}\nBanka: ${BANK_NAME}\nIBAN: ${BANK_IBAN.replace(/(.{4})/g, '$1 ').trim()}\nSWIFT/BIC: ${BANK_SWIFT}`,
-    icon: 'bank',
-  },
-];
-
-const officeHours = [
-  {
-    title: 'Pondělí – pátek',
-    price: '9:00 – 17:00',
-    text: 'Na e-maily odpovídáme průběžně během dne.',
-  },
-  {
-    title: 'Sobota – neděle',
-    price: 'Zavřeno',
-    text: 'O víkendu zákaznickou podporu nezajišťujeme.',
-  },
-];
-
-export const metadata = {
-  title: 'Kontakt',
-  description: 'Kontaktujte nás — rádi zodpovíme vaše dotazy ohledně Kreativního archu.',
-  alternates: { canonical: '/kontakt' },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata.contact' });
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: { canonical: '/kontakt' },
+  };
+}
 
 const contactIcons: Record<string, React.ReactNode> = {
   home: (
@@ -143,7 +107,7 @@ function Row({
 
 // Skutečný náhled mapy přes Google Maps embed (bez API klíče, klasické /maps?...&output=embed).
 // Iframe je sám o sobě interaktivní (drag/zoom), proto odkaz na Google Maps vede jen přes lištu pod ním.
-function MapPreview({ address }: { address: string }) {
+function MapPreview({ address, openInGoogleMapsLabel }: { address: string; openInGoogleMapsLabel: string }) {
   const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
@@ -155,7 +119,7 @@ function MapPreview({ address }: { address: string }) {
         style={{ border: 0 }}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
-        title={`Mapa: ${address}`}
+        title={address}
       />
       <a
         href={mapsUrl}
@@ -163,7 +127,7 @@ function MapPreview({ address }: { address: string }) {
         rel="noopener noreferrer"
         className="group/map flex items-center justify-between gap-2 bg-black/70 px-3 py-2 hover:bg-black/90 transition-colors"
       >
-        <span className="style-label text-secondary/80">Otevřít v Google Maps</span>
+        <span className="style-label text-secondary/80">{openInGoogleMapsLabel}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary/80 shrink-0 group-hover/map:translate-x-0.5 transition-transform">
           <path d="M7 17 17 7" />
           <path d="M7 7h10v10" />
@@ -173,17 +137,53 @@ function MapPreview({ address }: { address: string }) {
   );
 }
 
-export default function KontaktPage() {
+export default async function KontaktPage() {
+  const t = await getTranslations('contact');
+
+  const pickupAddress = 'Jindřišská 126/15, 110 00 Praha 1';
+
+  const contactRows = [
+    {
+      title: t('rows.pickup.title'),
+      text: pickupAddress,
+      map: true,
+      icon: 'home',
+    },
+    {
+      title: t('rows.info.title'),
+      lines: [
+        { label: t('rows.info.email'), value: 'info@mycreativestamp.com', href: 'mailto:info@mycreativestamp.com' },
+        { label: t('rows.info.web'), value: 'mycreativestamp.com', href: '/' },
+        { label: t('rows.info.phone'), value: '+420 123 456 789', href: 'tel:+420123456789' },
+      ],
+      icon: 'mail',
+    },
+    {
+      title: t('rows.invoicing.title'),
+      text: 'DVKS s.r.o., Nad Studánkou 393, 251 01 Světice, IČ: 14248328',
+      icon: 'invoice',
+    },
+    {
+      title: t('rows.bank.title'),
+      text: `${t('rows.bank.accountNumber')}: ${BANK_ACCOUNT_NUMBER}\n${t('rows.bank.bankName')}: ${BANK_NAME}\n${t('rows.bank.iban')}: ${BANK_IBAN.replace(/(.{4})/g, '$1 ').trim()}\n${t('rows.bank.swift')}: ${BANK_SWIFT}`,
+      icon: 'bank',
+    },
+  ];
+
+  const officeHours = [
+    { title: t('officeHours.weekdays.title'), price: t('officeHours.weekdays.price'), text: t('officeHours.weekdays.text') },
+    { title: t('officeHours.weekend.title'), price: t('officeHours.weekend.price'), text: t('officeHours.weekend.text') },
+  ];
+
   return (
     <main className="bg-[#0F172A] text-secondary w-full">
-      <Breadcrumbs items={[{ label: 'Kontakt' }]} />
+      <Breadcrumbs items={[{ label: t('breadcrumb') }]} />
 
       {/* ——— HERO ——— */}
       <section className="layout-container py-8 md:py-12 text-center">
-        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">Obraťte se na nás!</h1>
+        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">{t('hero.title')}</h1>
         <p className="style-perex text-secondary/70 max-w-[580px] mx-auto">
-          Máte dotaz k objednávce, reklamaci nebo jen chcete vědět víc o Kreativním archu?
-          Napište nám — odpovíme zpravidla do jednoho pracovního dne.
+          {t('hero.perex')}
         </p>
       </section>
 
@@ -193,7 +193,7 @@ export default function KontaktPage() {
           <div className="max-w-[640px] mx-auto">
             {contactRows.map((row) => (
               <Row key={row.title} title={row.title} text={row.text} lines={row.lines} icon={row.icon}>
-                {row.map && row.text && <MapPreview address={row.text} />}
+                {row.map && row.text && <MapPreview address={row.text} openInGoogleMapsLabel={t('map.openInGoogleMaps')} />}
               </Row>
             ))}
           </div>
@@ -203,7 +203,7 @@ export default function KontaktPage() {
       {/* ——— PROVOZNÍ DOBA ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-12 md:mb-16">Provozní doba zákaznické podpory</h2>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">{t('officeHours.title')}</h2>
 
           <div className="max-w-[640px] mx-auto">
             {officeHours.map((item) => (
@@ -216,12 +216,12 @@ export default function KontaktPage() {
       {/* ——— CTA ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[56px] md:py-[80px] text-center">
-          <h2 className="style-h2 mb-4">Potřebujete poradit?</h2>
+          <h2 className="style-h2 mb-4">{t('cta.title')}</h2>
           <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
-            Napište nám na e-mail a ozveme se zpravidla do jednoho pracovního dne.
+            {t('cta.text')}
           </p>
           <Link href="mailto:info@mycreativestamp.com">
-            <Button arrow="right">Napsat e-mail</Button>
+            <Button arrow="right">{t('cta.button')}</Button>
           </Link>
         </div>
       </section>

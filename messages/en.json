@@ -394,12 +394,126 @@
       }
     }
   },
+  "howToBuy": {
+    "breadcrumb": "How to shop",
+    "hero": {
+      "title": "How can you shop with us?",
+      "perex": "What can you buy from us, and how does production, shipping and payment work? Find everything you need in one place."
+    },
+    "shipping": {
+      "title": "Shipping and pickup",
+      "pickup": { "title": "Personal pickup (Prague)", "price": "Free", "text": "Pickup at Jindřišská 126/15, Prague 1." },
+      "czech": { "title": "Czech Republic", "price": "40–120 CZK", "text": "Price depends on parcel weight — plain letter, registered letter or package." },
+      "international": { "title": "International shipping", "price": "150–300 CZK", "text": "Choose your destination country at checkout — price depends on parcel weight." }
+    },
+    "deliveryTime": {
+      "title": "How long does it take?",
+      "standard": { "title": "Standard order", "price": "1–2 business days", "text": "From order confirmation to dispatch." },
+      "customArch": { "title": "Custom-made Creative Sheet", "price": "1–5 business days", "text": "The longer lead time comes from printing and assembling the sheet with your photos." }
+    },
+    "payment": {
+      "title": "How to pay?",
+      "card": { "title": "Online card payment", "text": "Fast and secure payment via the popular Stripe payment gateway — your order and payment are confirmed instantly." },
+      "transfer": { "title": "Bank transfer", "text": "We'll send payment instructions by e-mail right after you complete your order. We process the order once payment arrives in our account." }
+    },
+    "cta": {
+      "title": "Got everything you need?",
+      "text": "Let's go — pick your stamps, sheets or plaques and order in just a few minutes.",
+      "shopButton": "Go to shop",
+      "questionButton": "I still have a question"
+    }
+  },
+  "whatIsCreativeArch": {
+    "breadcrumb": "What is a Creative Sheet?",
+    "hero": {
+      "title": "What is a Creative Sheet?",
+      "perex": "A unique gift and a collector's treasure. Handpicked postage stamps featuring world-renowned artists, Czech and European history or landmarks, combined with your own photos and text.",
+      "cta": "Choose a template and start creating"
+    },
+    "howItWorks": {
+      "title": "How do you create your own Creative Sheet?",
+      "perex": "First pick a template, then start creating in our online editor.",
+      "step1": { "title": "Upload your photos", "text": "Add your photos from your phone or computer — even ones you took today." },
+      "step2": { "title": "Write your own text", "text": "Add a date, a name, a message, or anything that makes the sheet truly yours." },
+      "step3": { "title": "Printing and production", "text": "We print your photos onto the template and add genuine postage stamps." },
+      "step4": { "title": "Delivery to your address", "text": "We carefully package the finished sheet and deliver it straight to your door — or you can pick it up in person in Prague." }
+    },
+    "forTourists": {
+      "title": "Visit, snap a photo, take home a piece of Czechia",
+      "perex": "A Creative Sheet is the perfect souvenir for tourists who want to bring home more than a fridge magnet. Upload photos straight from your trip and tell your own story.",
+      "item1": "Photographed Prague Castle? We'll pair it with stamps depicting Czech history.",
+      "item2": "Visited a Mucha gallery? We'll add his artwork from stamp collections.",
+      "item3": "Charmed by Český Krumlov? We have landmarks from Krumlov and its surroundings ready."
+    },
+    "cta": {
+      "title": "Ready to create your own sheet?",
+      "text": "Pick a template, upload your photos, and we'll take care of printing and delivery.",
+      "button": "Choose a template and start creating"
+    }
+  },
+  "contact": {
+    "breadcrumb": "Contact",
+    "hero": {
+      "title": "Get in touch!",
+      "perex": "Have a question about your order, a complaint, or just want to know more about the Creative Sheet? Write to us — we usually reply within one business day."
+    },
+    "rows": {
+      "pickup": { "title": "Pickup location" },
+      "info": { "title": "Contact details", "email": "E-mail", "web": "Website", "phone": "Phone" },
+      "invoicing": { "title": "Billing details" },
+      "bank": { "title": "Bank details", "accountNumber": "Account number", "bankName": "Bank", "iban": "IBAN", "swift": "SWIFT/BIC" }
+    },
+    "officeHours": {
+      "title": "Customer support hours",
+      "weekdays": { "title": "Monday – Friday", "price": "9:00 AM – 5:00 PM", "text": "We respond to e-mails throughout the day." },
+      "weekend": { "title": "Saturday – Sunday", "price": "Closed", "text": "We don't provide customer support over the weekend." }
+    },
+    "map": { "openInGoogleMaps": "Open in Google Maps", "alt": "Map: {address}" },
+    "cta": {
+      "title": "Need help?",
+      "text": "Send us an e-mail and we'll usually get back to you within one business day.",
+      "button": "Send an e-mail"
+    }
+  },
+  "faq": {
+    "breadcrumb": "FAQ",
+    "hero": {
+      "title": "Frequently Asked Questions",
+      "perex": "Answers to what our customers ask us most often. If you couldn't find your answer, reach out to us."
+    },
+    "questions": {
+      "q1": { "question": "How long does producing and delivering a Creative Sheet take?", "answer": "We make a custom Creative Sheet within 1–5 business days of order confirmation and photo upload. Delivery time then depends on the shipping method you choose — usually 1–3 days within the Czech Republic, and varies by destination abroad." },
+      "q2": { "question": "Which payment methods do you accept?", "answer": "You can pay online by card through the payment gateway (both payment and order are confirmed instantly), or by bank transfer — payment instructions are sent by e-mail right after your order is completed." },
+      "q3": { "question": "Can I pick up my order in person?", "answer": "Yes, personal pickup is free at Jindřišská 126/15, Prague 1. As soon as your order is ready for pickup, we'll let you know by e-mail." }
+    },
+    "cta": {
+      "title": "Didn't find your answer?",
+      "text": "Write to us and we'll gladly help with anything about your order or production.",
+      "button": "Contact us"
+    }
+  },
+  "category": {
+    "defaultTitle": "Category",
+    "defaultDescription": "Category description coming soon...",
+    "content": {
+      "znamky": { "title": "Postage stamps", "description": "Every stamp is a valuable collectible and a masterful work of art, telling the most powerful stories of the old continent. Discover the world of Czech stamp design, a globally recognized phenomenon." },
+      "znamkove-archy": { "title": "Stamp sheets", "description": "Add your own text for the Stamp Sheets category here." },
+      "fdc": { "title": "First Day Cover (FDC)", "description": "A First Day Cover (FDC) is an envelope, postcard or card bearing a newly issued postage stamp, postmarked on the first official day of its issue. For philatelists it's a highly prized and sought-after collectible that serves as a historical document." },
+      "plakety": { "title": "Gift plaques", "description": "Gift plaques let the stamp itself stand out and shine. The plate itself is available in silver or brass. Choose from engraved patterns and different edge styles." }
+    },
+    "topicFilter": { "vse": "All", "umeni": "Art", "pamatky": "Landmarks", "znamky": "Stamps", "archy": "Sheets" },
+    "sortOptions": { "doporucene": "Recommended", "price_asc": "Price: lowest first", "price_desc": "Price: highest first", "name_asc": "Name: A–Z", "bestseller": "Bestsellers" }
+  },
   "metadata": {
     "cart": { "title": "Cart" },
     "createArch": {
       "title": "Create a Creative Sheet",
       "description": "Choose a template, upload your own photos and text, and create a unique Creative Sheet with real postage stamps."
     },
-    "thankYou": { "title": "Thank you for your order" }
+    "thankYou": { "title": "Thank you for your order" },
+    "howToBuy": { "title": "How to shop", "description": "What you can buy from us, shipping and pickup options, payment methods, and how long production takes." },
+    "whatIsCreativeArch": { "title": "What is a Creative Sheet?", "description": "A unique collectible product combining the beauty of postage stamps with your own photos and memories." },
+    "contact": { "title": "Contact", "description": "Contact us — we're happy to answer your questions about the Creative Sheet." },
+    "faq": { "title": "FAQ", "description": "Answers to the most common questions about production, shipping and payment at the My Creative Stamp shop." }
   }
 }

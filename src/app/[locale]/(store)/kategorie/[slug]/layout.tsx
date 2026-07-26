@@ -1,25 +1,29 @@
 import type { Metadata } from 'next';
-import { CATEGORY_CONTENT } from '@/lib/categoryContent';
+import { getTranslations } from 'next-intl/server';
+import { INDEXABLE_CATEGORY_SLUGS } from '@/lib/categoryContent';
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const content = CATEGORY_CONTENT[slug];
+  const { locale, slug } = await params;
+  const t = await getTranslations({ locale, namespace: 'category' });
 
-  if (!content) {
-    return { title: 'Kategorie' };
+  if (!INDEXABLE_CATEGORY_SLUGS.includes(slug)) {
+    return { title: t('defaultTitle') };
   }
 
+  const title = t(`content.${slug}.title`);
+  const description = t(`content.${slug}.description`);
+
   return {
-    title: content.title,
-    description: content.description,
+    title,
+    description,
     alternates: { canonical: `/kategorie/${slug}` },
     openGraph: {
-      title: content.title,
-      description: content.description,
+      title,
+      description,
       url: `/kategorie/${slug}`,
     },
   };

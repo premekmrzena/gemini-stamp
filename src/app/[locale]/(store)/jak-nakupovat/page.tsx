@@ -1,57 +1,19 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import PurchaseCategoriesSection from '@/components/PurchaseCategoriesSection';
 import { ApplePayBadge, GooglePayBadge } from '@/components/PayBadges';
 
-const shippingOptions = [
-  {
-    title: 'Osobní odběr (Praha)',
-    price: 'Zdarma',
-    text: 'Vyzvednutí na adrese Jindřišská 126/15, Praha 1.',
-  },
-  {
-    title: 'Česká republika',
-    price: '40–120 Kč',
-    text: 'Cena podle hmotnosti zásilky — obyčejné psaní, doporučené psaní nebo balíček.',
-  },
-  {
-    title: 'Mezinárodní doprava',
-    price: '150–300 Kč',
-    text: 'Zemi doručení zvolíte při objednávce, cena záleží na hmotnosti zásilky.',
-  },
-];
-
-const paymentOptions = [
-  {
-    title: 'Online platba kartou',
-    text: 'Rychlá a bezpečná platba přes oblíbenou platební bránu Stripe, objednávku i platbu potvrdíme okamžitě.',
-    logos: true,
-  },
-  {
-    title: 'Bankovní převod',
-    text: 'Platební pokyny pošleme e-mailem hned po dokončení objednávky. Objednávku realizujeme po připsání platby na náš účet.',
-  },
-];
-
-const deliveryTimes = [
-  {
-    title: 'Standardní objednávka',
-    price: '1–2 pracovních dnů',
-    text: 'Od potvrzení objednávky do expedice.',
-  },
-  {
-    title: 'Kreativní arch na míru',
-    price: '1–5 pracovních dnů',
-    text: 'Delší lhůta je daná tiskem a kompletací archu s vašimi fotografiemi.',
-  },
-];
-
-export const metadata = {
-  title: 'Jak nakupovat',
-  description: 'Co si u nás můžete koupit, jaké jsou možnosti dopravy, osobního odběru, platby a jak dlouho trvá výroba.',
-  alternates: { canonical: '/jak-nakupovat' },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata.howToBuy' });
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: { canonical: '/jak-nakupovat' },
+  };
+}
 
 function Row({
   index,
@@ -95,16 +57,34 @@ function Row({
   return <div className={rowClasses}>{inner}</div>;
 }
 
-export default function JakNakupovatPage() {
+export default async function JakNakupovatPage() {
+  const t = await getTranslations('howToBuy');
+
+  const shippingOptions = [
+    { title: t('shipping.pickup.title'), price: t('shipping.pickup.price'), text: t('shipping.pickup.text') },
+    { title: t('shipping.czech.title'), price: t('shipping.czech.price'), text: t('shipping.czech.text') },
+    { title: t('shipping.international.title'), price: t('shipping.international.price'), text: t('shipping.international.text') },
+  ];
+
+  const paymentOptions = [
+    { title: t('payment.card.title'), text: t('payment.card.text'), logos: true },
+    { title: t('payment.transfer.title'), text: t('payment.transfer.text') },
+  ];
+
+  const deliveryTimes = [
+    { title: t('deliveryTime.standard.title'), price: t('deliveryTime.standard.price'), text: t('deliveryTime.standard.text') },
+    { title: t('deliveryTime.customArch.title'), price: t('deliveryTime.customArch.price'), text: t('deliveryTime.customArch.text') },
+  ];
+
   return (
     <main className="bg-[#0F172A] text-secondary w-full">
-      <Breadcrumbs items={[{ label: 'Jak nakupovat' }]} />
+      <Breadcrumbs items={[{ label: t('breadcrumb') }]} />
 
       {/* ——— HERO ——— */}
       <section className="layout-container py-8 md:py-12 text-center">
-        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">Jak u nás můžete nakupovat?</h1>
+        <h1 className="style-h1 mb-5 max-w-[740px] mx-auto">{t('hero.title')}</h1>
         <p className="style-perex text-secondary/70 max-w-[580px] mx-auto">
-          Co si u nás můžete koupit a jak probíhá výroba, doprava a platba? Zde najdete všechny potřebné informace na jednom místě.
+          {t('hero.perex')}
         </p>
       </section>
 
@@ -116,7 +96,7 @@ export default function JakNakupovatPage() {
       {/* ——— DOPRAVA A OSOBNÍ ODBĚR ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-12 md:mb-16">Doprava a osobní odběr</h2>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">{t('shipping.title')}</h2>
 
           <div className="max-w-[640px] mx-auto">
             {shippingOptions.map((opt) => (
@@ -129,7 +109,7 @@ export default function JakNakupovatPage() {
       {/* ——— DOBA VÝROBY ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-12 md:mb-16">Jak dlouho to trvá?</h2>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">{t('deliveryTime.title')}</h2>
 
           <div className="max-w-[640px] mx-auto">
             {deliveryTimes.map((item) => (
@@ -142,7 +122,7 @@ export default function JakNakupovatPage() {
       {/* ——— PLATBA ——— */}
       <section className="border-t border-white/5">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
-          <h2 className="style-h2 text-center mb-12 md:mb-16">Jak zaplatit?</h2>
+          <h2 className="style-h2 text-center mb-12 md:mb-16">{t('payment.title')}</h2>
 
           <div className="max-w-[640px] mx-auto">
             {paymentOptions.map((opt) => (
@@ -162,16 +142,16 @@ export default function JakNakupovatPage() {
       {/* ——— CTA ——— */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[56px] md:py-[80px] text-center">
-          <h2 className="style-h2 mb-4">Máte všechny informace?</h2>
+          <h2 className="style-h2 mb-4">{t('cta.title')}</h2>
           <p className="style-perex text-secondary/60 max-w-[480px] mx-auto mb-10">
-            Pojďme na to — vyberte si známky, archy nebo plakety a objednejte během pár minut.
+            {t('cta.text')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/">
-              <Button arrow="right">Přejít do obchodu</Button>
+              <Button arrow="right">{t('cta.shopButton')}</Button>
             </Link>
             <Link href="/kontakt">
-              <Button variant="outlined" arrow="right">Mám ještě dotaz</Button>
+              <Button variant="outlined" arrow="right">{t('cta.questionButton')}</Button>
             </Link>
           </div>
         </div>

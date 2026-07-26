@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { supabase } from '@/lib/supabase';
 import ProductList from '@/components/ProductList';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TrustBadges from '@/components/TrustBadges';
 import { getOrderCurrency, getLocalizedEffectivePrice, Currency } from '@/lib/currency';
 import { Product, ProductTopic } from '@/types/database';
-import { CATEGORY_CONTENT, CATEGORY_GROUPS } from '@/lib/categoryContent';
+import { CATEGORY_GROUPS, INDEXABLE_CATEGORY_SLUGS } from '@/lib/categoryContent';
 
 type SortableProduct = {
   name: string;
@@ -20,27 +20,23 @@ type SortableProduct = {
   sold_count: number | null;
 };
 
-const TOPIC_FILTER_OPTIONS: Record<'vse' | ProductTopic, string> = {
-  vse: 'Vše',
-  umeni: 'Umění',
-  pamatky: 'Památky',
-  znamky: 'Známky',
-  archy: 'Archy',
-};
+type TopicFilterKey = 'vse' | ProductTopic;
 
-type TopicFilterKey = keyof typeof TOPIC_FILTER_OPTIONS;
+const TOPIC_FILTER_KEYS: TopicFilterKey[] = ['vse', 'umeni', 'pamatky', 'znamky', 'archy'];
+
+type SortKey = 'doporucene' | 'price_asc' | 'price_desc' | 'name_asc' | 'bestseller';
+
+const SORT_KEYS: SortKey[] = ['doporucene', 'price_asc', 'price_desc', 'name_asc', 'bestseller'];
 
 // price_asc/price_desc berou currency navíc (getLocalizedEffectivePrice vrací
 // Infinity, když produktu chybí EUR cena, ať spadne na konec řazení).
-const SORT_OPTIONS = {
-  doporucene: { label: 'Doporučené', compare: null },
-  price_asc: { label: 'Cena: od nejnižší', compare: (a: SortableProduct, b: SortableProduct, currency: Currency) => getLocalizedEffectivePrice(a, currency) - getLocalizedEffectivePrice(b, currency) },
-  price_desc: { label: 'Cena: od nejvyšší', compare: (a: SortableProduct, b: SortableProduct, currency: Currency) => getLocalizedEffectivePrice(b, currency) - getLocalizedEffectivePrice(a, currency) },
-  name_asc: { label: 'Název: A–Z', compare: (a: SortableProduct, b: SortableProduct) => a.name.localeCompare(b.name, 'cs') },
-  bestseller: { label: 'Nejprodávanější', compare: (a: SortableProduct, b: SortableProduct) => (b.sold_count ?? 0) - (a.sold_count ?? 0) },
-} as const satisfies Record<string, { label: string; compare: ((a: SortableProduct, b: SortableProduct, currency: Currency) => number) | null }>;
-
-type SortKey = keyof typeof SORT_OPTIONS;
+const SORT_COMPARATORS: Record<SortKey, ((a: SortableProduct, b: SortableProduct, currency: Currency) => number) | null> = {
+  doporucene: null,
+  price_asc: (a, b, currency) => getLocalizedEffectivePrice(a, currency) - getLocalizedEffectivePrice(b, currency),
+  price_desc: (a, b, currency) => getLocalizedEffectivePrice(b, currency) - getLocalizedEffectivePrice(a, currency),
+  name_asc: (a, b) => a.name.localeCompare(b.name, 'cs'),
+  bestseller: (a, b) => (b.sold_count ?? 0) - (a.sold_count ?? 0),
+};
 
 export default function CategoryPage() {
   const params = useParams();
@@ -48,16 +44,16 @@ export default function CategoryPage() {
   const locale = useLocale();
   const currency = getOrderCurrency(locale);
   const slug = typeof params?.slug === 'string' ? params.slug : '';
+  const t = useTranslations('category');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('doporucene');
   const [topicFilter, setTopicFilter] = useState<TopicFilterKey>('vse');
 
-  const current = CATEGORY_CONTENT[slug] || {
-    title: slug,
-    description: 'Popis kategorie se připravuje...',
-  };
+  const current = INDEXABLE_CATEGORY_SLUGS.includes(slug)
+    ? { title: t(`content.${slug}.title`), description: t(`content.${slug}.description`) }
+    : { title: slug, description: t('defaultDescription') };
 
   const categoriesToFetch = useMemo(() => CATEGORY_GROUPS[slug] || [slug], [slug]);
   const showTopicFilter = slug === 'znamky' || slug === 'znamkove-archy';
@@ -92,7 +88,7 @@ export default function CategoryPage() {
   }, [products, topicFilter]);
 
   const sortedProducts = useMemo(() => {
-    const compare = SORT_OPTIONS[sortKey].compare;
+    const compare = SORT_COMPARATORS[sortKey];
     return compare ? [...filteredProducts].sort((a, b) => compare(a, b, currency)) : filteredProducts;
   }, [filteredProducts, sortKey, currency]);
 
@@ -133,8 +129,8 @@ export default function CategoryPage() {
                   onChange={(e) => setSortKey(e.target.value as SortKey)}
                   className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
                 >
-                  {Object.entries(SORT_OPTIONS).map(([value, { label }]) => (
-                    <option key={value} value={value}>{label}</option>
+                  {SORT_KEYS.map((key) => (
+                    <option key={key} value={key}>{t(`sortOptions.${key}`)}</option>
                   ))}
                 </select>
                 {showTopicFilter && (
@@ -143,8 +139,8 @@ export default function CategoryPage() {
                     onChange={(e) => setTopicFilter(e.target.value as TopicFilterKey)}
                     className="bg-black400 border border-black300/30 rounded-[8px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
                   >
-                    {Object.entries(TOPIC_FILTER_OPTIONS).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                    {TOPIC_FILTER_KEYS.map((key) => (
+                      <option key={key} value={key}>{t(`topicFilter.${key}`)}</option>
                     ))}
                   </select>
                 )}
