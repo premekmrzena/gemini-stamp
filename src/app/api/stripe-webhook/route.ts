@@ -87,12 +87,23 @@ async function reserveStockAfterRecoveredPayment(orderId: string) {
 // (viz create-order/route.ts) - dřív by ho zákazník dostal i u zamítnuté/nedokončené platby.
 // Tohle je jeho jediné odeslání pro platbu kartou, proto plnohodnotné (položky, částka),
 // ne jen obecná "Zaplaceno" notifikace jako u ručního potvrzení platby převodem v adminu.
-// Volá se PŘED mark_order_paid, aby šlo poznat stav před tranzicí - Stripe umí stejný
-// payment_intent.succeeded event doručit vícekrát, bez týhle pojistky by se email zdvojil.
+//
+// Pojistka proti duplicitě je atomický claim (claim_order_confirmation_email, docs/sql/027),
+// ne kontrola orders.status - ten se přepíná až mark_order_paid (o krok dál v POST handleru),
+// takže při Stripe retry (timeout ~20s, řetězec iDoklad faktura + PDF + email umí trvat déle)
+// by souběžné/navazující vyvolání webhooku ještě vidělo starý status a email poslalo znovu.
+// Claim je "kdo první, ten mele" - jen jedno vyvolání dostane true a smí email fakticky odeslat.
 async function sendOrderConfirmationForCardPayment(orderId: string) {
+  const { data: claimed, error: claimError } = await supabase.rpc('claim_order_confirmation_email', { p_order_id: orderId });
+  if (claimError) {
+    console.error('Chyba při claimování potvrzovacího emailu:', claimError);
+    return;
+  }
+  if (!claimed) return;
+
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, status, billing_email, billing_first_name, total_price, currency, cart_items, idoklad_invoice_id, idoklad_invoice_number')
+    .select('id, billing_email, billing_first_name, total_price, currency, cart_items, idoklad_invoice_id, idoklad_invoice_number')
     .eq('id', orderId)
     .single();
 
@@ -100,8 +111,6 @@ async function sendOrderConfirmationForCardPayment(orderId: string) {
     console.error('Chyba při načítání objednávky pro potvrzovací email:', error);
     return;
   }
-
-  if (order.status === 'Zaplaceno') return;
 
   // createInvoiceForOrder se volá dřív (viz POST handler), takže tu už idoklad_invoice_id
   // bývá vyplněné - PDF je jen "nejlepší snaha", selhání stažení nesmí zablokovat email samotný.

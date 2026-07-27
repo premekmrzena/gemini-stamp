@@ -514,12 +514,13 @@ export default function AdminDashboard() {
   }
 
   async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId);
+    const res = await fetch('/api/admin/update-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, status: newStatus }),
+    });
 
-    if (error) {
+    if (!res.ok) {
       alert('Chyba při aktualizaci stavu');
       return;
     }
@@ -577,12 +578,13 @@ export default function AdminDashboard() {
     const trimmed = trackingNumberInput.trim();
 
     setSavingTracking(true);
-    const { error } = await supabase
-      .from('orders')
-      .update({ tracking_number: trimmed })
-      .eq('id', selectedOrder.id);
+    const res = await fetch('/api/admin/update-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: selectedOrder.id, trackingNumber: trimmed }),
+    });
 
-    if (error) {
+    if (!res.ok) {
       alert('Uložení sledovacího čísla selhalo.');
       setSavingTracking(false);
       return;

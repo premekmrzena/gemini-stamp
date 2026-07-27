@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Truck, X, AlertTriangle, MapPin, Package, CheckCircle2, Loader2 } from 'lucide-react';
 import { Order } from '@/types/database';
-import { supabase } from '@/lib/supabase';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 import {
   buildCustomsDeclarationItems,
@@ -76,12 +75,13 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
         return;
       }
 
-      const { error: dbError } = await supabase
-        .from('orders')
-        .update({ tracking_number: data.parcelCode })
-        .eq('id', order.id);
+      const saveRes = await fetch('/api/admin/update-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, trackingNumber: data.parcelCode }),
+      });
 
-      if (dbError) {
+      if (!saveRes.ok) {
         setSubmitError(`Zásilka podána (${data.parcelCode}), ale uložení do objednávky selhalo - ulož číslo ručně.`);
         return;
       }
