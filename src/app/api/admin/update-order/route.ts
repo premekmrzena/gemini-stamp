@@ -9,10 +9,17 @@ import { OrderStatus } from '@/types/database';
 // prohlížeč to pak nesprávně hlásí jako "blocked by CORS"). Tahle route zápis provede
 // server-side (Vercel -> Supabase) - z prohlížeče jde jen běžný POST na vlastní doménu,
 // který firemní proxy neřeší.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Klient se vytváří až uvnitř handleru (ne při načtení modulu) - chybějící env
+// proměnná by jinak shodila celý produkční build (viz "supabaseKey is required"
+// v build logu 2026-08-03, chybějící SUPABASE_SERVICE_ROLE_KEY na Vercelu -
+// touhle chybou byl produkční build rozbitý od 27.7. do 3.8., žádný push
+// mezitím se nikdy nenasadil).
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 type UpdateOrderBody = {
   orderId: string;
@@ -32,7 +39,7 @@ export async function POST(request: Request) {
     if (status) fields.status = status;
     if (trackingNumber !== undefined) fields.tracking_number = trackingNumber;
 
-    const { error } = await supabaseAdmin.from('orders').update(fields).eq('id', orderId);
+    const { error } = await getSupabaseAdmin().from('orders').update(fields).eq('id', orderId);
 
     if (error) {
       console.error('Chyba při aktualizaci objednávky:', error);
