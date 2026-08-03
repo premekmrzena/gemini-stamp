@@ -378,18 +378,23 @@ export default function AdminDashboard() {
       return;
     }
     setSavingRate(currencyCode);
-    const { data, error } = await supabase
-      .from('exchange_rates')
-      .update({ rate_to_eur: rate, updated_at: new Date().toISOString() })
-      .eq('currency_code', currencyCode)
-      .select()
-      .single();
-    setSavingRate(null);
-    if (error) {
-      alert(`Uložení kurzu selhalo: ${error.message}`);
-      return;
+    try {
+      const res = await fetch('/api/admin/update-exchange-rate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currencyCode, rate }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Uložení kurzu selhalo: ${data.error || 'neznámá chyba'}`);
+        return;
+      }
+      setExchangeRates((prev) => prev.map((r) => (r.currency_code === currencyCode ? data.rate : r)));
+    } catch {
+      alert('Uložení kurzu selhalo - zkontroluj připojení a zkus to znovu.');
+    } finally {
+      setSavingRate(null);
     }
-    setExchangeRates((prev) => prev.map((r) => (r.currency_code === currencyCode ? data : r)));
   }
 
   async function saveProductField(productId: string, payload: Partial<Product>) {
