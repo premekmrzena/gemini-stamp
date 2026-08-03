@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { X, Upload, Trash2, Loader2, ImagePlus } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { Product, ProductCategory, ProductTopic } from '@/types/database';
 import { useBackdropClose } from '@/hooks/useBackdropClose';
 
@@ -173,17 +172,18 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
     setError(null);
 
     const payload = { ...form };
-    const query = product
-      ? supabase.from('products').update(payload).eq('id', product.id).select().single()
-      : supabase.from('products').insert(payload).select().single();
-
-    const { data, error: saveError } = await query;
+    const res = await fetch('/api/admin/save-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: product?.id, payload }),
+    });
+    const result = await res.json();
     setSaving(false);
 
-    if (saveError) {
-      setError(saveError.message);
+    if (!res.ok) {
+      setError(result.error || 'Uložení produktu selhalo.');
     } else {
-      onSaved(data as Product);
+      onSaved(result.product as Product);
       onClose();
     }
   }

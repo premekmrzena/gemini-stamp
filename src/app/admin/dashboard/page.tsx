@@ -391,44 +391,49 @@ export default function AdminDashboard() {
     setExchangeRates((prev) => prev.map((r) => (r.currency_code === currencyCode ? data : r)));
   }
 
+  async function saveProductField(productId: string, payload: Partial<Product>) {
+    const res = await fetch('/api/admin/save-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, payload }),
+    });
+    return res.ok;
+  }
+
   async function toggleHomepage(productId: string, current: boolean) {
-    const { error } = await supabase
-      .from('products')
-      .update({ show_on_homepage: !current })
-      .eq('id', productId);
-    if (!error) {
+    const ok = await saveProductField(productId, { show_on_homepage: !current });
+    if (ok) {
       setProducts(products.map(p => p.id === productId ? { ...p, show_on_homepage: !current } : p));
     }
   }
 
   async function setTopRank(productId: string, value: number | null) {
-    const { error } = await supabase
-      .from('products')
-      .update({ tag_top: value })
-      .eq('id', productId);
-    if (!error) {
+    const ok = await saveProductField(productId, { tag_top: value });
+    if (ok) {
       setProducts(products.map(p => p.id === productId ? { ...p, tag_top: value } : p));
     }
   }
 
   async function toggleLastPieces(productId: string, current: boolean) {
-    const { error } = await supabase
-      .from('products')
-      .update({ tag_last_pieces: !current })
-      .eq('id', productId);
-    if (!error) {
+    const ok = await saveProductField(productId, { tag_last_pieces: !current });
+    if (ok) {
       setProducts(products.map(p => p.id === productId ? { ...p, tag_last_pieces: !current } : p));
     }
   }
 
   async function deleteProduct(product: Product) {
     if (!window.confirm(`Opravdu smazat produkt „${product.name}“? Tuto akci nejde vzít zpět.`)) return;
-    const { error } = await supabase.from('products').delete().eq('id', product.id);
-    if (error) {
+    const res = await fetch('/api/admin/delete-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: product.id }),
+    });
+    if (!res.ok) {
+      const result = await res.json();
       alert(
-        error.code === '23503'
+        result.code === '23503'
           ? 'Produkt nejde smazat – používá ho existující zákaznická objednávka z editoru (custom_stamps). Nejdřív deaktivuj produkt (Aktivní: ne) místo mazání.'
-          : `Smazání produktu selhalo: ${error.message}`
+          : `Smazání produktu selhalo: ${result.error}`
       );
       return;
     }
