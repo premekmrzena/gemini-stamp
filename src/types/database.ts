@@ -4,7 +4,7 @@ export type ProductTopic = 'umeni' | 'pamatky' | 'znamky' | 'archy';
 
 export type DiscountType = 'percentage' | 'fixed';
 
-export type CurrencyCode = 'CZK' | 'KRW' | 'JPY' | 'CNY' | 'TWD';
+export type CurrencyCode = 'CZK' | 'USD' | 'KRW' | 'JPY' | 'CNY' | 'TWD';
 
 // Měna objednávky/checkoutu - jen tyhle dvě se dnes reálně nabízí zákazníkovi
 // (viz src/lib/currency.ts, getOrderCurrency). Nezaměňovat s CurrencyCode výše,

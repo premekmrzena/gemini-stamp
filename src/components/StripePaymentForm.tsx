@@ -5,6 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useTranslations, useLocale } from 'next-intl';
 import { Currency, formatPrice } from '@/lib/currency';
+import Button from '@/components/Button';
 
 // 1. Inicializace Stripe pomocí tvého veřejného klíče
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -51,12 +52,13 @@ const CheckoutForm = ({ amount, currency, orderId }: { amount: number, currency:
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 animate-fadeIn">
       <PaymentElement />
       
-      <button
+      <Button
+        type="submit"
         disabled={!stripe || isLoading}
-        className="w-full bg-[#FF6B35] text-[#0F172A] style-body-bold py-[14px] rounded-full hover:bg-[#FF7F51] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+        className="w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? t('processing') : t('pay', { amount: formatPrice(amount, currency) })}
-      </button>
+      </Button>
 
       {errorMessage && (
         <div className="text-[#F95755] text-sm text-center font-medium bg-[#F95755]/10 py-3 rounded-[8px]">

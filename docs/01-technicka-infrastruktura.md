@@ -59,6 +59,8 @@
 - Notifikaci o odeslání zásilky spouští admin manuálně v dashboardu (zadání sledovacího čísla → `POST /api/send-shipping-notification`), viz [sekce 5](05-administrace.md#2-záložka-objednávky) – nezávislé na stavovém mechanismu výše.
 - **Odesílá se z `objednavky@mycreativestamp.com`** (od 2026-07-24) – vlastní doména ověřená v Resendu (DKIM/SPF/MX, id `eee884ad-735d-4615-a684-eb3df569e5a3`, status `verified`), `EMAIL_FROM` konstanta v `src/lib/email.ts`. Sandbox limit (doručení jen na ověřenou adresu vlastníka účtu) už neplatí.
 - **API klíč** – `mycreativestamp-production`, oprávnění jen `sending_access` (appka jen odesílá, nespravuje domény/klíče). Starší `full_access` klíč "Onboarding" zůstává aktivní ve Vercel produkčním prostředí, dokud tam někdo ručně nepřepne `RESEND_API_KEY` na nový – pak lze "Onboarding" smazat v Resend dashboardu.
+- **Schránka `info@mycreativestamp.com`** (od 2026-08-03) – Resend sám o sobě neumí přijímat poštu, jen odesílat. Příjem řeší **ImprovMX** (zdarma): MX `mx1.improvmx.com`(10)/`mx2.improvmx.com`(20) + TXT `v=spf1 include:spf.improvmx.com ~all` na kořenové doméně, přeposílá na osobní Gmail. Odpovídání jako `info@` řeší Gmail „Odesílat jako" nastavené na SMTP relay `smtp.resend.com:587` (user `resend`, heslo = dedikovaná Resend API key, ne appka's produkční klíč) – funguje bez dalšího ověřování domény, protože DKIM pro `mycreativestamp.com` je už u Resendu verifikovaný.
+- **DMARC** (od 2026-08-03) – `_dmarc.mycreativestamp.com` → `v=DMARC1; p=none; rua=mailto:info@mycreativestamp.com`. Předtím žádný DMARC záznam neexistoval.
 
 ## Proměnné prostředí (`.env.local` / Vercel env)
 | Proměnná | Účel |
@@ -73,11 +75,13 @@
 | `CESKA_POSTA_API_ENV` | `demo`/`live` přepínač pro `/api/admin/create-shipment` (default `demo`) |
 | `CESKA_POSTA_DEMO_ID_CONTRACT` / `_API_TOKEN` / `_PRIVATE_KEY` / `_CUSTOMER_ID` / `_POST_CODE` / `_LOCATION_NUMBER` | Přístupy k nAPI B2B-ZSK České pošty (demo prostředí), viz [sekce 10](10-doprava-a-celni-prohlaseni.md) |
 | `CESKA_POSTA_LIVE_ID_CONTRACT` / `_API_TOKEN` / `_PRIVATE_KEY` | Ostré přístupy k nAPI B2B-ZSK — zatím bez `CUSTOMER_ID`/`POST_CODE`/`LOCATION_NUMBER`, integrace zatím neběží naostro |
+| `ZONOS_API_KEY` | Zonos Declaration ID pro USA/Portoriko (`credentialToken` hlavička), viz [sekce 10](10-doprava-a-celni-prohlaseni.md) |
 
 ## Zjištěné nedodělky / otevřené body
 - **Stripe webhook** není zaregistrovaný v Dashboardu – čeká na finální produkční doménu (viz výše)
 - **Vercel produkční env** `RESEND_API_KEY` pořád ukazuje na starší `full_access` klíč "Onboarding" – funguje (klíč není smazaný), ale je potřeba ho ručně přepnout na nový `sending_access` klíč `mycreativestamp-production` (viz sekce E-maily výše), pak starý smazat
 ## Změny
+- 2026-08-03: Zprovozněna schránka `info@mycreativestamp.com` (ImprovMX příjem + Gmail „Odesílat jako" přes Resend SMTP relay) a doplněn DMARC záznam – viz sekce [E-maily](#e-maily--resend).
 - 2026-07-24: Rozšíření e-mailových notifikací o 4 nové šablony (`PaymentReceivedEmail`, `ReadyForPickupEmail`, `OrderCancelledEmail`, `RefundedEmail`) automaticky spouštěné podle změny stavu objednávky v adminu, sdílená `EmailLayout.tsx`. Oprava časování potvrzovacího e-mailu u platby kartou – posílá se až po `payment_intent.succeeded`, ne při vytvoření objednávky. Nalezena a rozpracována verifikace vlastní domény v Resendu, viz sekce [E-maily](#e-maily--resend).
 - 2026-07-23: Napojení na nAPI B2B-ZSK České pošty (doprava + celní prohlášení), zatím proti demo prostředí — nová sekce [10](10-doprava-a-celni-prohlaseni.md).
 - 2026-07-12: `.devcontainer/devcontainer.json` – automatická instalace Claude Code CLI + `npm install` po vytvoření/rebuildu GitHub Codespace, viz výše.

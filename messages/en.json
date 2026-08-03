@@ -85,7 +85,7 @@
       "shipping": { "title": "Shipping", "text": "Worldwide" },
       "pickup": { "title": "Local pickup", "text": "Free in Prague" },
       "fastProduction": { "title": "Fast production", "text": "2-7 business days" },
-      "securePayment": { "title": "Secure payment", "text": "By card or bank transfer" }
+      "securePayment": { "title": "Secure payment", "text": "ApplePay or GooglePay" }
     },
     "stampCategories": {
       "title": "A Creative Sheet with a piece of history",

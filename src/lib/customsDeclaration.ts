@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { getCustomsHsCode } from '@/lib/constants';
-import { CartItemSnapshot, ProductCategory } from '@/types/database';
+import { convertFromEur, convertToEur } from '@/lib/pricing';
+import { CartItemSnapshot, Currency, ProductCategory } from '@/types/database';
 
 export type CustomsDeclarationItem = {
   sequence: number;
@@ -8,7 +9,7 @@ export type CustomsDeclarationItem = {
   quantity: number;
   /** Celková hmotnost položky v kg (jednotková hmotnost × počet kusů). */
   weight: number;
-  /** Celní hodnota položky v Kč (jednotková cena × počet kusů). */
+  /** Celní hodnota položky v order.currency (jednotková cena × počet kusů), pokud není explicitně přepočtena (viz convertCustomsItemsToUsd). */
   customVal: number;
   hsCode: string;
   iso: 'CZ';
@@ -72,6 +73,34 @@ export function buildCustomsDeclarationItems(
       iso: 'CZ',
     };
   });
+}
+
+export type CustomsUsdConversionResult =
+  | { ok: true; items: CustomsDeclarationItem[]; totalUsd: number }
+  | { ok: false; reason: 'CZK_RATE_MISSING' | 'USD_RATE_MISSING' };
+
+/**
+ * Převede customVal položek celního prohlášení (dnes v order.currency, CZK nebo EUR)
+ * do USD - jediné místo, které tenhle přepočet dělá (src/lib/zonos.ts pro itemInput.amount,
+ * ceskaPostaShipment.ts pro parcelCustomGoods u USA/Portorika). CZK objednávka: nejdřív
+ * CZK->EUR přes stávající kurz CZK (rate_to_eur = "1 EUR = X CZK"), pak EUR->USD přes
+ * nový kurz USD (stejná sémantika). EUR objednávka: přímo EUR->USD.
+ */
+export function convertCustomsItemsToUsd(
+  items: CustomsDeclarationItem[],
+  orderCurrency: Currency,
+  czkRateToEur: number | null,
+  usdRateToEur: number | null
+): CustomsUsdConversionResult {
+  if (usdRateToEur == null) return { ok: false, reason: 'USD_RATE_MISSING' };
+  if (orderCurrency === 'CZK' && czkRateToEur == null) return { ok: false, reason: 'CZK_RATE_MISSING' };
+
+  const items_ = items.map((item) => {
+    const eurValue = orderCurrency === 'EUR' ? item.customVal : convertToEur(item.customVal, czkRateToEur)!;
+    return { ...item, customVal: convertFromEur(eurValue, usdRateToEur)! };
+  });
+  const totalUsd = items_.reduce((sum, i) => sum + i.customVal, 0);
+  return { ok: true, items: items_, totalUsd };
 }
 
 const INTERNATIONAL_SHIPPING_METHOD_NAMES = ['Cenné psaní do zahraničí', 'EMS'];

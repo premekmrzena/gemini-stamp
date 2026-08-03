@@ -85,7 +85,7 @@
       "shipping": { "title": "Doprava", "text": "Do celého světa" },
       "pickup": { "title": "Osobní odběr", "text": "Zdarma v Praze" },
       "fastProduction": { "title": "Rychlá výroba", "text": "2–7 pracovních dnů" },
-      "securePayment": { "title": "Bezpečná platba", "text": "Kartou nebo převodem" }
+      "securePayment": { "title": "Bezpečná platba", "text": "ApplePay nebo GooglePay" }
     },
     "stampCategories": {
       "title": "Kreativní arch s kouskem historie",

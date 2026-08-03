@@ -1,5 +1,5 @@
 import { Order } from '@/types/database';
-import { CustomsDeclarationItem } from '@/lib/customsDeclaration';
+import { CustomsDeclarationItem, convertCustomsItemsToUsd } from '@/lib/customsDeclaration';
 import { COUNTRY_SHIPPING_INFO } from '@/lib/constants';
 
 export type ShipmentPrefix = 'RR' | 'VL' | 'EM';
@@ -45,6 +45,43 @@ export type ParcelServiceRequestResult =
   | { ok: true; request: Record<string, unknown> }
   | { ok: false; error: string };
 
+export type OrderRecipientAddress = {
+  firstName: string;
+  lastName: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  region: string;
+  zip: string;
+  countryName: string;
+  phone: string;
+};
+
+/**
+ * Adresa příjemce - shipping_* pokud je "doručovací adresa jiná" zaškrtnutá, jinak
+ * billing_* (checkout formulář to takhle ukládá). Jedno místo pravdy, dřív duplicitní
+ * i v ShipmentModal.tsx a nově i v Zonos routu.
+ */
+export function getOrderRecipientAddress(order: Order): OrderRecipientAddress {
+  return {
+    firstName: order.shipping_is_different ? order.shipping_first_name : order.billing_first_name,
+    lastName: order.shipping_is_different ? order.shipping_last_name : order.billing_last_name,
+    addressLine1: order.shipping_is_different ? order.shipping_address_line1 : order.billing_address_line1,
+    addressLine2: order.shipping_is_different ? order.shipping_address_line2 : order.billing_address_line2,
+    city: order.shipping_is_different ? order.shipping_city : order.billing_city,
+    region: order.shipping_is_different ? order.shipping_region : order.billing_region,
+    zip: order.shipping_is_different ? order.shipping_zip : order.billing_zip,
+    countryName: order.shipping_is_different ? order.shipping_country : order.billing_country,
+    phone: order.shipping_is_different ? order.shipping_phone : order.billing_phone,
+  };
+}
+
+export type UsShipmentContext = {
+  declarationId: string;
+  czkRateToEur: number | null;
+  usdRateToEur: number | null;
+};
+
 /**
  * Sestaví request tělo pro POST /parcelService, přesně podle kombinací ověřených proti demo
  * API (viz paměť projektu) - RR + služba 50, VL + služba 7 (+ insuredValue + celní prohlášení
@@ -53,22 +90,24 @@ export type ParcelServiceRequestResult =
 export function buildParcelServiceRequest(
   order: Order,
   customsItems: CustomsDeclarationItem[] | null,
-  headerConfig: { customerID: string; postCode: string; locationNumber: number }
+  headerConfig: { customerID: string; postCode: string; locationNumber: number },
+  usContext?: UsShipmentContext
 ): ParcelServiceRequestResult {
   const prefix = getShipmentPrefix(order.shipping_method);
   if (!prefix) {
     return { ok: false, error: `Nepodporovaný způsob dopravy pro podání u České pošty: "${order.shipping_method}"` };
   }
 
-  const recipientFirstName = order.shipping_is_different ? order.shipping_first_name : order.billing_first_name;
-  const recipientLastName = order.shipping_is_different ? order.shipping_last_name : order.billing_last_name;
-  const recipientAddressLine = order.shipping_is_different ? order.shipping_address_line1 : order.billing_address_line1;
-  const recipientAddressLine2 = order.shipping_is_different ? order.shipping_address_line2 : order.billing_address_line2;
-  const recipientCity = order.shipping_is_different ? order.shipping_city : order.billing_city;
-  const recipientRegion = order.shipping_is_different ? order.shipping_region : order.billing_region;
-  const recipientZip = order.shipping_is_different ? order.shipping_zip : order.billing_zip;
-  const recipientCountryName = order.shipping_is_different ? order.shipping_country : order.billing_country;
-  const recipientPhone = order.shipping_is_different ? order.shipping_phone : order.billing_phone;
+  const recipient = getOrderRecipientAddress(order);
+  const recipientFirstName = recipient.firstName;
+  const recipientLastName = recipient.lastName;
+  const recipientAddressLine = recipient.addressLine1;
+  const recipientAddressLine2 = recipient.addressLine2;
+  const recipientCity = recipient.city;
+  const recipientRegion = recipient.region;
+  const recipientZip = recipient.zip;
+  const recipientCountryName = recipient.countryName;
+  const recipientPhone = recipient.phone;
 
   const isoCountry = getCountryIsoCode(recipientCountryName || 'Česká republika');
   if (!isoCountry) {
@@ -122,13 +161,34 @@ export function buildParcelServiceRequest(
       return { ok: false, error: `Položce "${missingHsCode.customCont}" chybí HS kód.` };
     }
 
-    const declaredValue = Math.max(1, customsItems.reduce((sum, i) => sum + i.customVal, 0));
+    // USA/Portoriko vyžadují od 1.7.2026 Zonos declarationId + celní hodnotu v USD (ČP jinak
+    // vrací 444/445/446, viz paměť projektu) - všechny ostatní mezinárodní zásilky posílají
+    // celní hodnotu v order.currency (dřív tu bylo natvrdo "CZK", i pro EUR objednávky - bug).
+    const requiresDeclarationId = isoCountry === 'US' || isoCountry === 'PR';
+    let declaredCustomsItems = customsItems;
+    let customValCur: string = order.currency;
+
+    if (requiresDeclarationId) {
+      if (!usContext?.declarationId) {
+        return { ok: false, error: 'Zásilka do USA/Portorika vyžaduje Zonos declarationId - nejdřív ho získej tlačítkem výše.' };
+      }
+      const usdConversion = convertCustomsItemsToUsd(customsItems, order.currency, usContext.czkRateToEur, usContext.usdRateToEur);
+      if (!usdConversion.ok) {
+        const reasonText = usdConversion.reason === 'CZK_RATE_MISSING' ? 'CZK' : 'USD';
+        return { ok: false, error: `Chybí kurz ${reasonText} v adminu ("Kurzy měn") - bez něj nejde spočítat celní hodnotu v USD.` };
+      }
+      declaredCustomsItems = usdConversion.items;
+      customValCur = 'USD';
+    }
+
+    const declaredValue = Math.max(1, declaredCustomsItems.reduce((sum, i) => sum + i.customVal, 0));
     parcelCustomsDeclaration = {
       category: '91',
-      customValCur: 'CZK',
+      customValCur,
+      ...(requiresDeclarationId ? { declarationId: usContext!.declarationId } : {}),
       // "weight" v ParcelCustomGoods musí být string dle vzoru "\d{1,5}(\.\d{1,3})?" (ověřeno
       // proti demu - number selže s "Instance type (number) does not match ... string").
-      parcelCustomGoods: customsItems.map((item) => ({ ...item, weight: item.weight.toFixed(3) })),
+      parcelCustomGoods: declaredCustomsItems.map((item) => ({ ...item, weight: item.weight.toFixed(3) })),
     };
 
     if (prefix === 'VL') {

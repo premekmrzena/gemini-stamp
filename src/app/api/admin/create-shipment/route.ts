@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 import { ceskaPostaRequest, getCeskaPostaConfig } from '@/lib/ceska-posta';
 import { buildParcelServiceRequest } from '@/lib/ceskaPostaShipment';
+import { supabase } from '@/lib/supabase';
 import { Order } from '@/types/database';
 import { CustomsDeclarationItem } from '@/lib/customsDeclaration';
 
 type CreateShipmentBody = {
   order: Order;
   customsItems: CustomsDeclarationItem[] | null;
+  declarationId?: string;
 };
 
 export async function POST(request: Request) {
   try {
-    const { order, customsItems }: CreateShipmentBody = await request.json();
+    const { order, customsItems, declarationId }: CreateShipmentBody = await request.json();
 
     if (!order?.id) {
       return NextResponse.json({ error: 'Chybí objednávka.' }, { status: 400 });
@@ -29,11 +31,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const built = buildParcelServiceRequest(order, customsItems, {
-      customerID: config.customerID,
-      postCode: config.postCode,
-      locationNumber: config.locationNumber,
-    });
+    // Vždy fetchnout CZK i USD kurz (levné, buildParcelServiceRequest je použije jen u
+    // zásilek do USA/Portorika) - stejný vzor jako fetch CZK kurzu v create-order.
+    const { data: rates } = await supabase.from('exchange_rates').select('currency_code, rate_to_eur').in('currency_code', ['CZK', 'USD']);
+    const czkRateToEur = rates?.find((r) => r.currency_code === 'CZK')?.rate_to_eur ?? null;
+    const usdRateToEur = rates?.find((r) => r.currency_code === 'USD')?.rate_to_eur ?? null;
+
+    const built = buildParcelServiceRequest(
+      order,
+      customsItems,
+      {
+        customerID: config.customerID,
+        postCode: config.postCode,
+        locationNumber: config.locationNumber,
+      },
+      declarationId ? { declarationId, czkRateToEur, usdRateToEur } : undefined
+    );
 
     if (!built.ok) {
       return NextResponse.json({ error: built.error }, { status: 400 });

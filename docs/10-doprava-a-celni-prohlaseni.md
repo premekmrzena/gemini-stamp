@@ -1,6 +1,6 @@
 # 10. Doprava (Česká pošta) a celní prohlášení
 
-> Stav k 2026-07-23. Napojení na nAPI B2B-ZSK České pošty běží zatím jen proti **demo** prostředí — žádná reálná zásilka zatím nevznikla, admin flow je funkční a otestovaný, ale vědomě se nepřepnul na ostrý provoz.
+> Stav k 2026-08-03. Napojení na nAPI B2B-ZSK České pošty běží zatím jen proti **demo** prostředí — žádná reálná zásilka zatím nevznikla, admin flow je funkční a otestovaný, ale vědomě se nepřepnul na ostrý provoz. Zonos Declaration ID (USA/Portoriko, sekce 3) je zapojené v kódu a účet je hotový, ale reálné volání zatím neproběhlo.
 
 ## 1. Checkout — krok 2 (Doprava)
 
@@ -42,10 +42,28 @@ V detailu objednávky (`src/app/admin/dashboard/page.tsx`) je tlačítko **„Vy
   - **Hlavička podání**: `customerID` + `postCode` + `locationNumber` musí být vyplněné **všechny tři najednou** (samotné `postCode` dá `INVALID_LOCATION`, samotné `locationNumber` dá `INVALID_POST_CODE`) — nová env proměnná `CESKA_POSTA_DEMO_LOCATION_NUMBER`.
 - Minimální udaná cena u Cenného psaní: **1 Kč** (potvrzeno obchodním zástupcem ČP).
 
-## 3. Otevřené body
+## 3. Zonos Declaration ID (USA/Portoriko)
 
-- **Živý provoz**: zatím se volá jen `env: 'demo'` (`POST /api/admin/create-shipment` čte `CESKA_POSTA_API_ENV`, default `'demo'`) — na `'live'` přepnout až bude jasné, že integrace funguje spolehlivě, a doplnit `CESKA_POSTA_LIVE_CUSTOMER_ID`/`POST_CODE`/`LOCATION_NUMBER` (live účet je zatím nemá).
-- **USA/Portoriko**: od 1.7.2026 vyžadují `declarationId` z externího **Zonos API** (`declarationCreateWorkflow`, GraphQL) vloženého do `parcelCustomsDeclaration.declarationId` — zdokumentováno (registrace, request/response tvar), ale **nikde v kódu nezapojeno**. Bez toho kroku ČP zásilky do USA/Portorika pravděpodobně odmítne. Vyžaduje založení Zonos účtu s platební kartou (musí udělat majitel eshopu, ne přes API).
+Od 1.7.2026 vyžaduje Česká pošta pro zásilky do USA/Portorika (kromě zboží ≥ 800 USD, jiný celní režim mimo tenhle flow) `declarationId` získané od externí firmy **Zonos**. Zapojeno 2026-08-03 do admin flow „Vytvořit zásilku" (`ShipmentModal.tsx`).
+
+**Účet**: registrace přes ČP-specifický odkaz (`https://account.zonos.com/register?key=...`), platební karta v Zonos Dashboard → Settings → Billing (z ní se strhává clo), API klíč z Account → Integrations (`ZONOS_API_KEY`, hlavička `credentialToken`). Origin adresa (odesílatel) je nastavená přímo v Zonosu i jako konstanta v kódu: `Nad studánkou 393, Světice, 251 01, CZ`.
+
+**Skutečný tvar GraphQL API** (ověřeno introspekcí proti živému schématu 2026-08-03 — liší se od staršího zjednodušeného PDF návodu od Zonosu, který popisoval jedinou mutaci): `src/lib/zonos.ts`, dvoukrokové volání:
+
+1. **`landedCostCalculateWorkflow`** — jedna GraphQL request obsahující víc sesterských `*Workflow` mutací najednou (`partyCreateWorkflow` + `itemCreateWorkflow` + `shipmentRatingCreateWorkflow` + `landedCostCalculateWorkflow`), které se server-side samy provážou (žádné explicitní `rootId`/`cartId` mezi nimi netřeba, pokud běží ve stejné requestu). Vrací `LandedCost` s `id` a `amountSubtotals` (duties/taxes/fees/shipping/items/landedCostTotal) — jen "quote", žádný finanční dopad.
+2. **`declarationCreateWorkflow`** — samostatná request, `input: { landedCostIds: [<id z kroku 1>], source: 'POST' }` → vrací `Declaration.id` = Declaration ID pro ČP. **Tady se autorizuje karta** (zadrží se částka, nestrhne) — Declaration ID platí jen **5 dní**.
+
+**Přepočet měny**: Zonos i ČP (`customValCur`) vyžadují u USA/Portorika USD. Kurz je ruční (stejný vzor jako CZK) — nový řádek v `exchange_rates` (`029_exchange_rates_usd.sql`), admin ho zadává v záložce "Kurzy měn". `convertCustomsItemsToUsd()` (`src/lib/customsDeclaration.ts`) převádí `order.currency` (CZK nebo EUR) → USD, s CZK jako mezikrokem přes EUR když je potřeba.
+
+**Admin flow**: `ShipmentModal.tsx` u zásilek do US/PR ukáže tlačítko "Získat Declaration ID (Zonos)" (`POST /api/admin/create-zonos-declaration`), teprve po úspěchu se odemkne "Podat u České pošty" (`declarationId` se pošle v těle na `/api/admin/create-shipment`, `buildParcelServiceRequest()` ho vloží do `parcelCustomsDeclaration.declarationId` + přepne `customValCur` na `USD`).
+
+**Vedlejší oprava (2026-08-03)**: `customValCur` byl dřív natvrdo `'CZK'` pro VŠECHNY mezinárodní zásilky, i když skutečné objednávky (produkční `en` locale) mají hodnoty v EUR — opraveno na `order.currency`, ověřeno regresním testem (`buildParcelServiceRequest` pro ne-US zemi vrací teď `customValCur` podle skutečné měny objednávky, chování pro US/PR beze změny).
+
+## 4. Otevřené body
+
+- **Živý provoz ČP**: zatím se volá jen `env: 'demo'` (`POST /api/admin/create-shipment` čte `CESKA_POSTA_API_ENV`, default `'demo'`) — na `'live'` přepnout až bude jasné, že integrace funguje spolehlivě, a doplnit `CESKA_POSTA_LIVE_CUSTOMER_ID`/`POST_CODE`/`LOCATION_NUMBER` (live účet je zatím nemá).
+- **Zonos živé ověření**: kód napsaný a ověřený introspekcí schématu + regresním testem `buildParcelServiceRequest`, ale **reálné `declarationCreateWorkflow` volání (skutečná autorizace karty) zatím neproběhlo** — čeká na první opravdovou objednávku do USA/Portorika. Přesný tvar `amountSubtotals` (klíče v odpovědi) taky zatím jen podle schématu, ne živě ověřený.
+- **`ZONOS_ORIGIN_ADDRESS`** v `src/lib/zonos.ts` je natvrdo zadaná konstanta (potvrzena uživatelem) — pokud se výdejní/podací adresa změní, upravit i tady.
 - **Kombinace `Services` kódů**: ověřeno jen pro jednoduchý případ (1 položka, běžná váha) — u složitějších zásilek (víc položek, extrémní váha/hodnota) není jisté, jestli aktuální kombinace (`['50']`/`['7']`/`['43']`) zůstává správná, nebo jestli by měl přibýt další kód (např. `44` „Zboží s VDD" u vyšší celní hodnoty, vyžaduje MRN kód).
 - **`resultParcelCustomsGoods[].sequence`** v odpovědi ČP neodpovídá poslané hodnotě (offset o 1) — nebránilo úspěchu v testech, ale nevysvětleno, sledovat při zásilkách s víc položkami.
 - **`weight`/`customVal` v `parcelCustomGoods[]`** — není jisté, jestli má jít hodnota za kus nebo za celou položku; implementováno jako za celou položku (jednotka × počet), needs-confirm u ČP.

@@ -10,7 +10,7 @@ import {
   requiresCustomsDeclaration,
   CustomsDeclarationItem,
 } from '@/lib/customsDeclaration';
-import { getShipmentPrefix } from '@/lib/ceskaPostaShipment';
+import { getShipmentPrefix, getCountryIsoCode } from '@/lib/ceskaPostaShipment';
 
 type ShipmentModalProps = {
   order: Order;
@@ -25,6 +25,10 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [parcelCode, setParcelCode] = useState<string | null>(order.tracking_number);
+  const [declarationId, setDeclarationId] = useState<string | null>(null);
+  const [amountSubtotals, setAmountSubtotals] = useState<Record<string, number> | null>(null);
+  const [zonosLoading, setZonosLoading] = useState(false);
+  const [zonosError, setZonosError] = useState<string | null>(null);
 
   const isInternational = requiresCustomsDeclaration(order.shipping_method);
   const prefix = getShipmentPrefix(order.shipping_method);
@@ -36,6 +40,9 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
   const recipientCity = order.shipping_is_different ? order.shipping_city : order.billing_city;
   const recipientZip = order.shipping_is_different ? order.shipping_zip : order.billing_zip;
   const recipientCountry = order.shipping_is_different ? order.shipping_country : order.billing_country;
+
+  const recipientCountryIso = getCountryIsoCode(recipientCountry);
+  const requiresZonos = isInternational && (recipientCountryIso === 'US' || recipientCountryIso === 'PR');
 
   useEffect(() => {
     if (!isInternational) return;
@@ -57,7 +64,34 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
   }, [isInternational, order.cart_items]);
 
   const missingHsCode = items?.some((i) => !i.hsCode) ?? false;
-  const canSubmit = !!prefix && !submitting && !parcelCode && (!isInternational || (items && !missingHsCode));
+  const canSubmit = !!prefix && !submitting && !parcelCode
+    && (!isInternational || (items && !missingHsCode))
+    && (!requiresZonos || !!declarationId);
+
+  async function handleGetDeclaration() {
+    setZonosLoading(true);
+    setZonosError(null);
+    try {
+      const res = await fetch('/api/admin/create-zonos-declaration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order, customsItems: items }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.declarationId) {
+        setZonosError(data.error || 'Získání Declaration ID selhalo.');
+        return;
+      }
+
+      setDeclarationId(data.declarationId);
+      setAmountSubtotals(data.amountSubtotals ?? null);
+    } catch {
+      setZonosError('Získání Declaration ID selhalo - zkontroluj připojení a zkus to znovu.');
+    } finally {
+      setZonosLoading(false);
+    }
+  }
 
   async function handleSubmit() {
     setSubmitting(true);
@@ -66,7 +100,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
       const res = await fetch('/api/admin/create-shipment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order, customsItems: items }),
+        body: JSON.stringify({ order, customsItems: items, declarationId: declarationId ?? undefined }),
       });
       const data = await res.json();
 
@@ -157,6 +191,53 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
             </div>
           )}
 
+          {requiresZonos && (
+            <div className="space-y-3">
+              <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                <Package size={14} className="text-primary" /> Zonos Declaration ID (USA/Portoriko)
+              </h3>
+              {declarationId ? (
+                <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-2">
+                  <p className="style-body-bold text-success flex items-center gap-2">
+                    <CheckCircle2 size={16} /> Declaration ID: {declarationId}
+                  </p>
+                  <p className="style-body text-tag-posledni-kusy flex items-center gap-2">
+                    <AlertTriangle size={14} /> Platí jen 5 dní od vytvoření - podej zásilku u ČP co nejdřív.
+                  </p>
+                  {amountSubtotals && (
+                    <div className="style-body text-black200 grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
+                      {Object.entries(amountSubtotals).map(([key, value]) => (
+                        <div key={key} className="flex justify-between gap-2">
+                          <span className="text-black300">{key}</span>
+                          <span>{typeof value === 'number' ? `${value.toFixed(2)} USD` : String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleGetDeclaration}
+                  disabled={zonosLoading || !items || missingHsCode}
+                  className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 disabled:hover:bg-primary/10 disabled:hover:text-primary border border-primary/20 py-3 rounded-[4px] style-body-bold transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {zonosLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Získávám Declaration ID...
+                    </>
+                  ) : (
+                    'Získat Declaration ID (Zonos)'
+                  )}
+                </button>
+              )}
+              {zonosError && (
+                <p className="style-body text-tag-posledni-kusy flex items-center gap-2">
+                  <AlertTriangle size={14} /> {zonosError}
+                </p>
+              )}
+            </div>
+          )}
+
           {!prefix && (
             <div className="bg-tag-posledni-kusy/10 border border-tag-posledni-kusy/20 p-4 rounded-[4px] flex gap-3 items-start">
               <AlertTriangle size={18} className="text-tag-posledni-kusy shrink-0 mt-0.5" />
@@ -170,7 +251,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
             <AlertTriangle size={18} className="text-primary shrink-0 mt-0.5" />
             <p className="style-body text-black200">
               Podává se zatím jen proti <span className="text-secondary">demo</span> prostředí České pošty - žádná reálná zásilka
-              nevznikne, dokud se vědomě nepřepne na ostrý provoz. Pro USA/Portoriko navíc chybí krok přes Zonos Declaration ID.
+              nevznikne, dokud se vědomě nepřepne na ostrý provoz.
             </p>
           </div>
 

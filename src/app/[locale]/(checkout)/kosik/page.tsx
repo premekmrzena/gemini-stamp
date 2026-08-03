@@ -246,12 +246,12 @@ const CheckoutPage = () => {
 
       {isPaymentModalOpen && createdOrderId && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-black400 w-full max-w-[500px] rounded-[16px] overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-black300/30 bg-[#252C3C]">
+          <div className="bg-black400 w-full max-w-[500px] max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl">
+            <div className="sticky top-0 flex justify-between items-center p-6 border-b border-black300/30 bg-black500 z-10">
               <h3 className="style-h3 text-secondary">{t('paymentModal.title')}</h3>
-              <button onClick={() => setIsPaymentModalOpen(false)} className="text-white text-2xl">×</button>
+              <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 -m-2 text-black300 hover:text-secondary hover:bg-black300/10 rounded-full transition-colors cursor-pointer text-2xl leading-none">×</button>
             </div>
-            <div className="p-6 bg-white">
+            <div className="p-6 bg-black400">
               <StripePaymentForm amount={serverTotal ?? totalOrderPrice} currency={serverCurrency ?? currency} orderId={createdOrderId} />
             </div>
           </div>

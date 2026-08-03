@@ -34,6 +34,7 @@ function isCustomStampItem(item: CartItemSnapshot) {
 
 const CURRENCY_LABELS: Record<CurrencyCode, string> = {
   CZK: 'Česká koruna (CZK)',
+  USD: 'Americký dolar (USD)',
   KRW: 'Korejský won (KRW)',
   JPY: 'Japonský jen (JPY)',
   CNY: 'Čínský jüan (CNY)',
@@ -1237,9 +1238,10 @@ export default function AdminDashboard() {
         {activeTab === 'kurzy' && (
           <div className="space-y-4">
             <p className="style-body text-black300/70 max-w-2xl">
-              Kurz EUR → cílová měna pro přepočet mezinárodní ceny produktů (pole „Cena (EUR)“ v produktu), plus
-              kurz CZK použitý k přepočtu poštovného (skutečná Kč cena od České pošty) do EUR. Bez napojení na
-              kurzovní API – aktualizuj ručně podle potřeby, orientačně jednou za měsíc.
+              Kurz EUR → cílová měna pro přepočet mezinárodní ceny produktů (pole „Cena (EUR)“ v produktu), kurz CZK
+              použitý k přepočtu poštovného (skutečná Kč cena od České pošty) do EUR, a kurz USD použitý k přepočtu
+              celní hodnoty zásilek do USA/Portorika pro Zonos Declaration ID. Bez napojení na kurzovní API –
+              aktualizuj ručně podle potřeby, orientačně jednou za měsíc.
             </p>
             <div className="bg-black400 rounded-[4px] border border-black300/20 overflow-hidden shadow-xl">
               {exchangeRatesLoading ? (
@@ -1291,10 +1293,46 @@ export default function AdminDashboard() {
                         ))}
                         <tr>
                           <td colSpan={4} className="px-4 pt-4 pb-1 style-label text-black300/70 uppercase tracking-wide bg-black/20">
+                            Celní hodnota USA/Portoriko (Zonos)
+                          </td>
+                        </tr>
+                        {exchangeRates.filter((r) => r.currency_code === 'USD').map((rate) => (
+                          <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
+                            <td className="p-4 style-body-bold text-secondary">
+                              {CURRENCY_LABELS[rate.currency_code]}
+                              <span className="block style-label text-black300/70 font-normal">pro celní prohlášení Zonos declarationId</span>
+                            </td>
+                            <td className="p-4">
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.0001"
+                                placeholder="nenastaveno"
+                                className="bg-black border border-black300/50 rounded-[4px] px-3 h-[36px] style-body text-secondary placeholder:text-black300/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-32"
+                                value={rateInputs[rate.currency_code] ?? ''}
+                                onChange={(e) => setRateInputs((prev) => ({ ...prev, [rate.currency_code]: e.target.value }))}
+                              />
+                            </td>
+                            <td className="p-4 style-body text-black300">
+                              {rate.rate_to_eur != null ? new Date(rate.updated_at).toLocaleString('cs-CZ') : '—'}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => saveExchangeRate(rate.currency_code)}
+                                disabled={savingRate === rate.currency_code}
+                                className="bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold px-4 h-[36px] rounded-[4px] transition-all style-body cursor-pointer"
+                              >
+                                {savingRate === rate.currency_code ? 'Ukládám...' : 'Uložit'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <td colSpan={4} className="px-4 pt-4 pb-1 style-label text-black300/70 uppercase tracking-wide bg-black/20">
                             Budoucí jazykové mutace (KO/JA/ZH)
                           </td>
                         </tr>
-                        {exchangeRates.filter((r) => r.currency_code !== 'CZK').map((rate) => (
+                        {exchangeRates.filter((r) => r.currency_code !== 'CZK' && r.currency_code !== 'USD').map((rate) => (
                           <tr key={rate.currency_code} className="hover:bg-black/30 transition-colors">
                             <td className="p-4 style-body-bold text-secondary">{CURRENCY_LABELS[rate.currency_code]}</td>
                             <td className="p-4">
@@ -1333,6 +1371,7 @@ export default function AdminDashboard() {
                         <p className="style-body-bold text-secondary">
                           {CURRENCY_LABELS[rate.currency_code]}
                           {rate.currency_code === 'CZK' && <span className="block style-label text-black300/70 font-normal">pro přepočet poštovného</span>}
+                          {rate.currency_code === 'USD' && <span className="block style-label text-black300/70 font-normal">pro celní prohlášení Zonos declarationId</span>}
                         </p>
                         <div className="flex items-center gap-2">
                           <input
