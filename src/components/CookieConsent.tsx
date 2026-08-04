@@ -86,7 +86,7 @@ export default function CookieConsent() {
               {t('save')}
             </button>
             <button className={neutralButton} onClick={() => apply({ analytics: false, marketing: false })}>{t('reject')}</button>
-            <button className={primaryButton} onClick={() => apply({ analytics: true, marketing: true })}>{t('accept')}</button>
+            <button className={`${primaryButton} w-full sm:w-auto`} onClick={() => apply({ analytics: true, marketing: true })}>{t('accept')}</button>
           </div>
         </div>
       </div>

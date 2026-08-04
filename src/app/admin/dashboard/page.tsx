@@ -59,7 +59,19 @@ const STATUS_COLOR_CLASSES: Record<'neutral' | 'success' | 'danger', string> = {
   neutral: 'bg-primary/10 text-primary border-primary/20',
 };
 
+// Pár stavů má barvu štítku odlišnou od svého `group` (ten dál řídí jen tyhle výchozí barvy,
+// group ze zadání 2026-08-04: Čekáme na platbu červeně, Připravujeme modře (tag-top, plné pozadí
+// pro kontrast - stejný "invertovaný" vzor jako hover na tlačítku Smazat, viz řádek s bg-tag-posledni-kusy/10
+// hover:bg-tag-posledni-kusy), Odesláno bíle (secondary). Uzavřeno a Reklamace beze změny -
+// ta druhá je červená už přes group 'danger'.
+const STATUS_COLOR_OVERRIDES: Partial<Record<OrderStatus, string>> = {
+  'Čekáme na platbu': 'bg-tag-posledni-kusy/10 text-tag-posledni-kusy border-tag-posledni-kusy/20',
+  'Připravujeme': 'bg-tag-top text-secondary border-tag-top',
+  'Odesláno': 'bg-secondary/10 text-secondary border-secondary/20',
+};
+
 function getStatusColorClasses(status: OrderStatus | undefined) {
+  if (status && STATUS_COLOR_OVERRIDES[status]) return STATUS_COLOR_OVERRIDES[status]!;
   const group = ORDER_STATUSES.find((s) => s.value === status)?.group ?? 'neutral';
   return STATUS_COLOR_CLASSES[group];
 }
@@ -89,12 +101,30 @@ function NewOrderBadge() {
   );
 }
 
-// Jemné podbarvení řádku/karty podle stavu - rychlá vizuální orientace "čeká na peníze"
-// vs. "už zaplaceno", nezávislé na barvě samotného badge (ta zůstává podle `group`).
+// Podbarvení řádku/karty podle stavu - rychlá vizuální orientace "čeká na peníze" vs. "už
+// zaplaceno", nezávislé na barvě samotného badge (ta zůstává podle `group`/STATUS_COLOR_OVERRIDES).
+// Připravujeme a Uzavřeno mají plné (ne jen tónované) pozadí, viz [[project_dashboard_redesign_2026-07-26]] -
+// text uvnitř bílého řádku (Připravujeme) proto musí přepnout na tmavý, viz getOrderRowTextClass.
+// Zaplaceno a Čekáme na platbu zůstávají na výchozí (transparentní, prosvítá kontejner) - zadání 2026-08-04.
 function getOrderRowBg(status: OrderStatus | undefined) {
-  if (status === 'Zaplaceno') return 'bg-success/5';
-  if (status === 'Čekáme na platbu') return 'bg-tag-novinka/5';
+  if (status === 'Připravujeme') return 'bg-secondary';
+  if (status === 'Uzavřeno') return 'bg-black500';
   return '';
+}
+
+// Připravujeme má plné bílé pozadí (viz getOrderRowBg) - hlavní text řádku/karty se tam
+// musí přepnout na tmavý, jinak splyne s podkladem. Ostatní stavy zůstávají na výchozí světlé.
+function getOrderRowTextClass(status: OrderStatus | undefined) {
+  return status === 'Připravujeme' ? 'text-black' : 'text-secondary';
+}
+
+// Původní hover/active (tmavý poloprůhledný překryv) zůstává pro všechny stavy - jen na bílém
+// pozadí Připravujeme by vytvořil rušivý skok do tmava, tam proto místo něj jemné přitmavení bílé.
+// Třídy musí být v kódu jako plné literály (ne poskládané ze `${variant}`) - jinak je Tailwindí
+// scanner při buildu nenajde a hover se vůbec nevygeneruje.
+function getOrderRowHoverClass(status: OrderStatus | undefined, variant: 'hover' | 'active') {
+  if (status === 'Připravujeme') return variant === 'hover' ? 'hover:bg-black100' : 'active:bg-black100';
+  return variant === 'hover' ? 'hover:bg-black/40' : 'active:bg-black/40';
 }
 
 // 'Nová' na začátku obou toků je jen pro historické objednávky, které ještě mají tenhle
@@ -1656,10 +1686,10 @@ export default function AdminDashboard() {
                         <tr
                           key={order.id}
                           onClick={() => setSelectedOrder(order)}
-                          className={`hover:bg-black/40 cursor-pointer transition-colors group ${getOrderRowBg(order.status)} ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
+                          className={`${getOrderRowHoverClass(order.status, 'hover')} cursor-pointer transition-colors group ${getOrderRowBg(order.status)} ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
                         >
                           <td className="p-4">
-                            <div className="style-body-bold text-secondary group-hover:text-primary transition-colors">
+                            <div className={`style-body-bold group-hover:text-primary transition-colors ${getOrderRowTextClass(order.status)}`}>
                               {order.billing_first_name} {order.billing_last_name}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
@@ -1674,7 +1704,7 @@ export default function AdminDashboard() {
                               {isFreshOrder(order.created_at) && <NewOrderBadge />}
                             </div>
                           </td>
-                          <td className="p-4 text-right style-body-bold text-secondary">
+                          <td className={`p-4 text-right style-body-bold ${getOrderRowTextClass(order.status)}`}>
                             {formatPrice(order.total_price, order.currency)}
                           </td>
                           <td className="p-4 text-right">
@@ -1700,14 +1730,14 @@ export default function AdminDashboard() {
                     <div
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
-                      className={`p-4 space-y-2 active:bg-black/40 cursor-pointer transition-colors ${getOrderRowBg(order.status)} ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
+                      className={`p-4 space-y-2 ${getOrderRowHoverClass(order.status, 'active')} cursor-pointer transition-colors ${getOrderRowBg(order.status)} ${hasCustomStamp ? 'border-l-2 border-l-primary' : ''}`}
                     >
                       <div className="flex justify-between items-start gap-3">
                         <div>
-                          <p className="style-body-bold text-secondary">{order.billing_first_name} {order.billing_last_name}</p>
+                          <p className={`style-body-bold ${getOrderRowTextClass(order.status)}`}>{order.billing_first_name} {order.billing_last_name}</p>
                           <p className="text-[11px] font-mono text-black300 uppercase mt-1">#{order.id.slice(-6)} · {new Date(order.created_at).toLocaleDateString('cs-CZ')}</p>
                         </div>
-                        <p className="style-body-bold text-secondary shrink-0">{formatPrice(order.total_price, order.currency)}</p>
+                        <p className={`style-body-bold shrink-0 ${getOrderRowTextClass(order.status)}`}>{formatPrice(order.total_price, order.currency)}</p>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
