@@ -59,7 +59,7 @@ export function useCheckout() {
       if (params.selectedPayment === 'karta') {
         setIsPaymentModalOpen(true);
       } else {
-        window.location.href = `/dekujeme?orderId=${data.orderId}`;
+        window.location.href = `/dekujeme?orderId=${data.orderId}&total=${data.totalPrice}&currency=${data.currency}`;
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Něco se pokazilo.';

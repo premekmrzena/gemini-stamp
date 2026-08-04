@@ -36,7 +36,7 @@ const CheckoutForm = ({ amount, currency, orderId }: { amount: number, currency:
       elements,
       confirmParams: {
         // PŘESMĚROVÁNÍ PO ÚSPĚŠNÉ PLATBĚ S ID OBJEDNÁVKY
-        return_url: `${window.location.origin}/dekujeme?orderId=${orderId}`,
+        return_url: `${window.location.origin}/dekujeme?orderId=${orderId}&total=${amount}&currency=${currency}`,
       },
     });
 

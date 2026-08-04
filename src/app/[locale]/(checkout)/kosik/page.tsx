@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -11,6 +11,7 @@ import { PAYMENT_OPTIONS } from '@/lib/constants';
 import { getShippingOptionsInCurrency, getMinInternationalPriceInCurrency, getPaymentOptionsInCurrency } from '@/lib/shippingCurrency';
 import { supabase } from '@/lib/supabase';
 import { useCheckout } from '@/hooks/useCheckout';
+import { gtagBeginCheckout } from '@/lib/gtag';
 import CartStep from '@/components/checkout/CartStep';
 import ShippingStep from '@/components/checkout/ShippingStep';
 import AddressForm from '@/components/checkout/AddressForm';
@@ -51,6 +52,25 @@ const CheckoutPage = () => {
   const [czkRate, setCzkRate] = useState<number | null>(null);
 
   const { submitOrder, isSubmitting, orderError, createdOrderId, serverTotal, serverCurrency, isPaymentModalOpen, setIsPaymentModalOpen } = useCheckout();
+
+  // begin_checkout se posílá jen jednou za návštěvu košíku - při přechodu ze
+  // sumarizace košíku (krok 1) na výběr dopravy (krok 2), ne při každém
+  // dalším renderu se stejným krokem (např. výběr dopravy v kroku 2). Hodnota
+  // musí být cartTotalAfterDiscount, ne cartTotal - slevový kód se zadává už
+  // v OrderSummary na kroku 1, takže v okamžiku přechodu na krok 2 už může být
+  // uplatněný.
+  const beginCheckoutFiredRef = useRef(false);
+  useEffect(() => {
+    if (currentStep !== 2 || beginCheckoutFiredRef.current) return;
+    beginCheckoutFiredRef.current = true;
+    gtagBeginCheckout(
+      cartItems.map((item) => ({ item_id: item.id, item_name: item.name, price: item.price, quantity: item.quantity })),
+      cartTotalAfterDiscount,
+      currency,
+      appliedDiscount?.code
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
 
   useEffect(() => {
     if (currency !== 'EUR') return;

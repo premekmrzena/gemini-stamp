@@ -33,10 +33,21 @@
     "unavailable": "Currently unavailable"
   },
   "cookieConsent": {
-    "text": "We use cookies to run the shop and the sheet editor properly, and to understand site traffic.",
+    "text": "We use cookies to run the shop and the sheet editor properly. With your consent, also to understand site traffic and personalize ads.",
     "moreInfo": "More information",
-    "reject": "Reject",
-    "accept": "Accept all"
+    "reject": "Reject all",
+    "accept": "Accept all",
+    "save": "Save selection",
+    "categories": {
+      "analytics": {
+        "title": "Analytics",
+        "description": "Helps us understand traffic and customer behavior on the shop (Google Analytics)."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "description": "Enables personalized ads and remarketing (e.g. Google Ads)."
+      }
+    }
   },
   "home": {
     "hero": {

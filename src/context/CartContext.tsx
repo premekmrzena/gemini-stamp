@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { computeDiscountAmount } from '@/lib/pricing';
 import { getOrderCurrency, Currency } from '@/lib/currency';
 import { DiscountType } from '@/types/database';
+import { gtagAddToCart } from '@/lib/gtag';
 
 export type CartItem = {
   id: string;
@@ -142,6 +143,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cartItems, isLoaded]);
 
   const addToCart = (newItem: CartItem) => {
+    gtagAddToCart(
+      { item_id: newItem.id, item_name: newItem.name, price: newItem.price, quantity: newItem.quantity },
+      newItem.currency
+    );
+
     setCartItems((prev) => {
       // Košík smí obsahovat jen jednu měnu najednou (viz cartCurrency níže) -
       // pokud má nová položka jinou měnu než ty stávající (typicky přeskočení

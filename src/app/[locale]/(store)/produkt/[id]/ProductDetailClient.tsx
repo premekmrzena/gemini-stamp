@@ -10,6 +10,7 @@ import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getSalePrice } from '@/lib/pricing';
 import { getOrderCurrency, getLocalizedPrice, formatPrice } from '@/lib/currency';
+import { gtagViewItem } from '@/lib/gtag';
 import { sanitizeDescriptionHtml } from '@/lib/sanitize';
 import { getLocalizedProductField } from '@/lib/product-i18n';
 import { Product } from '@/types/database';
@@ -44,6 +45,17 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const [mainImage, setMainImage] = useState(allImages[0]);
   
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    if (!localizedPrice) return;
+    gtagViewItem(
+      { item_id: product.id, item_name: localizedName, price: salePrice ?? localizedPrice.price },
+      currency
+    );
+    // Jen při vstupu na detail konkrétního produktu - ne při každé změně
+    // lokalizovaných textů/ceny (ty se v rámci jedné návštěvy nemění).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   useEffect(() => {
     // window.innerWidth je dostupné jen na klientovi - nejde přesunout do lazy

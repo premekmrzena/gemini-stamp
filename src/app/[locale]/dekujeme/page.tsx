@@ -7,13 +7,19 @@ import { Link } from '@/i18n/navigation';
 import Button from '@/components/Button';
 import { useCart } from '@/context/CartContext';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
+import { gtagPurchase } from '@/lib/gtag';
+import { Currency } from '@/lib/currency';
+
+const PURCHASE_SENT_KEY = 'mcs_ga_purchase_sent';
 
 function ThankYouContent() {
-  const { clearCart } = useCart();
+  const { cartItems, clearCart } = useCart();
   const t = useTranslations('checkout.thankYou');
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const displayId = orderId ? orderId.slice(-8).toUpperCase() : null;
+  const totalParam = searchParams.get('total');
+  const currencyParam = searchParams.get('currency') as Currency | null;
 
   // Stripe u karetních plateb vyžadujících přesměrování (typicky 3D Secure)
   // vždy přesměruje na return_url bez ohledu na výsledek - úspěch/neúspěch
@@ -24,6 +30,24 @@ function ThankYouContent() {
 
   useEffect(() => {
     if (paymentFailed) return;
+    // Sem se naviguje plným reloadem (window.location.href/Stripe return_url), takže
+    // CartContext natahuje cartItems z localStorage až ve vlastním efektu PO téhle
+    // komponentě (React fire-uje efekty od nejhlubšího potomka k rodiči) - dokud
+    // nedoběhne, cartItems je ještě prázdné [] a purchase by se poslal bez items.
+    if (cartItems.length === 0) return;
+
+    // sessionStorage dedup - refresh/návrat na tuhle URL nesmí odeslat purchase
+    // znovu (rozpočet by se v GA4 započítal dvakrát za stejnou objednávku).
+    if (orderId && totalParam && currencyParam && sessionStorage.getItem(PURCHASE_SENT_KEY) !== orderId) {
+      sessionStorage.setItem(PURCHASE_SENT_KEY, orderId);
+      gtagPurchase(
+        orderId,
+        Number(totalParam),
+        currencyParam,
+        cartItems.map((item) => ({ item_id: item.id, item_name: item.name, price: item.price, quantity: item.quantity }))
+      );
+    }
+
     const timer = setTimeout(() => {
       clearCart();
       if (typeof window !== 'undefined') {
@@ -33,7 +57,7 @@ function ThankYouContent() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentFailed]);
+  }, [paymentFailed, cartItems]);
 
   if (paymentFailed) {
     return (

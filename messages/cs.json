@@ -33,10 +33,21 @@
     "unavailable": "Momentálně nedostupné"
   },
   "cookieConsent": {
-    "text": "Souhlas s cookies, pro zajištění základního chodu e-shopu, editoru archů a porozumění návštěvnosti.",
+    "text": "Používáme cookies pro zajištění základního chodu e-shopu a editoru archů. Se souhlasem navíc pro porozumění návštěvnosti a personalizaci reklamy.",
     "moreInfo": "Více informací",
-    "reject": "Odmítnout",
-    "accept": "Přijmout vše"
+    "reject": "Odmítnout vše",
+    "accept": "Přijmout vše",
+    "save": "Uložit výběr",
+    "categories": {
+      "analytics": {
+        "title": "Analytika",
+        "description": "Pomáhá nám porozumět návštěvnosti a chování zákazníků na e-shopu (Google Analytics)."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "description": "Umožňuje personalizovanou reklamu a remarketing (např. Google Ads)."
+      }
+    }
   },
   "home": {
     "hero": {
