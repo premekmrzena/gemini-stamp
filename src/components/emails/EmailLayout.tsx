@@ -30,6 +30,7 @@ export function EmailLayout({ footerNote, children }: EmailLayoutProps) {
         color: '#FDFBF7'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- e-mailový klient, next/image tu nejde použít */}
           <img
             src={`${SITE_URL}/images/creative-stamp_logo-email.png`}
             width={176}

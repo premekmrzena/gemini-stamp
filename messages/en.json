@@ -2,6 +2,11 @@
   "common": {
     "scrollToTop": "Scroll to top"
   },
+  "notFound": {
+    "title": "Page Not Found",
+    "message": "Sorry, we couldn't find the page you're looking for. It may have been moved or no longer exists.",
+    "backHome": "Back to homepage"
+  },
   "header": {
     "categories": {
       "stamps": "Stamps",
@@ -575,11 +580,6 @@
       "kreativni-archy": "Creative sheets",
       "fdc": "First Day Cover (FDC)",
       "plakety": "Gift plaques"
-    },
-    "notFound": {
-      "metaTitle": "Product Not Found",
-      "title": "Product Not Found",
-      "message": "Sorry, this stamp is probably no longer in our database."
     },
     "specs": {
       "category": "Category",

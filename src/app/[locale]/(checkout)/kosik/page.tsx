@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import Button from '@/components/Button';
@@ -62,8 +63,13 @@ const CheckoutPage = () => {
   }, [currency]);
 
   const totalWeightGrams = cartItems.reduce((sum, item) => sum + (item.weight_grams || 0) * item.quantity, 0);
-  const shippingResult = getShippingOptionsInCurrency(totalWeightGrams, cartTotal, formData.billing_country, currency, czkRate);
-  const shippingOptions = shippingResult.ok ? shippingResult.options : [];
+  // useMemo na primitivních vstupech - bez ní by byla shippingOptions pořád nová
+  // reference a efekt níže (zrušení nedostupné dopravy po změně země) by se spouštěl
+  // na každý render místo jen při skutečné změně dostupných možností.
+  const shippingOptions = useMemo(() => {
+    const result = getShippingOptionsInCurrency(totalWeightGrams, cartTotal, formData.billing_country, currency, czkRate);
+    return result.ok ? result.options : [];
+  }, [totalWeightGrams, cartTotal, formData.billing_country, currency, czkRate]);
   const minInternationalResult = getMinInternationalPriceInCurrency(totalWeightGrams, cartTotal, currency, czkRate);
   const minInternationalPrice = minInternationalResult.ok ? minInternationalResult.price : 0;
   const paymentOptions = getPaymentOptionsInCurrency(currency);
@@ -265,10 +271,12 @@ const CheckoutPage = () => {
         >
           <button onClick={() => setPreviewArchImage(null)} className="absolute top-6 right-6 text-white/60 hover:text-white text-4xl font-light transition-colors z-50 p-2">×</button>
           <div className="relative max-w-5xl max-h-[85vh] aspect-[1440/1080] w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-            <img
+            <Image
               src={previewArchImage}
               alt={t('archPreviewAlt')}
-              className="max-w-full max-h-full object-contain shadow-2xl rounded-lg pointer-events-none select-none border border-white/10"
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-contain shadow-2xl rounded-lg pointer-events-none select-none border border-white/10"
             />
             <div className="absolute inset-0 bg-transparent" onContextMenu={(e) => e.preventDefault()} />
           </div>

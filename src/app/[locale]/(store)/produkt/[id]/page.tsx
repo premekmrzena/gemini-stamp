@@ -1,10 +1,11 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, SITE_NAME } from '@/lib/site';
 import { Product } from '@/types/database';
 import { getLocalizedProductField } from '@/lib/product-i18n';
 import { getOrderCurrency, getLocalizedPrice } from '@/lib/currency';
@@ -39,8 +40,7 @@ export async function generateMetadata({
   const product = await getProduct(id);
 
   if (!product) {
-    const t = await getTranslations({ locale, namespace: 'product.notFound' });
-    return { title: t('metaTitle') };
+    notFound();
   }
 
   const name = getLocalizedProductField(product, locale, 'name');
@@ -74,13 +74,7 @@ export default async function ProductPage({
   const product = await getProduct(productId);
 
   if (!product) {
-    const t = await getTranslations({ locale, namespace: 'product.notFound' });
-    return (
-      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center bg-[#0F172A] text-[#FDFBF7]">
-        <h2 className="style-h2 mb-4">{t('title')}</h2>
-        <p className="style-body text-[#8B95AC]">{t('message')}</p>
-      </div>
-    );
+    notFound();
   }
 
   // 2. LOGIKA PRO SOUVISEJÍCÍ PRODUKTY (ARRAY VERSION)
@@ -134,6 +128,7 @@ export default async function ProductPage({
     description: localizedShortDescription || undefined,
     image: product.image_url,
     sku: product.catalog_number || product.id,
+    brand: { '@type': 'Brand', name: SITE_NAME },
     // Bez EUR ceny (nevyplněná v adminu) nejde vygenerovat platné offers -
     // radši žádné structured data pro cenu než chybně označené jako Kč.
     offers: localizedPrice

@@ -2,6 +2,11 @@
   "common": {
     "scrollToTop": "Nahoru"
   },
+  "notFound": {
+    "title": "Stránka nenalezena",
+    "message": "Omlouváme se, tuto stránku se nepodařilo najít. Možná byla přesunuta nebo už neexistuje.",
+    "backHome": "Zpět na úvodní stránku"
+  },
   "header": {
     "categories": {
       "stamps": "Známky",
@@ -575,11 +580,6 @@
       "kreativni-archy": "Kreativní archy",
       "fdc": "First Day Cover (FDC)",
       "plakety": "Dárkové plakety"
-    },
-    "notFound": {
-      "metaTitle": "Produkt nenalezen",
-      "title": "Produkt nenalezen",
-      "message": "Omlouváme se, ale tato známka už v databázi pravděpodobně není."
     },
     "specs": {
       "category": "Kategorie",

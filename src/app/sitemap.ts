@@ -11,6 +11,7 @@ const staticRoutes = [
   { path: '/jak-nakupovat', priority: 0.6, changeFrequency: 'monthly' as const },
   { path: '/vytvorit-arch', priority: 0.9, changeFrequency: 'weekly' as const },
   { path: '/kontakt', priority: 0.4, changeFrequency: 'yearly' as const },
+  { path: '/faq', priority: 0.4, changeFrequency: 'monthly' as const },
   { path: '/obchodni-podminky', priority: 0.2, changeFrequency: 'yearly' as const },
   { path: '/ochrana-osobnich-udaju', priority: 0.2, changeFrequency: 'yearly' as const },
 ];

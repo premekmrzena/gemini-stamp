@@ -127,6 +127,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
             <tbody>
               <tr>
                 <td className="qr-payment-cell" style={{ verticalAlign: 'top', width: '132px', paddingBottom: '12px' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- e-mailový klient, next/image tu nejde použít (navíc cid: příloha) */}
                   <img
                     src={`cid:${bankTransfer.qrCodeCid}`}
                     width={132}

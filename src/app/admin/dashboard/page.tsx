@@ -279,8 +279,6 @@ export default function AdminDashboard() {
 
   // --- STAVY PRO STATISTIKU ---
   const [statsPreset, setStatsPreset] = useState<StatsPreset>('30');
-  const [statsCustomFrom, setStatsCustomFrom] = useState('');
-  const [statsCustomTo, setStatsCustomTo] = useState('');
 
   async function fetchOrders() {
     setLoading(true);
