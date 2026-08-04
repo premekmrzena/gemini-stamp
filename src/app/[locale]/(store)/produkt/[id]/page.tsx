@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -15,14 +16,6 @@ type RelatedProduct = Pick<
   Product,
   'id' | 'name' | 'name_en' | 'name_ko' | 'name_ja' | 'name_zh_hans' | 'name_zh_hant' | 'price' | 'sale_price' | 'price_eur' | 'sale_price_eur' | 'image_url'
 >;
-
-const categoryLabels: Record<string, string> = {
-  'znamky': 'Poštovní známky',
-  'znamkove-archy': 'Známkové archy',
-  'kreativni-archy': 'Kreativní archy',
-  'fdc': 'First Day Cover (FDC)',
-  'plakety': 'Dárkové plakety',
-};
 
 // Vypne cachování pro 100% aktuálnost dat
 export const revalidate = 0;
@@ -46,7 +39,8 @@ export async function generateMetadata({
   const product = await getProduct(id);
 
   if (!product) {
-    return { title: 'Produkt nenalezen' };
+    const t = await getTranslations({ locale, namespace: 'product.notFound' });
+    return { title: t('metaTitle') };
   }
 
   const name = getLocalizedProductField(product, locale, 'name');
@@ -80,10 +74,11 @@ export default async function ProductPage({
   const product = await getProduct(productId);
 
   if (!product) {
+    const t = await getTranslations({ locale, namespace: 'product.notFound' });
     return (
       <div className="w-full min-h-[50vh] flex flex-col items-center justify-center bg-[#0F172A] text-[#FDFBF7]">
-        <h2 className="style-h2 mb-4">Produkt nenalezen</h2>
-        <p className="style-body text-[#8B95AC]">Omlouváme se, ale tato známka už v databázi pravděpodobně není.</p>
+        <h2 className="style-h2 mb-4">{t('title')}</h2>
+        <p className="style-body text-[#8B95AC]">{t('message')}</p>
       </div>
     );
   }
@@ -120,7 +115,10 @@ export default async function ProductPage({
     if (fallback) relatedProducts = fallback;
   }
 
-  const categoryLabel = categoryLabels[product.category] || product.category;
+  const tProduct = await getTranslations({ locale, namespace: 'product' });
+  const categoryLabel = tProduct.has(`categoryLabels.${product.category}`)
+    ? tProduct(`categoryLabels.${product.category}`)
+    : product.category;
   // Kreativní archy nemají vlastní stránku kategorie – vstupním bodem je editor.
   const categoryHref = product.category === 'kreativni-archy' ? '/vytvorit-arch' : `/kategorie/${product.category}`;
   const localizedName = getLocalizedProductField(product, locale, 'name');

@@ -40,6 +40,7 @@ export type ProductType = {
 export default function ProductCard({ product }: { product: ProductType }) {
   const locale = useLocale();
   const t = useTranslations('cart');
+  const tProduct = useTranslations('product');
   const isTop = !!product.tag_top;
   const isNovinka = product.tag_new;
   const isJenUNas = !isTop && !isNovinka;
@@ -58,7 +59,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
       <Link
         href={`/produkt/${product.id}`}
         className="absolute inset-0 z-20 rounded cursor-pointer"
-        aria-label={`Detail produktu ${localizedName}`}
+        aria-label={tProduct('detailAria', { name: localizedName })}
       />
 
       <div className="absolute top-[28px] right-0 z-30 flex flex-col items-end gap-1 pointer-events-none">
@@ -69,17 +70,17 @@ export default function ProductCard({ product }: { product: ProductType }) {
         )}
         {isNovinka && (
           <span className="style-product-tag bg-tag-novinka text-black pl-3 pr-4 py-1 rounded-l-full shadow-sm">
-            novinka
+            {tProduct('badges.new')}
           </span>
         )}
         {product.tag_last_pieces && (
           <span className="style-product-tag bg-tag-posledni-kusy text-black pl-3 pr-4 py-1 rounded-l-full shadow-sm">
-            poslední kusy
+            {tProduct('badges.lastPieces')}
           </span>
         )}
         {isJenUNas && !product.tag_last_pieces && (
           <span className="style-product-tag bg-black200 text-black pl-3 pr-4 py-1 rounded-l-full shadow-sm">
-            jen u nás
+            {tProduct('badges.onlyHere')}
           </span>
         )}
       </div>

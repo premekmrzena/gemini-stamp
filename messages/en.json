@@ -1,4 +1,7 @@
 {
+  "common": {
+    "scrollToTop": "Scroll to top"
+  },
   "header": {
     "categories": {
       "stamps": "Stamps",
@@ -525,6 +528,7 @@
   "category": {
     "defaultTitle": "Category",
     "defaultDescription": "Category description coming soon...",
+    "loading": "Loading...",
     "content": {
       "znamky": { "title": "Postage stamps", "description": "Every stamp is a valuable collectible and a masterful work of art, telling the most powerful stories of the old continent. Discover the world of Czech stamp design, a globally recognized phenomenon." },
       "znamkove-archy": { "title": "Stamp sheets", "description": "Add your own text for the Stamp Sheets category here." },
@@ -533,6 +537,72 @@
     },
     "topicFilter": { "vse": "All", "umeni": "Art", "pamatky": "Landmarks", "znamky": "Stamps", "archy": "Sheets" },
     "sortOptions": { "doporucene": "Recommended", "price_asc": "Price: lowest first", "price_desc": "Price: highest first", "name_asc": "Name: A–Z", "bestseller": "Bestsellers" }
+  },
+  "terms": {
+    "breadcrumb": "Terms and Conditions",
+    "title": "Terms and Conditions",
+    "validFrom": "Valid from 1 January 2025",
+    "sections": {
+      "s1": { "title": "1. Operator and Basic Information", "content": "The online store at mycreativestamp.com is operated by DVKS s.r.o., Company ID (IČO): 14248328, with its registered office at Nad Studánkou 393, 251 01 Světice, Czech Republic (hereinafter the \"Seller\").\n\nContact e-mail: info@mycreativestamp.com" },
+      "s2": { "title": "2. Order and Conclusion of the Contract", "content": "Orders are placed either through the online editor (Creative Sheet) or by selecting a product in the e-shop and adding it to the cart. By submitting an order, the buyer confirms that they have read and agree to these Terms and Conditions.\n\nThe contract is concluded when the Seller sends an order confirmation e-mail. The Seller reserves the right to decline an order in the event of stock unavailability or a technical error." },
+      "s3": { "title": "3. Price and Payment", "content": "Prices in the e-shop include VAT. The Seller reserves the right to change prices. The price valid at the moment the order is submitted is binding for the buyer.\n\nPayment is processed via the Stripe payment gateway (payment card). The order is processed once payment has been received." },
+      "s4": { "title": "4. Shipping and Delivery Times", "content": "We ship goods to addresses within the Czech Republic and abroad. The standard time to prepare a shipment for dispatch is 1–2 business days from order (payment) confirmation. For personalized products (Creative Sheet), this period is 1–5 business days due to production time.\n\nShipping is charged according to the current price list shown when choosing a shipping method in the cart." },
+      "s5": { "title": "5. Withdrawal from the Contract", "content": "The buyer — as a consumer — has the right to withdraw from the contract without giving a reason within 14 days of receiving the goods, except for custom-made goods (personalized products such as a Creative Sheet with your own photographs), for which the right of withdrawal does not apply under Section 1837(d) of the Czech Civil Code.\n\nSend withdrawal notices by e-mail to info@mycreativestamp.com. Please return the goods undamaged at your own expense." },
+      "s6": { "title": "6. Complaints and Liability for Defects", "content": "All goods carry a 24-month warranty period. To file a complaint, please send an e-mail with a photo of the defect and your order number. Complaints will be resolved within 30 days at the latest.\n\nIn the case of a justified complaint, you are entitled to a repair, replacement, or refund." },
+      "s7": { "title": "7. Personal Data Protection", "content": "The processing of personal data is governed by the Privacy Policy available at /ochrana-osobnich-udaju." },
+      "s8": { "title": "8. Final Provisions", "content": "These Terms and Conditions are valid from 1 January 2025. The Seller reserves the right to change these terms at any time. Matters not covered by these terms are governed by Act No. 89/2012 Coll., the Civil Code, and Act No. 634/1992 Coll., on Consumer Protection.\n\nDisputes may be resolved out of court through the Czech Trade Inspection Authority (www.coi.cz)." }
+    }
+  },
+  "privacyPolicy": {
+    "breadcrumb": "Privacy Policy",
+    "title": "Privacy Policy",
+    "validFrom": "Valid from 1 January 2025 · GDPR",
+    "sections": {
+      "s1": { "title": "1. Data Controller", "content": "The controller of your personal data is DVKS s.r.o., Company ID (IČO): 14248328, with its registered office at Nad Studánkou 393, 251 01 Světice, Czech Republic (hereinafter the \"Controller\"). Contact e-mail: info@mycreativestamp.com." },
+      "s2": { "title": "2. What Data We Process", "content": "We only process data necessary to fulfil your order and operate the e-shop:\n\n• Identification and contact details: first name, last name, e-mail address, phone number.\n• Delivery address: street, city, postal code, country.\n• Payment information: payment transactions are processed directly by the Stripe payment gateway — we do not store card numbers or sensitive payment data.\n• Photos and Creative Sheet content: photos you upload while creating a Creative Sheet, and any text you enter. This data is stored solely for the purpose of producing the ordered product." },
+      "s3": { "title": "3. Purpose and Legal Basis of Processing", "content": "We process your personal data on the following legal bases:\n\n• Performance of a contract (Art. 6(1)(b) GDPR) — processing your order, producing and delivering goods, customer support.\n• Compliance with a legal obligation (Art. 6(1)(c) GDPR) — bookkeeping and tax records for the period required by law (10 years).\n• Legitimate interest (Art. 6(1)(f) GDPR) — fraud prevention and technical security." },
+      "s4": { "title": "4. Retention Period", "content": "Personal data associated with an order is retained for the duration of the contractual relationship and for 3 years thereafter for the purposes of any complaints. Accounting records are archived for 10 years as required by law. Photos and Creative Sheet content are deleted once the order is completed, and no later than 90 days after the order is delivered." },
+      "s5": { "title": "5. Recipients and Data Transfers", "content": "We do not sell or provide your personal data to third parties for their marketing purposes. We only share data with processors strictly necessary for operation of the e-shop:\n\n• Shipping companies (delivery of shipments).\n• Stripe, Inc. (payment processing).\n• Supabase, Inc. (cloud database and storage).\n• Vercel, Inc. (application hosting).\n\nAll processors are bound by contractual data protection obligations in accordance with the GDPR." },
+      "s6": { "title": "6. Your Rights", "content": "You have the right to access your personal data, to have it corrected, erased (\"right to be forgotten\"), and to restrict its processing or request data portability. You also have the right to object to processing and to lodge a complaint with the Office for Personal Data Protection (www.uoou.cz).\n\nSend requests to exercise your rights by e-mail to info@mycreativestamp.com. We will respond within 30 days." },
+      "s7": { "title": "7. Cookies", "content": "This website uses technical cookies necessary for the application to function (login, cart, editor). We also use analytics and marketing cookies to help us understand customer behavior on the e-shop." },
+      "s8": { "title": "8. Changes to This Policy", "content": "This policy may be updated from time to time. We will notify you by e-mail of any material changes. The current version is always available on this page.\n\nValid from 1 January 2025." }
+    }
+  },
+  "product": {
+    "categoryLabels": {
+      "znamky": "Postage stamps",
+      "znamkove-archy": "Stamp sheets",
+      "kreativni-archy": "Creative sheets",
+      "fdc": "First Day Cover (FDC)",
+      "plakety": "Gift plaques"
+    },
+    "notFound": {
+      "metaTitle": "Product Not Found",
+      "title": "Product Not Found",
+      "message": "Sorry, this stamp is probably no longer in our database."
+    },
+    "specs": {
+      "category": "Category",
+      "catalogNumber": "Catalog Number",
+      "releaseDate": "Release Date",
+      "dimensions": "Dimensions",
+      "designer": "Designer",
+      "engraver": "Engraver",
+      "weight": "Weight"
+    },
+    "badges": {
+      "new": "New",
+      "lastPieces": "Last pieces",
+      "onlyHere": "Exclusive"
+    },
+    "parametersTitle": "Parameters",
+    "detailedDescriptionTitle": "Detailed Description",
+    "relatedTitle": "You Might Also Like",
+    "startCreating": "Start Creating",
+    "previewAlt": "Preview {index}",
+    "detailedPreviewAlt": "Detailed preview",
+    "detailAria": "View details for {name}",
+    "empty": "No stamps here yet."
   },
   "metadata": {
     "cart": { "title": "Cart" },
@@ -544,6 +614,8 @@
     "howToBuy": { "title": "How to shop", "description": "What you can buy from us, shipping and pickup options, payment methods, and how long production takes." },
     "whatIsCreativeArch": { "title": "What is a Creative Sheet?", "description": "A unique collectible product combining the beauty of postage stamps with your own photos and memories." },
     "contact": { "title": "Contact", "description": "Contact us — we're happy to answer your questions about the Creative Sheet." },
-    "faq": { "title": "FAQ", "description": "Answers to the most common questions about production, shipping and payment at the My Creative Stamp shop." }
+    "faq": { "title": "FAQ", "description": "Answers to the most common questions about production, shipping and payment at the My Creative Stamp shop." },
+    "terms": { "title": "Terms and Conditions", "description": "Terms and Conditions of the My Creative Stamp online store." },
+    "privacyPolicy": { "title": "Privacy Policy", "description": "Privacy policy and information on data processing under GDPR." }
   }
 }

@@ -95,7 +95,7 @@ export default function CategoryPage() {
   if (slug === 'kreativni-archy') return null;
 
   if (!slug && loading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center text-secondary">Načítám...</div>;
+    return <div className="min-h-screen bg-black flex items-center justify-center text-secondary">{t('loading')}</div>;
   }
 
   return (

@@ -1,4 +1,7 @@
 {
+  "common": {
+    "scrollToTop": "Nahoru"
+  },
   "header": {
     "categories": {
       "stamps": "Známky",
@@ -525,6 +528,7 @@
   "category": {
     "defaultTitle": "Kategorie",
     "defaultDescription": "Popis kategorie se připravuje...",
+    "loading": "Načítám...",
     "content": {
       "znamky": { "title": "Poštovní známky", "description": "Každá známka je hodnotnou ceninou, sběratelským unikátem a mistrovským uměleckým dílem, které vypráví ty nejsilnější příběhy starého kontinentu. Nahlédněte do světa české známkové tvorby, která je celosvětově uznávaným fenoménem." },
       "znamkove-archy": { "title": "Známkové archy", "description": "Zde doplň svůj vlastní text pro kategorii Známkové archy." },
@@ -533,6 +537,72 @@
     },
     "topicFilter": { "vse": "Vše", "umeni": "Umění", "pamatky": "Památky", "znamky": "Známky", "archy": "Archy" },
     "sortOptions": { "doporucene": "Doporučené", "price_asc": "Cena: od nejnižší", "price_desc": "Cena: od nejvyšší", "name_asc": "Název: A–Z", "bestseller": "Nejprodávanější" }
+  },
+  "terms": {
+    "breadcrumb": "Obchodní podmínky",
+    "title": "Obchodní podmínky",
+    "validFrom": "Platné od 1. 1. 2025",
+    "sections": {
+      "s1": { "title": "1. Provozovatel a základní údaje", "content": "Provozovatelem internetového obchodu na adrese mycreativestamp.com je společnost DVKS s.r.o., IČO: 14248328, se sídlem Nad Studánkou 393, 251 01 Světice (dále jen „prodávající\").\n\nKontaktní e-mail: info@mycreativestamp.com" },
+      "s2": { "title": "2. Objednávka a uzavření smlouvy", "content": "Objednávka zboží probíhá prostřednictvím online editoru (Kreativní arch) nebo výběrem produktu v e-shopu a jeho přidáním do košíku. Odesláním objednávky kupující potvrzuje, že se seznámil s těmito obchodními podmínkami a souhlasí s nimi.\n\nSmlouva je uzavřena okamžikem odeslání potvrzovacího e-mailu prodávajícím. Prodávající si vyhrazuje právo odmítnout objednávku v případě vyprodání zásob nebo technické chyby." },
+      "s3": { "title": "3. Cena a platba", "content": "Ceny v e-shopu jsou uvedeny včetně DPH. Prodávající si vyhrazuje právo na změnu cen. Pro kupujícího je závazná cena platná v okamžiku odeslání objednávky.\n\nPlatba je realizována prostřednictvím platební brány Stripe (platební karta). Objednávka je zpracována po přijetí platby." },
+      "s4": { "title": "4. Doprava a dodací lhůty", "content": "Zboží zasíláme na adresu v České republice i do zahraničí. Standardní lhůta pro přípravu zásilky k odeslání je 1–2 pracovních dnů od potvrzení objednávky (platby). U personalizovaných produktů (Kreativní arch) je lhůta 1–5 pracovních dnů z důvodu výroby.\n\nDoprava je zpoplatněna dle aktuálního ceníku zobrazovaného při výběru dopravy v košíku." },
+      "s5": { "title": "5. Odstoupení od smlouvy", "content": "Kupující — spotřebitel má právo odstoupit od smlouvy bez udání důvodu ve lhůtě 14 dnů od převzetí zboží, s výjimkou zboží vyrobeného na míru (personalizované produkty, jako je Kreativní arch s vlastními fotografiemi), u nichž právo na odstoupení nevzniká dle § 1837 písm. d) občanského zákoníku.\n\nOdstoupení zasílejte e-mailem na info@mycreativestamp.com. Zboží vraťte nepoškozené na vlastní náklady." },
+      "s6": { "title": "6. Reklamace a odpovědnost za vady", "content": "Na veškeré zboží se vztahuje záruční doba 24 měsíců. Reklamaci uplatňujte e-mailem s fotografií vady a číslem objednávky. Reklamace bude vyřízena nejpozději do 30 dnů.\n\nV případě oprávněné reklamace máte nárok na opravu, výměnu nebo vrácení peněz." },
+      "s7": { "title": "7. Ochrana osobních údajů", "content": "Zpracování osobních údajů se řídí Zásadami ochrany osobních údajů dostupnými na stránce /ochrana-osobnich-udaju." },
+      "s8": { "title": "8. Závěrečná ustanovení", "content": "Tyto obchodní podmínky jsou platné od 1. 1. 2025. Prodávající si vyhrazuje právo podmínky kdykoli změnit. Vztahy neupravené těmito podmínkami se řídí zákonem č. 89/2012 Sb., občanský zákoník, a zákonem č. 634/1992 Sb., o ochraně spotřebitele.\n\nPřípadné spory lze řešit mimosoudně prostřednictvím České obchodní inspekce (www.coi.cz)." }
+    }
+  },
+  "privacyPolicy": {
+    "breadcrumb": "Ochrana osobních údajů",
+    "title": "Ochrana osobních údajů",
+    "validFrom": "Platné od 1. 1. 2025 · GDPR",
+    "sections": {
+      "s1": { "title": "1. Správce osobních údajů", "content": "Správcem vašich osobních údajů je společnost DVKS s.r.o., IČO: 14248328, se sídlem Nad Studánkou 393, 251 01 Světice (dále jen „správce\"). Kontaktní e-mail: info@mycreativestamp.com." },
+      "s2": { "title": "2. Jaké údaje zpracováváme", "content": "Zpracováváme pouze údaje nezbytné pro splnění objednávky a provoz e-shopu:\n\n• Identifikační a kontaktní údaje: jméno, příjmení, e-mailová adresa, telefonní číslo.\n• Doručovací adresa: ulice, město, PSČ, stát.\n• Platební informace: platební transakce zpracovává přímo platební brána Stripe — čísla karet ani citlivé platební údaje neukládáme.\n• Fotografie a obsah Kreativního archu: fotografie, které nahrajete při tvorbě Kreativního archu, a vámi zadané texty. Tato data jsou ukládána výhradně za účelem výroby objednaného produktu." },
+      "s3": { "title": "3. Účel a právní základ zpracování", "content": "Vaše osobní údaje zpracováváme na základě:\n\n• Plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR) — zpracování objednávky, výroba a doručení zboží, zákaznická podpora.\n• Plnění právní povinnosti (čl. 6 odst. 1 písm. c) GDPR) — vedení účetnictví a daňová evidence po dobu stanovenou zákonem (10 let).\n• Oprávněný zájem (čl. 6 odst. 1 písm. f) GDPR) — ochrana před podvody a technická bezpečnost." },
+      "s4": { "title": "4. Doba uchování", "content": "Osobní údaje spojené s objednávkou uchováváme po dobu trvání smluvního vztahu a po dobu 3 let od jeho ukončení pro účely případných reklamací. Účetní doklady jsou archivovány po dobu 10 let dle zákona. Fotografie a obsah Kreativního archu mažeme po uzavření objednávky, nejpozději však do 90 dnů od doručení objednávky." },
+      "s5": { "title": "5. Příjemci a předávání dat", "content": "Vaše osobní údaje neprodáváme ani neposkytujeme třetím stranám pro jejich marketingové účely. Údaje sdílíme pouze se zpracovateli nezbytně nutnými pro provoz:\n\n• Přepravní společnosti (doručení zásilky).\n• Stripe, Inc. (zpracování plateb).\n• Supabase, Inc. (cloudová databáze a úložiště).\n• Vercel, Inc. (hosting aplikace).\n\nVšichni zpracovatelé jsou vázáni smluvní ochranou dat v souladu s GDPR." },
+      "s6": { "title": "6. Vaše práva", "content": "Máte právo na přístup ke svým osobním údajům, jejich opravu, výmaz („právo být zapomenut\"), omezení zpracování a přenositelnost. Máte rovněž právo vznést námitku proti zpracování a právo podat stížnost u Úřadu pro ochranu osobních údajů (www.uoou.cz).\n\nŽádost o uplatnění práv zasílejte e-mailem na info@mycreativestamp.com. Odpovíme do 30 dnů." },
+      "s7": { "title": "7. Cookies", "content": "Webové stránky používají technické cookies nezbytné pro fungování aplikace (přihlášení, košík, editor). Analytické a marketingové cookies používáme, abychom porozuměli chování zákazníků na e-shopu." },
+      "s8": { "title": "8. Změny zásad", "content": "Tyto zásady mohou být průběžně aktualizovány. O zásadních změnách vás budeme informovat e-mailem. Aktuální verze je vždy dostupná na této stránce.\n\nPlatné od 1. 1. 2025." }
+    }
+  },
+  "product": {
+    "categoryLabels": {
+      "znamky": "Poštovní známky",
+      "znamkove-archy": "Známkové archy",
+      "kreativni-archy": "Kreativní archy",
+      "fdc": "First Day Cover (FDC)",
+      "plakety": "Dárkové plakety"
+    },
+    "notFound": {
+      "metaTitle": "Produkt nenalezen",
+      "title": "Produkt nenalezen",
+      "message": "Omlouváme se, ale tato známka už v databázi pravděpodobně není."
+    },
+    "specs": {
+      "category": "Kategorie",
+      "catalogNumber": "Katalogové číslo",
+      "releaseDate": "Datum vydání",
+      "dimensions": "Rozměr",
+      "designer": "Výtvarný návrh",
+      "engraver": "Autor rytiny",
+      "weight": "Hmotnost"
+    },
+    "badges": {
+      "new": "novinka",
+      "lastPieces": "poslední kusy",
+      "onlyHere": "jen u nás"
+    },
+    "parametersTitle": "Parametry",
+    "detailedDescriptionTitle": "Detailní popis",
+    "relatedTitle": "Mohlo by vás také zajímat",
+    "startCreating": "Začít tvořit",
+    "previewAlt": "Náhled {index}",
+    "detailedPreviewAlt": "Detailní náhled",
+    "detailAria": "Detail produktu {name}",
+    "empty": "Zatím tu nejsou žádné známky."
   },
   "metadata": {
     "cart": { "title": "Košík" },
@@ -544,6 +614,8 @@
     "howToBuy": { "title": "Jak nakupovat", "description": "Co si u nás můžete koupit, jaké jsou možnosti dopravy, osobního odběru, platby a jak dlouho trvá výroba." },
     "whatIsCreativeArch": { "title": "Co je Kreativní arch?", "description": "Unikátní sběratelský produkt spojující krásu poštovních známek s vašimi vlastními fotografiemi a vzpomínkami." },
     "contact": { "title": "Kontakt", "description": "Kontaktujte nás — rádi zodpovíme vaše dotazy ohledně Kreativního archu." },
-    "faq": { "title": "Časté otázky", "description": "Odpovědi na nejčastější otázky ohledně výroby, dopravy a platby v e-shopu My Creative Stamp." }
+    "faq": { "title": "Časté otázky", "description": "Odpovědi na nejčastější otázky ohledně výroby, dopravy a platby v e-shopu My Creative Stamp." },
+    "terms": { "title": "Obchodní podmínky", "description": "Obchodní podmínky internetového obchodu My Creative Stamp." },
+    "privacyPolicy": { "title": "Ochrana osobních údajů", "description": "Zásady ochrany osobních údajů a informace o zpracování dat dle GDPR." }
   }
 }

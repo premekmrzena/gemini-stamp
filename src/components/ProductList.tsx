@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import ProductCard, { ProductType } from '@/components/ProductCard';
 
 type ProductListProps = {
@@ -6,10 +9,12 @@ type ProductListProps = {
 };
 
 export default function ProductList({ products, title }: ProductListProps) {
+  const t = useTranslations('product');
+
   if (!products || products.length === 0) {
     return (
       <div className="text-center py-20 text-secondary/50">
-        Zatím tu nejsou žádné známky.
+        {t('empty')}
       </div>
     );
   }

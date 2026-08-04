@@ -13,7 +13,11 @@ export const metadata: Metadata = {
   description: SITE_DEFAULT_DESCRIPTION,
   openGraph: {
     type: 'website',
-    locale: 'cs_CZ',
+    // 'en' je výchozí produkční mutace (routing.ts) - tenhle root layout nemá
+    // přístup k params.locale (viz komentář u <html lang> níže), takže žádná
+    // stránka bez vlastní openGraph/twitter metadata (a to je většina) padá
+    // na tenhle fallback. Musí tedy odpovídat produkčnímu jazyku, ne CZ.
+    locale: 'en_US',
     siteName: SITE_NAME,
     title: SITE_DEFAULT_TITLE,
     description: SITE_DEFAULT_DESCRIPTION,

@@ -27,6 +27,7 @@ type ProductDetailClientProps = {
 export default function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
   const locale = useLocale();
   const t = useTranslations('cart');
+  const tProduct = useTranslations('product');
   const currency = getOrderCurrency(locale);
   const localizedPrice = getLocalizedPrice(product, currency);
   const salePrice = localizedPrice ? getSalePrice(localizedPrice.price, localizedPrice.salePrice) : null;
@@ -56,20 +57,20 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString('cs-CZ');
+    return new Date(dateString).toLocaleDateString(locale === 'cs' ? 'cs-CZ' : locale);
   };
 
   const productParameters = [
-    { label: 'Kategorie', value: product.category },
-    { label: 'Katalogové číslo', value: product.catalog_number },
-    { label: 'Datum vydání', value: formatDate(product.release_date) },
-    { label: 'Rozměr', value: product.dimensions_mm ? `${product.dimensions_mm} mm` : null },
-    { label: 'Výtvarný návrh', value: product.designer },
-    { label: 'Autor rytiny', value: product.engraver },
-    { label: 'Hmotnost', value: product.weight_grams ? `${product.weight_grams} g` : null },
+    { key: 'category', label: tProduct('specs.category'), value: product.category },
+    { key: 'catalogNumber', label: tProduct('specs.catalogNumber'), value: product.catalog_number },
+    { key: 'releaseDate', label: tProduct('specs.releaseDate'), value: formatDate(product.release_date) },
+    { key: 'dimensions', label: tProduct('specs.dimensions'), value: product.dimensions_mm ? `${product.dimensions_mm} mm` : null },
+    { key: 'designer', label: tProduct('specs.designer'), value: product.designer },
+    { key: 'engraver', label: tProduct('specs.engraver'), value: product.engraver },
+    { key: 'weight', label: tProduct('specs.weight'), value: product.weight_grams ? `${product.weight_grams} g` : null },
   ]
     .filter(param => param.value)
-    .filter(param => !isCreativeArch || ['Kategorie', 'Katalogové číslo', 'Rozměr', 'Hmotnost'].includes(param.label));
+    .filter(param => !isCreativeArch || ['category', 'catalogNumber', 'dimensions', 'weight'].includes(param.key));
 
   return (
     <section className="bg-black text-secondary w-full pt-[32px] md:pt-[54px] lg:pt-[64px] pb-[64px] min-h-screen">
@@ -111,7 +112,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 >
                   <Image 
                     src={img} 
-                    alt={`Náhled ${idx + 1}`} 
+                    alt={tProduct('previewAlt', { index: idx + 1 })}
                     fill 
                     className="object-contain p-2 pointer-events-none" 
                     onDragStart={(e) => e.preventDefault()}
@@ -139,17 +140,17 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               )}
               {product.tag_new && (
                 <span className="style-product-tag bg-tag-novinka text-black px-3 py-1 rounded-full shadow-sm">
-                  novinka
+                  {tProduct('badges.new')}
                 </span>
               )}
               {product.tag_last_pieces && (
                 <span className="style-product-tag bg-tag-posledni-kusy text-black px-3 py-1 rounded-full shadow-sm">
-                  poslední kusy
+                  {tProduct('badges.lastPieces')}
                 </span>
               )}
               {!product.tag_top && !product.tag_new && !product.tag_last_pieces && (
                 <span className="style-product-tag bg-black200 text-black px-3 py-1 rounded-full shadow-sm">
-                  jen u nás
+                  {tProduct('badges.onlyHere')}
                 </span>
               )}
             </div>
@@ -177,7 +178,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Paintbrush size={20} />
-                    Začít tvořit
+                    {tProduct('startCreating')}
                   </span>
                 </Button>
               ) : (
@@ -198,7 +199,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                     });
                   }}
                 >
-                  Do košíku
+                  {t('addToCart')}
                 </Button>
               )}
             </div>
@@ -210,19 +211,19 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   className="w-full flex items-center justify-between cursor-pointer text-left group"
                   onClick={() => setIsParamsOpen(!isParamsOpen)}
                 >
-                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">Parametry</h2>
-                  <svg 
-                    className={`w-6 h-6 transition-transform duration-300 ${isParamsOpen ? 'rotate-180' : ''}`} 
+                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">{tProduct('parametersTitle')}</h2>
+                  <svg
+                    className={`w-6 h-6 transition-transform duration-300 ${isParamsOpen ? 'rotate-180' : ''}`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                
+
                 <div className={`${isParamsOpen ? 'block' : 'hidden'} mt-4 select-none`}>
                   <div className="flex flex-col gap-2">
-                    {productParameters.map((param, idx) => (
-                      <div key={idx} className="flex justify-between border-b border-black300/10 pb-2">
+                    {productParameters.map((param) => (
+                      <div key={param.key} className="flex justify-between border-b border-black300/10 pb-2">
                         <span className="style-body text-[#8B95AC]">{param.label}</span>
                         <span className="style-body text-secondary text-right font-medium">{param.value}</span>
                       </div>
@@ -239,7 +240,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   className="w-full flex items-center justify-between cursor-pointer text-left group"
                   onClick={() => setIsDescOpen(!isDescOpen)}
                 >
-                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">Detailní popis</h2>
+                  <h2 className="style-h4 group-hover:text-primary-hover transition-colors">{tProduct('detailedDescriptionTitle')}</h2>
                   <svg 
                     className={`w-6 h-6 transition-transform duration-300 ${isDescOpen ? 'rotate-180' : ''}`} 
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -261,7 +262,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
         {/* SOUVISEJÍCÍ PRODUKTY S OCHRANOU */}
         {relatedProducts && relatedProducts.length > 0 && (
           <div className="border-t border-black300/30 pt-16">
-            <h2 className="style-h2 text-center mb-12 select-none">Mohlo by vás také zajímat</h2>
+            <h2 className="style-h2 text-center mb-12 select-none">{tProduct('relatedTitle')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
               {relatedProducts.map((relProd) => {
                 const relLocalizedPrice = getLocalizedPrice(relProd, currency);
@@ -273,7 +274,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   className="group relative bg-[#0F172A] border border-black300/30 rounded p-[24px] flex flex-col active:bg-black500 active:scale-[0.98] active:z-10 md:hover:bg-black500 md:hover:scale-[1.02] md:hover:z-10 transition-all duration-300"
                   onContextMenu={(e) => e.preventDefault()}
                 >
-                  <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={`Detail produktu ${relLocalizedName}`}></Link>
+                  <Link href={`/produkt/${relProd.id}`} className="absolute inset-0 z-20 rounded" aria-label={tProduct('detailAria', { name: relLocalizedName })}></Link>
                   <div
                     className="relative w-full h-[120px] bg-transparent mb-6 flex-shrink-0 z-10 overflow-hidden flex items-center justify-center select-none"
                     onContextMenu={(e) => e.preventDefault()}
@@ -330,7 +331,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <div className="relative w-full max-w-[90vw] max-h-[90vh] aspect-square md:aspect-auto md:h-full">
             <Image 
               src={lightboxImg} 
-              alt="Detailní náhled" 
+              alt={tProduct('detailedPreviewAlt')}
               fill 
               className="object-contain pointer-events-none" 
               onDragStart={(e) => e.preventDefault()}
