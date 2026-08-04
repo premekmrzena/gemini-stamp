@@ -39,14 +39,8 @@
     "accept": "Accept all",
     "save": "Save selection",
     "categories": {
-      "analytics": {
-        "title": "Analytics",
-        "description": "Helps us understand traffic and customer behavior on the shop (Google Analytics)."
-      },
-      "marketing": {
-        "title": "Marketing",
-        "description": "Enables personalized ads and remarketing (e.g. Google Ads)."
-      }
+      "analytics": "Analytics",
+      "marketing": "Marketing"
     }
   },
   "home": {

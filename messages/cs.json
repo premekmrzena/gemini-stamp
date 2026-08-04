@@ -39,14 +39,8 @@
     "accept": "Přijmout vše",
     "save": "Uložit výběr",
     "categories": {
-      "analytics": {
-        "title": "Analytika",
-        "description": "Pomáhá nám porozumět návštěvnosti a chování zákazníků na e-shopu (Google Analytics)."
-      },
-      "marketing": {
-        "title": "Marketing",
-        "description": "Umožňuje personalizovanou reklamu a remarketing (např. Google Ads)."
-      }
+      "analytics": "Analytika",
+      "marketing": "Marketing"
     }
   },
   "home": {

@@ -49,7 +49,7 @@ export default function CookieConsent() {
   const buttonBase = 'style-body-bold h-11 px-5 rounded-[4px] transition-colors whitespace-nowrap';
   const primaryButton = `${buttonBase} bg-primary text-black hover:bg-primary-hover`;
   const neutralButton = `${buttonBase} bg-transparent border border-black200 text-black hover:border-black300`;
-  const textButton = 'style-body-bold h-11 px-2 text-black underline hover:text-black300 transition-colors whitespace-nowrap';
+  const textButton = 'style-body h-11 px-2 text-black underline hover:text-black300 transition-colors whitespace-nowrap';
 
   const categories: { key: 'analytics' | 'marketing'; checked: boolean; onChange: (v: boolean) => void }[] = [
     { key: 'analytics', checked: analyticsChecked, onChange: setAnalyticsChecked },
@@ -66,29 +66,28 @@ export default function CookieConsent() {
           </Link>
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          {categories.map(({ key, checked, onChange }) => (
-            <label key={key} className="flex items-start gap-3 cursor-pointer flex-1">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={(e) => onChange(e.target.checked)}
-                className="w-5 h-5 mt-0.5 accent-primary rounded shrink-0"
-              />
-              <span>
-                <span className="style-body-bold text-black block">{t(`categories.${key}.title`)}</span>
-                <span className="style-body text-black300 text-sm">{t(`categories.${key}.description`)}</span>
-              </span>
-            </label>
-          ))}
-        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex flex-wrap gap-4">
+            {categories.map(({ key, checked, onChange }) => (
+              <label key={key} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => onChange(e.target.checked)}
+                  className="w-5 h-5 accent-primary rounded shrink-0"
+                />
+                <span className="style-body text-black">{t(`categories.${key}`)}</span>
+              </label>
+            ))}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          <button className={textButton} onClick={() => apply({ analytics: analyticsChecked, marketing: marketingChecked })}>
-            {t('save')}
-          </button>
-          <button className={neutralButton} onClick={() => apply({ analytics: false, marketing: false })}>{t('reject')}</button>
-          <button className={primaryButton} onClick={() => apply({ analytics: true, marketing: true })}>{t('accept')}</button>
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <button className={textButton} onClick={() => apply({ analytics: analyticsChecked, marketing: marketingChecked })}>
+              {t('save')}
+            </button>
+            <button className={neutralButton} onClick={() => apply({ analytics: false, marketing: false })}>{t('reject')}</button>
+            <button className={primaryButton} onClick={() => apply({ analytics: true, marketing: true })}>{t('accept')}</button>
+          </div>
         </div>
       </div>
     </div>
