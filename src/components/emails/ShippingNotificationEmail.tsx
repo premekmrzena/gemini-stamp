@@ -12,6 +12,11 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
   customerName,
   trackingNumber,
 }) => {
+  // Česká pošta je jediný dopravce, který zatím integrujeme (viz docs/10) - odkaz
+  // na jejich veřejné Track & Trace, ne přes lib/ceska-posta.ts (ten za sebou táhne
+  // TLS cert + nAPI auth, zbytečná zátěž jen kvůli sestavení URL).
+  const trackingUrl = `https://www.postaonline.cz/trackandtrace/-/zasilka/cislo?parcelNumbers=${encodeURIComponent(trackingNumber)}`;
+
   return (
     <EmailLayout footerNote="This email is an automatic notification that your order has shipped.">
       <h2 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: '600' }}>
@@ -19,7 +24,7 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has just been shipped.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has just been shipped.
       </p>
 
       <div style={{
@@ -36,6 +41,22 @@ export const ShippingNotificationEmail: React.FC<Readonly<ShippingEmailProps>> =
         <p style={{ margin: '8px 0 0 0', fontSize: '20px', fontWeight: '600', color: '#22C55E' }}>
           {trackingNumber}
         </p>
+        <a
+          href={trackingUrl}
+          style={{
+            display: 'inline-block',
+            marginTop: '16px',
+            padding: '10px 24px',
+            backgroundColor: '#FF6B35',
+            color: '#0F172A',
+            fontSize: '14px',
+            fontWeight: '600',
+            textDecoration: 'none',
+            borderRadius: '6px'
+          }}
+        >
+          Track your shipment
+        </a>
       </div>
     </EmailLayout>
   );

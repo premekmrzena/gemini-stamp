@@ -17,7 +17,7 @@ export const OrderCancelledEmail: React.FC<Readonly<OrderCancelledEmailProps>> =
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has been cancelled and will not be processed further.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has been cancelled and will not be processed further.
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
         If you&apos;ve already paid for the order, we&apos;ll refund it to the same payment method within the next few days.

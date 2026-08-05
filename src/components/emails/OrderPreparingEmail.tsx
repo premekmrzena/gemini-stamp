@@ -17,7 +17,7 @@ export const OrderPreparingEmail: React.FC<Readonly<OrderPreparingEmailProps>> =
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> is now being prepared. We&apos;ll let you know as soon as it&apos;s on its way.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;is now being prepared. We&apos;ll let you know as soon as it&apos;s on its way.
       </p>
     </EmailLayout>
   );

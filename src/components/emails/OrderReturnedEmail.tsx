@@ -17,7 +17,7 @@ export const OrderReturnedEmail: React.FC<Readonly<OrderReturnedEmailProps>> = (
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has been returned to us.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has been returned to us.
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
         If a refund is due, we&apos;ll send you a separate confirmation once it&apos;s been processed. If you have any questions, feel free to reply to this email.

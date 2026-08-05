@@ -17,7 +17,7 @@ export const OrderPickedUpEmail: React.FC<Readonly<OrderPickedUpEmailProps>> = (
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        we&apos;ve marked your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> as picked up. Thank you for shopping with us!
+        we&apos;ve marked your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;as picked up. Thank you for shopping with us!
       </p>
     </EmailLayout>
   );

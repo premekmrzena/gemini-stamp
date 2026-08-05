@@ -324,11 +324,12 @@ type SendOrderClosedParams = {
   email: string;
   orderId: string;
   customerName: string;
+  discountCode?: string;
 };
 
-export async function sendOrderClosed({ email, orderId, customerName }: SendOrderClosedParams) {
+export async function sendOrderClosed({ email, orderId, customerName, discountCode }: SendOrderClosedParams) {
   const emailHtml = await render(
-    React.createElement(OrderClosedEmail, { orderId, customerName })
+    React.createElement(OrderClosedEmail, { orderId, customerName, discountCode })
   );
 
   return resend.emails.send({

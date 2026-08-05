@@ -17,7 +17,7 @@ export const ReadyForPickupEmail: React.FC<Readonly<ReadyForPickupEmailProps>> =
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> is waiting for you at our store.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;is waiting for you at our store.
       </p>
 
       <div style={{

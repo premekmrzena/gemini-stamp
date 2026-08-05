@@ -54,8 +54,16 @@
   - `ReadyForPickupEmail` – připraveno k osobnímu odběru (stav `K vyzvednutí`)
   - `OrderCancelledEmail` – zrušení objednávky (stav `Zrušeno`)
   - `RefundedEmail` – vrácení platby (stav `Vráceny peníze`)
+  - `AwaitingPaymentEmail` – čekání na platbu (stav `Čekáme na platbu`)
+  - `OrderPreparingEmail` – příprava objednávky (stav `Připravujeme`)
+  - `OrderDeliveredEmail` – doručeno (stav `Doručeno`)
+  - `OrderPickedUpEmail` – vyzvednuto (stav `Vyzvednuto`)
+  - `OrderReturnedEmail` – vráceno (stav `Vráceno`)
+  - `ShipmentLostEmail` – ztracená zásilka (stav `Ztracená zásilka`)
+  - `ComplaintRegisteredEmail` – zaevidovaná reklamace (stav `Reklamace`)
+  - `OrderClosedEmail` – uzavřená objednávka (stav `Uzavřeno`)
 - **Časování potvrzení objednávky** (od 2026-07-24): u platby převodem se posílá hned v `POST /api/create-order` (obsahuje platební pokyny). U platby kartou se **neposílá** při vytvoření objednávky (status `Nová`) – teprve `POST /api/stripe-webhook` po `payment_intent.succeeded` dotáhne objednávku a pošle ho, s pojistkou proti duplicitě při redeliveru stejného Stripe eventu (kontrola `status !== 'Zaplaceno'` před odesláním, viz `sendOrderConfirmationForCardPayment` ve webhooku).
-- **Notifikace podle stavu objednávky** (od 2026-07-24): `PaymentReceivedEmail`/`ReadyForPickupEmail`/`OrderCancelledEmail`/`RefundedEmail` se posílají automaticky, když admin v dashboardu změní stav objednávky na `Zaplaceno`/`K vyzvednutí`/`Zrušeno`/`Vráceny peníze` (`updateOrderStatus()` → `POST /api/admin/notify-order-status`, mapování v `STATUS_EMAIL_NOTIFICATIONS`). `Zaplaceno` u platby kartou touhle cestou v běžném provozu neprojde – tam odchází rovnou plnohodnotné potvrzení objednávky přes webhook (viz výše), aby zákazník nedostal dva podobné e-maily za sebou. Ostatní stavy (`Připravujeme`, `Doručeno`, `Vyzvednuto`, `Uzavřeno`, `Vráceno`, `Ztracená zásilka`, `Reklamace`) zatím žádný automatický e-mail nemají.
+- **Notifikace podle stavu objednávky** (rozšířeno 2026-08-05 z 4 na 12 stavů): každá změna stavu v dashboardu kromě `Nová` a `Odesláno` (ty mají vlastní cestu, viz výše/níže) pošle automaticky odpovídající e-mail (`updateOrderStatus()` → `POST /api/admin/notify-order-status`, mapování v `STATUS_EMAIL_NOTIFICATIONS`). `Zaplaceno` u platby kartou touhle cestou v běžném provozu neprojde – tam odchází rovnou plnohodnotné potvrzení objednávky přes webhook (viz výše), aby zákazník nedostal dva podobné e-maily za sebou.
 - Notifikaci o odeslání zásilky spouští admin manuálně v dashboardu (zadání sledovacího čísla → `POST /api/send-shipping-notification`), viz [sekce 5](05-administrace.md#2-záložka-objednávky) – nezávislé na stavovém mechanismu výše.
 - **Odesílá se z `objednavky@mycreativestamp.com`** (od 2026-07-24) – vlastní doména ověřená v Resendu (DKIM/SPF/MX, id `eee884ad-735d-4615-a684-eb3df569e5a3`, status `verified`), `EMAIL_FROM` konstanta v `src/lib/email.ts`. Sandbox limit (doručení jen na ověřenou adresu vlastníka účtu) už neplatí.
 - **API klíč** – `mycreativestamp-production`, oprávnění jen `sending_access` (appka jen odesílá, nespravuje domény/klíče). Starší `full_access` klíč "Onboarding" zůstává aktivní ve Vercel produkčním prostředí, dokud tam někdo ručně nepřepne `RESEND_API_KEY` na nový – pak lze "Onboarding" smazat v Resend dashboardu.

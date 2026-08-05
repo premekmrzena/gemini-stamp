@@ -23,7 +23,7 @@ export const RefundedEmail: React.FC<Readonly<RefundedEmailProps>> = ({
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        we&apos;ve refunded the payment for your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> to your payment method. Depending on your bank, it may take a few business days to appear in your account.
+        we&apos;ve refunded the payment for your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;to your payment method. Depending on your bank, it may take a few business days to appear in your account.
       </p>
 
       <div style={{

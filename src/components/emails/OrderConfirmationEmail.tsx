@@ -28,7 +28,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has been successfully received and we&apos;ll start preparing it soon.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has been successfully received and we&apos;ll start preparing it soon.
       </p>
 
       {/* TABULKA POLOŽEK */}

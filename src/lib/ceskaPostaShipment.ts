@@ -82,6 +82,20 @@ export type UsShipmentContext = {
   usdRateToEur: number | null;
 };
 
+// Skutečná podací adresa (stejná jako ZONOS_ORIGIN_ADDRESS v src/lib/zonos.ts, NE sídlo
+// firmy - vyjde tu stejně, ale je to schválně samostatná konstanta pro tenhle jiný účel).
+// Bez tohohle ČP na štítek/do podacího systému doplní odesílatele podle údajů zaregistrovaných
+// k podacímu místu (`locationNumber`) - u téhle smlouvy je to osobní jméno, ne název firmy
+// (zjištěno 2026-08-05 z reálně vytištěného štítku).
+const SENDER_ADDRESS = {
+  companyName: 'DVKS s.r.o.',
+  street: 'Nad Studánkou',
+  houseNumber: '393',
+  city: 'Světice',
+  zipCode: '25101',
+  isoCountry: 'CZ',
+};
+
 /**
  * Sestaví request tělo pro POST /parcelService, přesně podle kombinací ověřených proti demo
  * API (viz paměť projektu) - RR + služba 50, VL + služba 7 (+ insuredValue + celní prohlášení
@@ -209,6 +223,7 @@ export function buildParcelServiceRequest(
           postCode: headerConfig.postCode,
           locationNumber: headerConfig.locationNumber,
         },
+        senderAddress: SENDER_ADDRESS,
       },
       parcelServiceData: {
         parcelParams,
