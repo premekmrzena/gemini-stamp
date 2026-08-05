@@ -22,7 +22,7 @@
 | `OrderReturnedEmail` | Admin ručně nastaví stav `Vráceno` | `POST /api/admin/notify-order-status` |
 | `ShipmentLostEmail` | Admin ručně nastaví stav `Ztracená zásilka` | `POST /api/admin/notify-order-status` |
 | `ComplaintRegisteredEmail` | Admin ručně nastaví stav `Reklamace` | `POST /api/admin/notify-order-status` |
-| `OrderClosedEmail` | Admin ručně nastaví stav `Uzavřeno` | `POST /api/admin/notify-order-status` |
+| `OrderClosedEmail` | Admin ručně nastaví stav `Uzavřeno` | `POST /api/admin/notify-order-status` (přiloží i nově vygenerovaný jednorázový 10% slevový kód, viz [sekce 5](05-administrace.md#detail-objednávky)) |
 | `ShippingNotificationEmail` | Admin zadá sledovací číslo zásilky u objednávky (obsahuje i odkaz na Track & Trace České pošty, přidáno 2026-08-05) | `POST /api/send-shipping-notification` (`handleSaveTrackingNumber` v dashboardu) |
 
 Jediné stavy bez automatického e-mailu jsou `Nová` (řeší `OrderConfirmationEmail` z `create-order`/Stripe webhooku) a `Odesláno` (vlastní cesta přes `ShippingNotificationEmail`, viz řádek výše) – mapování je v `STATUS_EMAIL_NOTIFICATIONS` (`src/app/admin/dashboard/page.tsx`).

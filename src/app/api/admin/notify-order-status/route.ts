@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import {
   sendPaymentReceived,
   sendReadyForPickup,
@@ -14,7 +15,45 @@ import {
   sendOrderClosed,
 } from '@/lib/email';
 import { createInvoiceForOrder, getInvoicePdf, payAndFinalizeProforma, IdokladInvoiceInfo } from '@/lib/idoklad';
+import { generateDiscountCode } from '@/lib/discountCode';
 import { OrderStatus, Currency } from '@/types/database';
+
+// Service role klient (stejný lazy-init vzor jako /api/admin/update-order) - discount_codes
+// RLS pustí jen authenticated roli, tahle route ale běží server-side bez uživatelské session.
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
+const THANK_YOU_DISCOUNT_PERCENT = 10;
+const THANK_YOU_DISCOUNT_VALID_DAYS = 90;
+
+/**
+ * Vygeneruje a uloží jednorázový (max_uses: 1) slevový kód pro zákazníka, jehož objednávka
+ * byla uzavřena - "poděkování" za nákup, viz sendOrderClosed. Pár pokusů pro nepravděpodobnou
+ * kolizi kódu (unique constraint na discount_codes.code); vrací null při selhání, ať
+ * nevygenerovaný kód nikdy nezablokuje samotné odeslání e-mailu o uzavření objednávky.
+ */
+async function createThankYouDiscountCode(): Promise<string | null> {
+  const admin = getSupabaseAdmin();
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const code = generateDiscountCode('THANKS10');
+    const { error } = await admin.from('discount_codes').insert({
+      code,
+      type: 'percentage',
+      value: THANK_YOU_DISCOUNT_PERCENT,
+      max_uses: 1,
+      valid_from: null,
+      valid_until: new Date(Date.now() + THANK_YOU_DISCOUNT_VALID_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+      is_active: true,
+    });
+    if (!error) return code;
+    console.error(`Chyba při vytváření poděkovacího slevového kódu (pokus ${attempt + 1}/3):`, error);
+  }
+  return null;
+}
 
 // Admin už má objednávku načtenou client-side (přihlášený, authenticated role) - stejný vzor
 // jako existující /api/send-shipping-notification, žádné další čtení z DB tu není potřeba.
@@ -97,9 +136,11 @@ export async function POST(request: Request) {
       case 'Reklamace':
         await sendComplaintRegistered({ email, orderId, customerName });
         break;
-      case 'Uzavřeno':
-        await sendOrderClosed({ email, orderId, customerName });
+      case 'Uzavřeno': {
+        const discountCode = await createThankYouDiscountCode();
+        await sendOrderClosed({ email, orderId, customerName, discountCode: discountCode ?? undefined });
         break;
+      }
       default:
         // 'Nová' a 'Odesláno' nemají mapovaný email tady - Nová řeší create-order/Stripe
         // webhook, Odesláno má vlastní tok se sledovacím číslem (ShipmentModal, viz

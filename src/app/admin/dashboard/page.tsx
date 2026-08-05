@@ -14,7 +14,7 @@ import { getEffectivePrice } from '@/lib/pricing';
 import { Currency, formatPrice } from '@/lib/currency';
 import {
   ShoppingBag, TrendingUp, X, Package, User,
-  MapPin, Calendar, Search,
+  MapPin, Calendar, Search, Globe, Phone,
   LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt,
   Sparkles, Printer, History, FileImage, BarChart3, Info, MessageSquare,
 } from 'lucide-react';
@@ -1963,8 +1963,9 @@ export default function AdminDashboard() {
                   </h3>
                   <div>
                     <p className="style-h4 text-secondary">{selectedOrder.billing_first_name} {selectedOrder.billing_last_name}</p>
-                    <p className="style-body text-black300 mt-1">{selectedOrder.billing_email}</p>
-                    <p className="style-body text-black300">{selectedOrder.billing_phone}</p>
+                    <p className="style-body text-black300 mt-1 flex items-center gap-1.5"><Mail size={12} /> {selectedOrder.billing_email}</p>
+                    <p className="style-body text-black300 flex items-center gap-1.5"><Phone size={12} /> {selectedOrder.billing_phone}</p>
+                    <p className="style-body text-black300 flex items-center gap-1.5"><Globe size={12} /> {selectedOrder.billing_country}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
