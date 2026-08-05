@@ -7,6 +7,14 @@ import { PaymentReceivedEmail } from '@/components/emails/PaymentReceivedEmail';
 import { ReadyForPickupEmail } from '@/components/emails/ReadyForPickupEmail';
 import { OrderCancelledEmail } from '@/components/emails/OrderCancelledEmail';
 import { RefundedEmail } from '@/components/emails/RefundedEmail';
+import { AwaitingPaymentEmail } from '@/components/emails/AwaitingPaymentEmail';
+import { OrderPreparingEmail } from '@/components/emails/OrderPreparingEmail';
+import { OrderDeliveredEmail } from '@/components/emails/OrderDeliveredEmail';
+import { OrderPickedUpEmail } from '@/components/emails/OrderPickedUpEmail';
+import { OrderReturnedEmail } from '@/components/emails/OrderReturnedEmail';
+import { ShipmentLostEmail } from '@/components/emails/ShipmentLostEmail';
+import { ComplaintRegisteredEmail } from '@/components/emails/ComplaintRegisteredEmail';
+import { OrderClosedEmail } from '@/components/emails/OrderClosedEmail';
 import { CartItemSnapshot, Currency } from '@/types/database';
 import { generatePaymentQrCodeBuffer, getVariableSymbol } from '@/lib/czechQrPayment';
 
@@ -173,6 +181,160 @@ export async function sendRefunded({ email, orderId, customerName, refundAmount,
     from: EMAIL_FROM,
     to: [email],
     subject: `Payment for order #${orderId} refunded – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendAwaitingPaymentParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+  totalPrice: number;
+  currency: Currency;
+};
+
+export async function sendAwaitingPayment({ email, orderId, customerName, totalPrice, currency }: SendAwaitingPaymentParams) {
+  const emailHtml = await render(
+    React.createElement(AwaitingPaymentEmail, { orderId, customerName, totalPrice, currency })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} awaiting payment – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendOrderPreparingParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendOrderPreparing({ email, orderId, customerName }: SendOrderPreparingParams) {
+  const emailHtml = await render(
+    React.createElement(OrderPreparingEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} is being prepared – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendOrderDeliveredParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendOrderDelivered({ email, orderId, customerName }: SendOrderDeliveredParams) {
+  const emailHtml = await render(
+    React.createElement(OrderDeliveredEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} has been delivered – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendOrderPickedUpParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendOrderPickedUp({ email, orderId, customerName }: SendOrderPickedUpParams) {
+  const emailHtml = await render(
+    React.createElement(OrderPickedUpEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} picked up – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendOrderReturnedParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendOrderReturned({ email, orderId, customerName }: SendOrderReturnedParams) {
+  const emailHtml = await render(
+    React.createElement(OrderReturnedEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} was returned – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendShipmentLostParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendShipmentLost({ email, orderId, customerName }: SendShipmentLostParams) {
+  const emailHtml = await render(
+    React.createElement(ShipmentLostEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} shipment update – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendComplaintRegisteredParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendComplaintRegistered({ email, orderId, customerName }: SendComplaintRegisteredParams) {
+  const emailHtml = await render(
+    React.createElement(ComplaintRegisteredEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} complaint registered – My Creative Stamp`,
+    html: emailHtml,
+  });
+}
+
+type SendOrderClosedParams = {
+  email: string;
+  orderId: string;
+  customerName: string;
+};
+
+export async function sendOrderClosed({ email, orderId, customerName }: SendOrderClosedParams) {
+  const emailHtml = await render(
+    React.createElement(OrderClosedEmail, { orderId, customerName })
+  );
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [email],
+    subject: `Order #${orderId} closed – My Creative Stamp`,
     html: emailHtml,
   });
 }

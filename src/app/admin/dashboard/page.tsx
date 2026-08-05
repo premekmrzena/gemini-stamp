@@ -134,9 +134,24 @@ const PICKUP_FLOW: OrderStatus[] = ['Nová', 'Čekáme na platbu', 'Zaplaceno', 
 const SHIPPING_FLOW: OrderStatus[] = ['Nová', 'Čekáme na platbu', 'Zaplaceno', 'Připravujeme', 'Odesláno', 'Doručeno', 'Uzavřeno'];
 
 // Stavy, u kterých změna přes updateOrderStatus() automaticky pošle zákazníkovi email
-// (viz /api/admin/notify-order-status). Odesláno má vlastní tok přes sledovací číslo
-// (ShipmentModal / handleSaveTrackingNumber), ne přes tenhle dropdown/"Další krok".
-const STATUS_EMAIL_NOTIFICATIONS = new Set<OrderStatus>(['Zaplaceno', 'K vyzvednutí', 'Zrušeno', 'Vráceny peníze']);
+// (viz /api/admin/notify-order-status). Každý stav má vlastní e-mail KROMĚ:
+// - 'Nová' - řeší create-order/Stripe webhook (potvrzení objednávky), ne admin dropdown.
+// - 'Odesláno' - má vlastní tok přes sledovací číslo (ShipmentModal / handleSaveTrackingNumber),
+//   e-mail bez trackovacího čísla by nedával smysl, tenhle dropdown ho záměrně neposílá.
+const STATUS_EMAIL_NOTIFICATIONS = new Set<OrderStatus>([
+  'Čekáme na platbu',
+  'Připravujeme',
+  'Zaplaceno',
+  'K vyzvednutí',
+  'Doručeno',
+  'Vyzvednuto',
+  'Zrušeno',
+  'Vráceno',
+  'Vráceny peníze',
+  'Ztracená zásilka',
+  'Reklamace',
+  'Uzavřeno',
+]);
 
 // Vrací další stav v "šťastné cestě" objednávky podle způsobu dopravy.
 // Stavy mimo tuto cestu (Zrušeno, Vráceno, Reklamace...) jsou výjimky řešené jen manuálně přes select.

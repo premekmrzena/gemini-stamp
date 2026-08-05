@@ -1,5 +1,18 @@
 import { NextResponse } from 'next/server';
-import { sendPaymentReceived, sendReadyForPickup, sendOrderCancelled, sendRefunded } from '@/lib/email';
+import {
+  sendPaymentReceived,
+  sendReadyForPickup,
+  sendOrderCancelled,
+  sendRefunded,
+  sendAwaitingPayment,
+  sendOrderPreparing,
+  sendOrderDelivered,
+  sendOrderPickedUp,
+  sendOrderReturned,
+  sendShipmentLost,
+  sendComplaintRegistered,
+  sendOrderClosed,
+} from '@/lib/email';
 import { createInvoiceForOrder, getInvoicePdf, payAndFinalizeProforma, IdokladInvoiceInfo } from '@/lib/idoklad';
 import { OrderStatus, Currency } from '@/types/database';
 
@@ -63,8 +76,34 @@ export async function POST(request: Request) {
       case 'Vráceny peníze':
         await sendRefunded({ email, orderId, customerName, refundAmount: totalPrice, currency });
         break;
+      case 'Čekáme na platbu':
+        await sendAwaitingPayment({ email, orderId, customerName, totalPrice, currency });
+        break;
+      case 'Připravujeme':
+        await sendOrderPreparing({ email, orderId, customerName });
+        break;
+      case 'Doručeno':
+        await sendOrderDelivered({ email, orderId, customerName });
+        break;
+      case 'Vyzvednuto':
+        await sendOrderPickedUp({ email, orderId, customerName });
+        break;
+      case 'Vráceno':
+        await sendOrderReturned({ email, orderId, customerName });
+        break;
+      case 'Ztracená zásilka':
+        await sendShipmentLost({ email, orderId, customerName });
+        break;
+      case 'Reklamace':
+        await sendComplaintRegistered({ email, orderId, customerName });
+        break;
+      case 'Uzavřeno':
+        await sendOrderClosed({ email, orderId, customerName });
+        break;
       default:
-        // Ostatní stavy nemají mapovaný email - no-op, ne chyba.
+        // 'Nová' a 'Odesláno' nemají mapovaný email tady - Nová řeší create-order/Stripe
+        // webhook, Odesláno má vlastní tok se sledovacím číslem (ShipmentModal, viz
+        // /api/send-shipping-notification). Ne chyba, no-op.
         break;
     }
 
