@@ -17,7 +17,7 @@ export const OrderDeliveredEmail: React.FC<Readonly<OrderDeliveredEmailProps>> =
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has been delivered. We hope you enjoy it!
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has been delivered. We hope you enjoy it!
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
         If anything isn&apos;t right, feel free to reply to this email and we&apos;ll sort it out.

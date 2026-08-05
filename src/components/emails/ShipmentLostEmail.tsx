@@ -17,7 +17,7 @@ export const ShipmentLostEmail: React.FC<Readonly<ShipmentLostEmailProps>> = ({
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        it looks like your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> has gone missing in transit. We&apos;re sorry for the inconvenience.
+        it looks like your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has gone missing in transit. We&apos;re sorry for the inconvenience.
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
         We&apos;re looking into it with the carrier and will be in touch shortly to sort out a solution. If you&apos;d like to reach us in the meantime, just reply to this email.

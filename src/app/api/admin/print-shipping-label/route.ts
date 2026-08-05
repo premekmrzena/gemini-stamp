@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ceskaPostaRequest, getCeskaPostaConfig } from '@/lib/ceska-posta';
 
-// idForm 101 = "Harmonized label, samostatný" - běžný A4 tisk (ne Zebra termotiskárna).
-// Snadno změnitelné, pokud se pořídí štítková tiskárna - viz docs/api/ceska-posta-b2b-zsk-1.13.0.yaml
-// (schema IdForm) pro další kódy (200/201/202 = Zebra 105x148/100x150/100x125).
-const LABEL_FORM_ID = 101;
+// idForm 20 = "adresní štítek bianco - 4x (A4)" - běžný A4 tisk (ne Zebra termotiskárna).
+// Původně nastaveno na 101 ("Harmonizovaný štítek") - to je ale určené pro balíkové
+// zásilky, ne pro dopisové produkty (Doporučené/Cenné psaní), které eshop posílá; ČP na
+// ně vracela 378 INVALID_PREFIX_COMBINATION (ověřeno živě proti demu 2026-08-05, viz
+// docs/06). idForm 20 funguje spolehlivě napříč typy zásilek. Snadno změnitelné, pokud
+// se pořídí štítková tiskárna - viz docs/api/ceska-posta-b2b-zsk-1.13.0.yaml (schema
+// IdForm) pro další kódy (200/201/202 = Zebra 105x148/100x150/100x125).
+const LABEL_FORM_ID = 20;
 
 // Vrací PDF adresního štítku pro už podanou zásilku (POST /parcelPrinting, ZSK služba) -
 // stejný `inline` PDF response pattern jako /api/admin/idoklad-invoice-pdf.

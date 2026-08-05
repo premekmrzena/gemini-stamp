@@ -17,7 +17,7 @@ export const ComplaintRegisteredEmail: React.FC<Readonly<ComplaintRegisteredEmai
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        we&apos;ve registered a complaint for your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> and we&apos;re now looking into it.
+        we&apos;ve registered a complaint for your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;and we&apos;re now looking into it.
       </p>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
         We&apos;ll get back to you with an update as soon as possible. If you&apos;d like to add any details, just reply to this email.

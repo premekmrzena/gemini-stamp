@@ -23,7 +23,7 @@ export const AwaitingPaymentEmail: React.FC<Readonly<AwaitingPaymentEmailProps>>
       </h2>
       <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1' }}>
         Hi {customerName},<br />
-        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong> is currently awaiting payment. As soon as we receive it, we&apos;ll start preparing your order.
+        your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;is currently awaiting payment. As soon as we receive it, we&apos;ll start preparing your order.
       </p>
 
       <div style={{
