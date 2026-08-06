@@ -56,7 +56,7 @@ export function EmailLayout({ footerNote, children }: EmailLayoutProps) {
           textAlign: 'center',
           lineHeight: '1.5'
         }}>
-          <p style={{ margin: '0 0 10px 0' }}>My Creative Stamp • Jindřišská 126/15, Prague 1</p>
+          <p style={{ margin: '0 0 10px 0' }}>My Creative Stamp • Tržiště 3, Malá Strana, Prague 1</p>
           <p style={{ margin: '0' }}>{footerNote}</p>
         </div>
       </div>

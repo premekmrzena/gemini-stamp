@@ -32,7 +32,10 @@ export const ReadyForPickupEmail: React.FC<Readonly<ReadyForPickupEmailProps>> =
           Pickup location
         </p>
         <p style={{ margin: '8px 0 0 0', fontSize: '18px', fontWeight: '600', color: '#FDFBF7' }}>
-          Jindřišská 126/15, Prague 1
+          In Arte veritas
+        </p>
+        <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#CBD5E1' }}>
+          Tržiště 3, Malá Strana, Prague 1 &middot; Open daily 12–8 PM
         </p>
       </div>
 

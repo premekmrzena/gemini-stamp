@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import { ShippingOption, PaymentOption, INTERNATIONAL_COUNTRIES } from '@/lib/constants';
 import { Currency, formatPrice } from '@/lib/currency';
 import { ApplePayBadge, GooglePayBadge } from '@/components/PayBadges';
+import { AddressMapLink } from '@/components/PickupPartner';
 
 type Props = {
   shippingOptions: ShippingOption[];
@@ -35,7 +36,20 @@ export default function ShippingStep({
   // linka za posledním produktem - uzavírá to border na obalovém pl-9 kontejneru) - linka mezi
   // produkty se objeví jen mezi nimi (Cenné psaní/EMS), když jsou dostupné oba zároveň.
   const renderOption = (option: ShippingOption, withBorder: boolean = true) => {
-    const desc = option.id === 'ceska' ? t('options.ceska.descRegistered') : t(`options.${option.id}.desc`);
+    const desc = option.id === 'osobni'
+      ? t.rich('options.osobni.desc', {
+          addr: (chunks) => (
+            <AddressMapLink
+              mapsLabel={t('openInGoogleMaps')}
+              className="underline decoration-primary/50 underline-offset-2 hover:text-primary transition-colors"
+            >
+              {chunks}
+            </AddressMapLink>
+          ),
+        })
+      : option.id === 'ceska'
+        ? t('options.ceska.descRegistered')
+        : t(`options.${option.id}.desc`);
     return (
       <label key={option.id} className={`py-5 flex items-start gap-4 cursor-pointer ${withBorder ? 'border-b border-white/10' : ''}`}>
         <div className={`mt-[2px] w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center ${selectedShipping === option.id ? 'border-secondary' : 'border-black200'}`}>

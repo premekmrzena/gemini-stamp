@@ -3,6 +3,8 @@ import { getTranslations } from 'next-intl/server';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { BANK_ACCOUNT_NUMBER, BANK_NAME, BANK_IBAN, BANK_SWIFT } from '@/lib/czechQrPayment';
+import { ArteVeritasLink } from '@/components/PickupPartner';
+import { ARTE_VERITAS_ADDRESS } from '@/lib/pickupPartner';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -58,7 +60,7 @@ function Row({
 }: {
   title: string;
   price?: string;
-  text?: string;
+  text?: React.ReactNode;
   href?: string;
   lines?: { label: string; value: string; href?: string }[];
   icon?: string;
@@ -140,12 +142,15 @@ function MapPreview({ address, openInGoogleMapsLabel }: { address: string; openI
 export default async function KontaktPage() {
   const t = await getTranslations('contact');
 
-  const pickupAddress = 'Jindřišská 126/15, 110 00 Praha 1';
+  const pickupText = t.rich('rows.pickup.text', {
+    partner: (chunks) => <ArteVeritasLink>{chunks}</ArteVeritasLink>,
+  });
 
   const contactRows = [
     {
       title: t('rows.pickup.title'),
-      text: pickupAddress,
+      text: pickupText,
+      mapAddress: ARTE_VERITAS_ADDRESS,
       map: true,
       icon: 'home',
     },
@@ -193,7 +198,7 @@ export default async function KontaktPage() {
           <div className="max-w-[640px] mx-auto">
             {contactRows.map((row) => (
               <Row key={row.title} title={row.title} text={row.text} lines={row.lines} icon={row.icon}>
-                {row.map && row.text && <MapPreview address={row.text} openInGoogleMapsLabel={t('map.openInGoogleMaps')} />}
+                {row.map && row.mapAddress && <MapPreview address={row.mapAddress} openInGoogleMapsLabel={t('map.openInGoogleMaps')} />}
               </Row>
             ))}
           </div>

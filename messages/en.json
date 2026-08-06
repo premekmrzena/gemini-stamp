@@ -322,10 +322,11 @@
         "priceFrom": "from {price}",
         "noneAvailable": "Unfortunately none of our international services can be shipped to the selected country."
       },
+      "openInGoogleMaps": "Open in Google Maps",
       "options": {
         "osobni": {
           "name": "Personal pickup (Prague)",
-          "desc": "You can pick up your order at: Jindřišská 126/15, Prague 1"
+          "desc": "You can pick up your order in the centre of Prague at: <addr>Tržiště 3, Malá Strana</addr>."
         },
         "ceska": {
           "name": "Czech Republic",
@@ -445,7 +446,7 @@
     },
     "shipping": {
       "title": "Shipping and pickup",
-      "pickup": { "title": "Personal pickup (Prague)", "price": "Free", "text": "Pickup at Jindřišská 126/15, Prague 1." },
+      "pickup": { "title": "Personal pickup (Prague)", "price": "Free", "text": "Pickup at our partner <partner>In Arte veritas</partner> in the centre of Prague, near Prague Castle. Open daily 12–8 PM. Address: Tržiště 3, Malá Strana. <maps>Open in Google Maps</maps>. As soon as your order is ready for pickup, we'll let you know by e-mail." },
       "czech": { "title": "Czech Republic", "price": "40–120 CZK", "text": "Price depends on parcel weight — plain letter, registered letter or package." },
       "international": { "title": "International shipping", "price": "150–300 CZK", "text": "Choose your destination country at checkout — price depends on parcel weight." }
     },
@@ -501,7 +502,7 @@
       "perex": "Have a question about your order, a complaint, or just want to know more about the Creative Sheet? Write to us — we usually reply within one business day."
     },
     "rows": {
-      "pickup": { "title": "Pickup location" },
+      "pickup": { "title": "Pickup location", "text": "Tržiště 3, Malá Strana. Pickup at our partner <partner>In Arte veritas</partner> in the centre of Prague, near Prague Castle. Open daily 12–8 PM." },
       "info": { "title": "Contact details", "email": "E-mail", "web": "Website", "phone": "Phone" },
       "invoicing": { "title": "Billing details" },
       "bank": { "title": "Bank details", "accountNumber": "Account number", "bankName": "Bank", "iban": "IBAN", "swift": "SWIFT/BIC" }
@@ -527,7 +528,7 @@
     "questions": {
       "q1": { "question": "How long does producing and delivering a Creative Sheet take?", "answer": "We make a custom Creative Sheet within 1–5 business days of order confirmation and photo upload. Delivery time then depends on the shipping method you choose — usually 1–3 days within the Czech Republic, and varies by destination abroad." },
       "q2": { "question": "Which payment methods do you accept?", "answer": "You can pay online by card through the payment gateway (both payment and order are confirmed instantly), or by bank transfer — payment instructions are sent by e-mail right after your order is completed." },
-      "q3": { "question": "Can I pick up my order in person?", "answer": "Yes, personal pickup is free at Jindřišská 126/15, Prague 1. As soon as your order is ready for pickup, we'll let you know by e-mail." }
+      "q3": { "question": "Can I pick up my order in person?", "answer": "Yes, personal pickup is free at our partner <partner>In Arte veritas</partner> in the centre of Prague, near Prague Castle. Open daily 12–8 PM. Address: Tržiště 3, Malá Strana. <maps>Open in Google Maps</maps>. As soon as your order is ready for pickup, we'll let you know by e-mail." }
     },
     "cta": {
       "title": "Didn't find your answer?",

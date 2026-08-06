@@ -256,7 +256,7 @@ export const getShippingOptions = (weightGrams: number, orderValueCzk: number = 
       id: 'osobni',
       name: 'Osobní odběr (Praha)',
       price: 0,
-      desc: 'Svoji objednávku si můžete vyzvednout na adrese: Jindřišská 126/15, Praha 1',
+      desc: 'Svoji objednávku si můžete vyzvednout v centru Prahy na adrese: Tržiště 3, Malá Strana (In Arte veritas)',
     },
     {
       id: 'ceska',

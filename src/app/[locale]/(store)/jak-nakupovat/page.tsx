@@ -4,6 +4,8 @@ import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import PurchaseCategoriesSection from '@/components/PurchaseCategoriesSection';
 import { ApplePayBadge, GooglePayBadge } from '@/components/PayBadges';
+import { ArteVeritasLink } from '@/components/PickupPartner';
+import { ARTE_VERITAS_MAPS_URL } from '@/lib/pickupPartner';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -26,7 +28,7 @@ function Row({
   index?: string;
   title: string;
   price?: string;
-  text: string;
+  text: React.ReactNode;
   href?: string;
   children?: React.ReactNode;
 }) {
@@ -60,8 +62,22 @@ function Row({
 export default async function JakNakupovatPage() {
   const t = await getTranslations('howToBuy');
 
+  const pickupText = t.rich('shipping.pickup.text', {
+    partner: (chunks) => <ArteVeritasLink>{chunks}</ArteVeritasLink>,
+    maps: (chunks) => (
+      <a
+        href={ARTE_VERITAS_MAPS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-bold underline decoration-primary/50 underline-offset-2 hover:text-primary transition-colors"
+      >
+        {chunks}
+      </a>
+    ),
+  });
+
   const shippingOptions = [
-    { title: t('shipping.pickup.title'), price: t('shipping.pickup.price'), text: t('shipping.pickup.text') },
+    { title: t('shipping.pickup.title'), price: t('shipping.pickup.price'), text: pickupText },
     { title: t('shipping.czech.title'), price: t('shipping.czech.price'), text: t('shipping.czech.text') },
     { title: t('shipping.international.title'), price: t('shipping.international.price'), text: t('shipping.international.text') },
   ];

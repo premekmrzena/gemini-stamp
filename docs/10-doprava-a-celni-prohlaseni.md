@@ -6,7 +6,7 @@
 
 `ShippingStep.tsx` nabízí tři možnosti dopravy:
 
-- **Osobní odběr (Praha)** — zdarma, adresa Jindřišská 126/15.
+- **Osobní odběr (Praha)** — zdarma, u partnera In Arte veritas, adresa Tržiště 3, Malá Strana (otevřeno denně 12–20 h).
 - **Česká republika** (Doporučené psaní, Prioritní) — cena podle váhy zásilky (87–109 Kč dle tabulky v `getShippingOptions()`, `src/lib/constants.ts`), navíc skryté navýšení 10 % na obal (`PACKAGING_MARKUP`, nikde se zákazníkovi neuvádí).
 - **Mezinárodní doprava** — od 2026-07-23 vlastní radio button (ne statický nadpis). Zobrazuje orientační cenu „od X Kč" (nejnižší cena napříč všemi podporovanými zeměmi pro váhu aktuálního košíku, `getMinInternationalPrice()`) a text „Pro finální cenu musíte vybrat cílovou zemi. Celní prohlášení za vás uděláme zdarma." Po zaškrtnutí se pod textem (bez oddělující linky, odsazeno stejně jako text) zobrazí select cílové země — teprve po výběru země se objeví konkrétní nabízené produkty (Cenné psaní do zahraničí a/nebo EMS, podle toho, co ČP pro danou zemi provozuje). Linka odděluje produkty jen když jsou k dispozici oba zároveň.
 
