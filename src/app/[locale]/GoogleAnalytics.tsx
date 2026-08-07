@@ -10,6 +10,25 @@ export default function GoogleAnalytics() {
 
   return (
     <>
+      {/* Trvalé vyloučení vlastních návštěv z GA4 (nezávisle na cookie liště -
+          ta se dá kdykoliv omylem odkliknout na "Přijmout"). Jednorázově otevři
+          web s ?ga_off=1 (?ga_off=0 zase zapne) - uloží se do localStorage a od
+          teď se v tomhle prohlížeči nastaví oficiální gtag.js "ga-disable" flag,
+          který GA hity zahazuje úplně, bez ohledu na consent stav. */}
+      <Script id="ga-opt-out" strategy="beforeInteractive">
+        {`
+          (function () {
+            var params = new URLSearchParams(location.search);
+            if (params.has('ga_off')) {
+              if (params.get('ga_off') === '0') localStorage.removeItem('ga_disable');
+              else localStorage.setItem('ga_disable', '1');
+            }
+            if (localStorage.getItem('ga_disable') === '1') {
+              window['ga-disable-${GA_MEASUREMENT_ID}'] = true;
+            }
+          })();
+        `}
+      </Script>
       <Script id="ga-consent-default" strategy="beforeInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
