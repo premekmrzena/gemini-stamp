@@ -1894,6 +1894,19 @@ export default function AdminDashboard() {
                         <Printer size={14} /> Vytisknout štítek
                       </a>
                     )}
+                    {/* CN22 je u Cenného psaní (VL) samostatný dokument navíc ke štítku
+                        (na rozdíl od EMS, kde je celní prohlášení už na štítku samotném) -
+                        viz komentář v print-shipping-label/route.ts. */}
+                    {selectedOrder.tracking_number?.startsWith('VL') && (
+                      <a
+                        href={`/api/admin/print-shipping-label?orderId=${selectedOrder.id}&type=cn22`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                      >
+                        <Printer size={14} /> Vytisknout CN22
+                      </a>
+                    )}
                   </div>
                 </div>
               )}

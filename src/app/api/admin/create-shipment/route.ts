@@ -73,8 +73,18 @@ export async function POST(request: Request) {
     const parcelCode = parcelResult?.parcelCode;
 
     if (resultHeader?.responseCode !== 1 || !parcelCode) {
+      // Dřív se vracela jen obecná hláška "zásilku nepřijala" a ShipmentModal ukazoval
+      // pouze `error`, ne `detail` - reálný důvod (responseText/parcelStateResponse) byl
+      // vidět jen v server logu, ne v UI. Skládáme čitelnější zprávu rovnou sem.
+      const stateReasons = (parcelResult?.parcelStateResponse ?? [])
+        .filter((r) => r.responseCode !== 1)
+        .map((r) => `${r.responseCode} ${r.responseText}`)
+        .join(', ');
+      const headerReason = resultHeader ? `${resultHeader.responseCode} ${resultHeader.responseText}` : 'bez odpovědi';
+      const reason = stateReasons || headerReason;
+      console.error('Česká pošta zásilku nepřijala:', JSON.stringify(responseData.responseHeader));
       return NextResponse.json(
-        { error: 'Česká pošta zásilku nepřijala.', detail: responseData.responseHeader },
+        { error: `Česká pošta zásilku nepřijala: ${reason}`, detail: responseData.responseHeader },
         { status: 502 }
       );
     }
