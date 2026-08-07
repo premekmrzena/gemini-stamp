@@ -36,7 +36,12 @@ export async function POST(request: Request) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(order.total_price * 100),
       currency: order.currency.toLowerCase(),
-      payment_method_types: ['card'],
+      // Necháváme Stripe vybrat metody automaticky (podle toho, co je zapnuté
+      // v Dashboardu + měna/částka objednávky + prohlížeč zákazníka) - natvrdo
+      // 'card' blokovalo Alipay/WeChat Pay (samostatné typy) i spolehlivé
+      // zobrazení Apple Pay/Google Pay. Frontend (PaymentElement + return_url
+      // redirect flow ve StripePaymentForm.tsx) na to je připravený.
+      automatic_payment_methods: { enabled: true },
       metadata: { orderId: order.id },
     });
 
