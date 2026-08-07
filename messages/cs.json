@@ -447,8 +447,8 @@
     "shipping": {
       "title": "Doprava a osobní odběr",
       "pickup": { "title": "Osobní odběr (Praha)", "price": "Zdarma", "text": "Vyzvednutí na adrese našeho partnera <partner>In Arte veritas</partner> v centru Prahy nedaleko Pražského hradu. Otevřeno denně 12–20 h. Adresa: Tržiště 3, Malá Strana. <maps>Otevřít v Google Maps</maps>. Jakmile bude objednávka připravená k vyzvednutí, dáme vám vědět e-mailem." },
-      "czech": { "title": "Česká republika", "price": "40–120 Kč", "text": "Cena podle hmotnosti zásilky — obyčejné psaní, doporučené psaní nebo balíček." },
-      "international": { "title": "Mezinárodní doprava", "price": "150–300 Kč", "text": "Zemi doručení zvolíte při objednávce, cena záleží na hmotnosti zásilky." }
+      "czech": { "title": "Česká republika", "price": "{min}–{max} Kč", "text": "Cena podle hmotnosti zásilky — obyčejné psaní, doporučené psaní nebo balíček." },
+      "international": { "title": "Mezinárodní doprava", "price": "od {price} Kč", "text": "Zemi doručení zvolíte při objednávce, cena záleží na hmotnosti zásilky." }
     },
     "deliveryTime": {
       "title": "Jak dlouho to trvá?",

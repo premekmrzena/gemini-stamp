@@ -447,8 +447,8 @@
     "shipping": {
       "title": "Shipping and pickup",
       "pickup": { "title": "Personal pickup (Prague)", "price": "Free", "text": "Pickup at our partner <partner>In Arte veritas</partner> in the centre of Prague, near Prague Castle. Open daily 12–8 PM. Address: Tržiště 3, Malá Strana. <maps>Open in Google Maps</maps>. As soon as your order is ready for pickup, we'll let you know by e-mail." },
-      "czech": { "title": "Czech Republic", "price": "40–120 CZK", "text": "Price depends on parcel weight — plain letter, registered letter or package." },
-      "international": { "title": "International shipping", "price": "150–300 CZK", "text": "Choose your destination country at checkout — price depends on parcel weight." }
+      "czech": { "title": "Czech Republic", "price": "{min}–{max} CZK", "text": "Price depends on parcel weight — plain letter, registered letter or package." },
+      "international": { "title": "International shipping", "price": "from {price} CZK", "text": "Choose your destination country at checkout — price depends on parcel weight." }
     },
     "deliveryTime": {
       "title": "How long does it take?",

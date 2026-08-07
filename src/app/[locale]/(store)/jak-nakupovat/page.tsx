@@ -3,9 +3,10 @@ import { getTranslations } from 'next-intl/server';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import PurchaseCategoriesSection from '@/components/PurchaseCategoriesSection';
-import { ApplePayBadge, GooglePayBadge } from '@/components/PayBadges';
+import { ApplePayBadge, GooglePayBadge, AlipayBadge } from '@/components/PayBadges';
 import { ArteVeritasLink } from '@/components/PickupPartner';
 import { ARTE_VERITAS_MAPS_URL } from '@/lib/pickupPartner';
+import { getShippingOptions, getMinInternationalPrice } from '@/lib/constants';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -76,10 +77,19 @@ export default async function JakNakupovatPage() {
     ),
   });
 
+  // Ceny počítané ze stejného zdroje jako checkout (src/lib/constants.ts), ne
+  // natvrdo v překladech - ať se stránka sama neodchýlí od ceníku ČP jako předtím
+  // (statické "40–120 Kč"/"150–300 Kč" zůstaly stát, když se ceník o rok posunul).
+  // Nejlehčí/nejlevnější kombinace (1 g, hodnota objednávky 0 Kč) = spodní hranice
+  // "od X", nejtěžší podporovaná domácí zásilka (2 kg) = horní hranice rozsahu ČR.
+  const domesticMin = getShippingOptions(1, 0).find((o) => o.id === 'ceska')!.price;
+  const domesticMax = getShippingOptions(2000, 0).find((o) => o.id === 'ceska')!.price;
+  const internationalFrom = getMinInternationalPrice(1, 0);
+
   const shippingOptions = [
     { title: t('shipping.pickup.title'), price: t('shipping.pickup.price'), text: pickupText },
-    { title: t('shipping.czech.title'), price: t('shipping.czech.price'), text: t('shipping.czech.text') },
-    { title: t('shipping.international.title'), price: t('shipping.international.price'), text: t('shipping.international.text') },
+    { title: t('shipping.czech.title'), price: t('shipping.czech.price', { min: domesticMin, max: domesticMax }), text: t('shipping.czech.text') },
+    { title: t('shipping.international.title'), price: t('shipping.international.price', { price: internationalFrom }), text: t('shipping.international.text') },
   ];
 
   const paymentOptions = [
@@ -147,6 +157,7 @@ export default async function JakNakupovatPage() {
                   <div className="flex items-center gap-2 mt-3">
                     <ApplePayBadge />
                     <GooglePayBadge />
+                    <AlipayBadge />
                   </div>
                 )}
               </Row>
