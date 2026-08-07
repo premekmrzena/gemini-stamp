@@ -106,33 +106,46 @@ type ContactInput = {
 };
 
 // Dedup podle IČO u firem (spolehlivější než název), podle e-mailu u fyzických osob (ty
-// IČO nemají). Nový kontakt se založí, jen když se podle klíče nic nenajde.
+// IČO nemají). Když kontakt existuje, přepíšeme ho aktuálními údaji z objednávky -
+// jinak by faktura brala starou adresu uloženou z dřívější objednávky, ne tu aktuální
+// (živě zjištěno 2026-08-07 - opakovaná objednávka se stejným e-mailem, jinou adresou).
 async function findOrCreateContact(token: string, input: ContactInput): Promise<number> {
   const filterField = input.identificationNumber ? 'IdentificationNumber' : 'Email';
   const filterValue = input.identificationNumber || input.email;
+
+  const payload = {
+    CompanyName: input.companyName,
+    Firstname: input.firstName,
+    Surname: input.surname,
+    Email: input.email,
+    Phone: input.phone,
+    Street: input.street,
+    City: input.city,
+    PostalCode: input.postalCode,
+    CountryId: input.countryId,
+    IdentificationNumber: input.identificationNumber || '',
+    VatIdentificationNumber: input.vatIdentificationNumber || '',
+  };
 
   // Pozor: hodnota se NESMÍ obalovat uvozovkami (~eq~'x') navzdory příkladu v dokumentaci -
   // živě ověřeno, s uvozovkami filtr vždy vrátí 0 výsledků, bez nich funguje správně.
   const searchRes = await idokladFetch(token, `/Contacts?filter=(${filterField}~eq~${encodeURIComponent(filterValue)})`);
   const searchJson = await searchRes.json();
   const existing = searchJson.Data?.Items?.[0];
-  if (existing) return existing.Id as number;
+
+  if (existing) {
+    // Pozor: update jede přes PATCH na kolekci /Contacts (s Id v těle), NE PUT/PATCH na
+    // /Contacts/{id} - obojí vrací 405 UnsupportedApiVersion, živě ověřeno 2026-08-07.
+    await idokladFetch(token, '/Contacts', {
+      method: 'PATCH',
+      body: JSON.stringify({ Id: existing.Id, ...payload }),
+    });
+    return existing.Id as number;
+  }
 
   const createRes = await idokladFetch(token, '/Contacts', {
     method: 'POST',
-    body: JSON.stringify({
-      CompanyName: input.companyName,
-      Firstname: input.firstName,
-      Surname: input.surname,
-      Email: input.email,
-      Phone: input.phone,
-      Street: input.street,
-      City: input.city,
-      PostalCode: input.postalCode,
-      CountryId: input.countryId,
-      IdentificationNumber: input.identificationNumber || '',
-      VatIdentificationNumber: input.vatIdentificationNumber || '',
-    }),
+    body: JSON.stringify(payload),
   });
   const createJson = await createRes.json();
   return createJson.Data.Id as number;
