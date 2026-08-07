@@ -4,10 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { sendOrderConfirmation } from '@/lib/email';
 import { createInvoiceForOrder, getInvoicePdf } from '@/lib/idoklad';
 import { CartItemSnapshot } from '@/types/database';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover',
-});
+import { getStripeWebhookSecret } from '@/lib/stripe';
 
 // Vrátí rezervovaný sklad zpět, když platba u dané objednávky nevyjde
 // (zamítnutá karta, přerušené 3D Secure, vypršelý/zrušený PaymentIntent).
@@ -148,15 +145,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Chybí Stripe podpis' }, { status: 400 });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
+  let webhookSecret: string;
+  try {
+    webhookSecret = getStripeWebhookSecret();
+  } catch {
     console.error('STRIPE_WEBHOOK_SECRET není nastaven');
     return NextResponse.json({ error: 'Webhook secret není nakonfigurován' }, { status: 500 });
   }
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = Stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error('Neplatný Stripe podpis:', err);
     return NextResponse.json({ error: 'Neplatný webhook podpis' }, { status: 400 });

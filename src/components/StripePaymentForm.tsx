@@ -7,7 +7,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Currency, formatPrice } from '@/lib/currency';
 import Button from '@/components/Button';
 
-// 1. Inicializace Stripe pomocí tvého veřejného klíče
+// Jeden Stripe účet (CZK i EUR přes stejný publishable key - settlement na
+// správnou měnu řeší Stripe sám, viz src/lib/stripe.ts + docs/00).
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // Mapování next-intl locale na StripeElementLocale - jen 'en' je dnes reálně aktivní

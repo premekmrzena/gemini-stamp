@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover',
-});
+import { getStripeClient } from '@/lib/stripe';
 
 export async function POST(request: Request) {
   let body: { orderId?: string };
@@ -34,6 +30,8 @@ export async function POST(request: Request) {
     if (error || !order) {
       return NextResponse.json({ error: 'Objednávka nenalezena' }, { status: 404 });
     }
+
+    const stripe = getStripeClient();
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(order.total_price * 100),
