@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { ShippingOption, PaymentOption, INTERNATIONAL_COUNTRIES } from '@/lib/constants';
 import { Currency, formatPrice } from '@/lib/currency';
-import { ApplePayBadge, GooglePayBadge } from '@/components/PayBadges';
+import { ApplePayBadge, GooglePayBadge, AlipayBadge } from '@/components/PayBadges';
 import { AddressMapLink } from '@/components/PickupPartner';
 
 type Props = {
@@ -134,6 +134,9 @@ export default function ShippingStep({
                 <div className="flex items-center gap-2 mt-1">
                   <ApplePayBadge />
                   <GooglePayBadge />
+                  {/* Alipay běží na Stripe účtu jen pro EUR, ne pro CZK - viz
+                      [[project_stripe_alt_payment_methods]] v paměti. */}
+                  {currency === 'EUR' && <AlipayBadge />}
                 </div>
               )}
             </div>

@@ -68,8 +68,11 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Bez gate: Stripe a iDoklad webhooky (volají je Stripe/iDoklad, ne prohlížeč),
-    // odemykací endpoint, Next.js interní statické/image soubory, samotná gate stránka
-    // a jakýkoli soubor s příponou (obrázky, video, favicon, sitemap.xml, robots.txt...).
-    '/((?!api/stripe-webhook|api/idoklad-webhook|api/site-access|_next/static|_next/image|rekonstrukce|.*\\..*).*)',
+    // odemykací endpoint, Next.js interní statické/image soubory, samotná gate stránka,
+    // Apple Pay doménová verifikace (public/.well-known/... - Stripe/Apple si ho stahují
+    // sami, bez cookie; soubor nemá příponu, takže by ho jinak zachytil gate/i18n rewrite
+    // stejně jako api/* - viz [[project_stripe_alt_payment_methods]] v paměti) a jakýkoli
+    // soubor s příponou (obrázky, video, favicon, sitemap.xml, robots.txt...).
+    '/((?!api/stripe-webhook|api/idoklad-webhook|api/site-access|_next/static|_next/image|rekonstrukce|\\.well-known/apple-developer-merchantid-domain-association|.*\\..*).*)',
   ],
 };

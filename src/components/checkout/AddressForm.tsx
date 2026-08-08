@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { INTERNATIONAL_COUNTRIES } from '@/lib/constants';
+import { INTERNATIONAL_COUNTRIES, PHONE_DIAL_CODES, DIAL_CODE_BY_COUNTRY } from '@/lib/constants';
 
 type FormData = Record<string, string>;
 
@@ -61,6 +61,82 @@ const SelectField = ({
   </div>
 );
 
+// Uložená hodnota má tvar "+420 731234567" (předvolba + mezera + zbytek čísla) - formData
+// nese jen jeden string na pole (billing_phone/shipping_phone), stejně jako všechna ostatní
+// pole formuláře, žádná změna tvaru dat směrem k rodiči ani na serveru (create-order, ČP
+// štítek, iDoklad) není potřeba. Rozpoznání předvolby jde jen podle přesné shody s
+// PHONE_DIAL_CODES (ne "startsWith" na číslech samotných), jinak by např. "+1" nesmyslně
+// sedlo i na začátek "+420...".
+function splitPhoneValue(value: string): { dial: string; national: string } {
+  const spaceIndex = value.indexOf(' ');
+  if (spaceIndex > 0) {
+    const maybeDial = value.slice(0, spaceIndex);
+    if (PHONE_DIAL_CODES.some((d) => d.dial === maybeDial)) {
+      return { dial: maybeDial, national: value.slice(spaceIndex + 1) };
+    }
+  }
+  return { dial: '', national: value };
+}
+
+// Telefon jako dvojice předvolba + zbytek čísla - donutí zákazníka vybrat stát předvolby
+// (select má vždy platnou výchozí hodnotu, nikdy prázdný placeholder), ne jen naslepo napsat
+// číslo bez kódu země. defaultDial se odvozuje od už vybrané země adresy (viz volání níže).
+const PhoneField = ({
+  label,
+  name,
+  value,
+  onChange,
+  defaultDial,
+  required,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: Props['onChange'];
+  defaultDial: string;
+  required?: boolean;
+}) => {
+  const { dial: parsedDial, national } = splitPhoneValue(value);
+  const dial = parsedDial || defaultDial;
+
+  const emit = (nextDial: string, nextNational: string) => {
+    const nextValue = nextNational.trim() ? `${nextDial} ${nextNational}` : '';
+    onChange({ target: { name, value: nextValue } } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  return (
+    <div className="w-full flex flex-col gap-2">
+      <label className="style-body-bold text-secondary">{label}</label>
+      <div className="flex gap-2">
+        <div className="relative shrink-0 w-[104px]">
+          <select
+            value={dial}
+            onChange={(e) => emit(e.target.value, national)}
+            className="w-full bg-secondary border border-black400 rounded-[4px] pl-3 pr-6 h-[48px] style-body text-black outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+          >
+            {PHONE_DIAL_CODES.map((d) => (
+              <option key={d.dial} value={d.dial} title={d.name}>{d.dial} {d.iso2}</option>
+            ))}
+          </select>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-black">
+            <svg width="10" height="7" viewBox="0 0 12 8" fill="none">
+              <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+        <input
+          type="tel"
+          inputMode="tel"
+          value={national}
+          onChange={(e) => emit(dial, e.target.value)}
+          required={required}
+          className="flex-grow min-w-0 bg-secondary border border-black400 rounded-[4px] px-4 h-[48px] style-body text-black placeholder:text-black300 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+        />
+      </div>
+    </div>
+  );
+};
+
 export default function AddressForm({
   formId,
   onSubmit,
@@ -103,7 +179,14 @@ export default function AddressForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputField label={t('firstName')} name="billing_first_name" value={formData.billing_first_name} onChange={onChange} required />
           <InputField label={t('lastName')} name="billing_last_name" value={formData.billing_last_name} onChange={onChange} required />
-          <InputField label={t('phone')} name="billing_phone" value={formData.billing_phone} onChange={onChange} required />
+          <PhoneField
+            label={t('phone')}
+            name="billing_phone"
+            value={formData.billing_phone}
+            onChange={onChange}
+            defaultDial={isMezinarodni ? (DIAL_CODE_BY_COUNTRY[formData.billing_country] ?? '+420') : '+420'}
+            required
+          />
           <InputField label={t('email')} name="billing_email" value={formData.billing_email} onChange={onChange} type="email" required />
           <InputField label={t('addressLine1')} name="billing_address_line1" value={formData.billing_address_line1} onChange={onChange} required />
           {isMezinarodni && (
@@ -161,7 +244,13 @@ export default function AddressForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField label={t('firstName')} name="shipping_first_name" value={formData.shipping_first_name} onChange={onChange} required />
             <InputField label={t('lastName')} name="shipping_last_name" value={formData.shipping_last_name} onChange={onChange} required />
-            <InputField label={t('shippingPhone')} name="shipping_phone" value={formData.shipping_phone} onChange={onChange} />
+            <PhoneField
+              label={t('shippingPhone')}
+              name="shipping_phone"
+              value={formData.shipping_phone}
+              onChange={onChange}
+              defaultDial={isMezinarodni ? (DIAL_CODE_BY_COUNTRY[formData.shipping_country] ?? '+420') : '+420'}
+            />
             <InputField label={t('shippingCompanyName')} name="shipping_company_name" value={formData.shipping_company_name} onChange={onChange} />
             <InputField label={t('addressLine1')} name="shipping_address_line1" value={formData.shipping_address_line1} onChange={onChange} required />
             {isMezinarodni && (
