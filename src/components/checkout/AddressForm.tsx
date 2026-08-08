@@ -61,19 +61,17 @@ const SelectField = ({
   </div>
 );
 
-// Uložená hodnota má tvar "+420 731234567" (předvolba + mezera + zbytek čísla) - formData
-// nese jen jeden string na pole (billing_phone/shipping_phone), stejně jako všechna ostatní
-// pole formuláře, žádná změna tvaru dat směrem k rodiči ani na serveru (create-order, ČP
-// štítek, iDoklad) není potřeba. Rozpoznání předvolby jde jen podle přesné shody s
-// PHONE_DIAL_CODES (ne "startsWith" na číslech samotných), jinak by např. "+1" nesmyslně
-// sedlo i na začátek "+420...".
+// Uložená hodnota má tvar "+420 731234567" (předvolba + mezera + zbytek čísla), nebo jen
+// "+420" samotné, dokud zákazník číslo nezačal psát - formData nese jen jeden string na pole
+// (billing_phone/shipping_phone), stejně jako všechna ostatní pole formuláře, žádná změna
+// tvaru dat směrem k rodiči ani na serveru (create-order, ČP štítek, iDoklad) není potřeba.
+// Rozpoznání předvolby jde jen podle přesné shody s PHONE_DIAL_CODES (ne "startsWith" na
+// číslech samotných), jinak by např. "+1" nesmyslně sedlo i na začátek "+420...".
 function splitPhoneValue(value: string): { dial: string; national: string } {
   const spaceIndex = value.indexOf(' ');
-  if (spaceIndex > 0) {
-    const maybeDial = value.slice(0, spaceIndex);
-    if (PHONE_DIAL_CODES.some((d) => d.dial === maybeDial)) {
-      return { dial: maybeDial, national: value.slice(spaceIndex + 1) };
-    }
+  const maybeDial = spaceIndex > 0 ? value.slice(0, spaceIndex) : value;
+  if (PHONE_DIAL_CODES.some((d) => d.dial === maybeDial)) {
+    return { dial: maybeDial, national: spaceIndex > 0 ? value.slice(spaceIndex + 1) : '' };
   }
   return { dial: '', national: value };
 }
@@ -99,8 +97,12 @@ const PhoneField = ({
   const { dial: parsedDial, national } = splitPhoneValue(value);
   const dial = parsedDial || defaultDial;
 
+  // Bug (nahlášeno 2026-08-08): dřív se při prázdném "national" posílalo úplně prázdné '',
+  // což při dalším renderu smazalo i vybranou předvolbu (splitPhoneValue('') nemá co
+  // rozpoznat) a select se viditelně "vrátil" na defaultDial - vypadalo to, že předvolbu
+  // vůbec nejde ručně změnit. Teď se předvolba drží ve value i bez čísla za ní.
   const emit = (nextDial: string, nextNational: string) => {
-    const nextValue = nextNational.trim() ? `${nextDial} ${nextNational}` : '';
+    const nextValue = nextNational.trim() ? `${nextDial} ${nextNational}` : nextDial;
     onChange({ target: { name, value: nextValue } } as React.ChangeEvent<HTMLInputElement>);
   };
 
