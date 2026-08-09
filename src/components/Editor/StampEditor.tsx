@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import Button from '@/components/Button';
-import { TEMPLATES, Template, PhotoState, TextState, PRINT_INCLUDES_TEMPLATE_BACKGROUND } from '@/lib/editorConfig';
+import { TEMPLATES, Template, PhotoState, TextState, PRINT_INCLUDES_TEMPLATE_BACKGROUND, getPrintBackgroundImage } from '@/lib/editorConfig';
 import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
 import { supabase } from '@/lib/supabase';
 import TextControls from './TextControls';
@@ -239,7 +239,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
   const handleMobilePreview = async () => {
     setMobileStep(totalSlotsSteps);
     setIsGeneratingPreview(true);
-    const dataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, true, 1080);
+    const dataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, activeTemplate.backgroundImage, 1080);
     setPreviewUrl(dataUrl);
     setIsGeneratingPreview(false);
   };
@@ -247,8 +247,13 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
   const handleUploadAndComplete = async () => {
     setIsUploading(true);
     try {
-      const previewDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, true, 1080);
-      const printDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, PRINT_INCLUDES_TEMPLATE_BACKGROUND);
+      const previewDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, activeTemplate.backgroundImage, 1080);
+      const printDataUrl = await generateCanvasDataUrl(
+        activeTemplate,
+        photos,
+        textState,
+        PRINT_INCLUDES_TEMPLATE_BACKGROUND ? getPrintBackgroundImage(activeTemplate) : false
+      );
       const timestamp = Date.now();
       const previewUpload = await uploadBase64ToBlob(previewDataUrl, `arch-${timestamp}-nahled.jpg`, 'editor-orders');
       const printUpload = await uploadBase64ToBlob(printDataUrl, `arch-${timestamp}-tisk.jpg`, 'editor-orders');

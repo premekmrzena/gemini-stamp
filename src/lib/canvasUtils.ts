@@ -4,7 +4,7 @@ export async function generateCanvasDataUrl(
   template: Template,
   photos: Record<string, PhotoState>,
   text: TextState,
-  includeBackground: boolean = true,
+  background: string | false = template.backgroundImage,
   targetWidth?: number
 ): Promise<string> {
   const tCanvas = document.createElement('canvas');
@@ -13,10 +13,26 @@ export async function generateCanvasDataUrl(
   const ctx = tCanvas.getContext('2d');
   if (!ctx) return '';
 
-  if (includeBackground) {
-    const bgImg = new window.Image();
-    bgImg.src = template.backgroundImage;
-    await new Promise<void>((r) => { bgImg.onload = () => r(); });
+  if (background) {
+    const loadImage = (src: string) =>
+      new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Nepodařilo se načíst podklad archu: ${src}`));
+        img.src = src;
+      });
+    let bgImg: HTMLImageElement;
+    try {
+      bgImg = await loadImage(background);
+    } catch {
+      // Tisková varianta podkladu (bez známek) zatím nebyla nahraná do /public/templates
+      // - dočasně spadni zpět na editorový podklad, ať se objednávka nezasekne.
+      if (background !== template.backgroundImage) {
+        bgImg = await loadImage(template.backgroundImage);
+      } else {
+        throw new Error(`Nepodařilo se načíst podklad archu: ${background}`);
+      }
+    }
     ctx.drawImage(bgImg, 0, 0, tCanvas.width, tCanvas.height);
   } else {
     ctx.fillStyle = '#FFFFFF';

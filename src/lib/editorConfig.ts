@@ -49,6 +49,16 @@ export type TextState = {
 // archy, vrátit zpět na `false` (viz docs/04-popis-eshopu.md, sekce 3).
 export const PRINT_INCLUDES_TEMPLATE_BACKGROUND = true;
 
+// Tiskový podklad se od editorového (`backgroundImage`, *_white-slots.jpg) liší
+// jen tím, že místo ilustrace známek má na jejich místě prázdný slabý rám –
+// skutečné známky se na vytištěný arch nalepují ručně dodatečně. Podklady jsou
+// 1:1 (stejný rozměr i souřadnice slotů), liší se jen souborem, proto se cesta
+// odvozuje ze stejného základu jako `backgroundImage` (přípona `_print-slots.jpg`
+// místo `_white-slots.jpg`). Používá se jen dokud je výše `true`.
+export function getPrintBackgroundImage(template: Template): string {
+  return template.backgroundImage.replace('_white-slots', '_print-slots');
+}
+
 export const TEMPLATES: Template[] = [
   {
     id: 'template-01',
