@@ -32,6 +32,28 @@ function isCustomStampItem(item: CartItemSnapshot) {
   return item.item_type === 'custom';
 }
 
+// Vynutí skutečné stažení souboru místo pouhého otevření v nové kartě. Vercel Blob
+// (kam se ukládají print_url/preview_url) je jiná doména než admin - atribut `download`
+// na <a> prohlížeč u cizí domény ignoruje a jen naviguje/otevře náhled, proto musíme
+// soubor stáhnout přes fetch a spustit stažení z lokální blob URL (stejný vzor jako
+// hromadný ZIP export níže).
+async function downloadFile(url: string, filename: string) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Stažení selhalo');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error('Chyba při stahování souboru:', err);
+    alert('Stažení souboru se nezdařilo.');
+  }
+}
+
 const CURRENCY_LABELS: Record<CurrencyCode, string> = {
   CZK: 'Česká koruna (CZK)',
   USD: 'Americký dolar (USD)',
@@ -194,21 +216,19 @@ function CustomStampQuickActions({ item, printUrl }: { item: CartItemSnapshot; p
   return (
     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
       {printUrl && (
-        <a
-          href={printUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => downloadFile(printUrl, `arch-tisk-${item.id}.png`)}
           title="Stáhnout tiskové PNG"
           className="p-1.5 text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
         >
           <Download size={14} />
-        </a>
+        </button>
       )}
       <a
         href={item.image_url}
         target="_blank"
         rel="noopener noreferrer"
-        title="Stáhnout náhled"
+        title="Zobrazit náhled"
         className="p-1.5 text-black300 hover:text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
       >
         <FileImage size={14} />
@@ -1922,15 +1942,13 @@ export default function AdminDashboard() {
                       {customItems.map((item, idx) => {
                         const printUrl = printUrlsByItemId[item.id];
                         return printUrl ? (
-                          <a
+                          <button
                             key={item.id}
-                            href={printUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.png`)}
                             className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
                           >
                             <Download size={14} /> {customItems.length > 1 ? `Stáhnout arch ${idx + 1}` : 'Stáhnout tiskové PNG'}
-                          </a>
+                          </button>
                         ) : (
                           <span key={item.id} className="style-body text-black300 italic animate-pulse">Načítám...</span>
                         );
@@ -2029,14 +2047,12 @@ export default function AdminDashboard() {
                           {isCustomStamp && (
                             <div className="pt-2 flex flex-wrap items-center gap-2">
                               {printUrl ? (
-                                <a
-                                  href={printUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                <button
+                                  onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${i + 1}.png`)}
                                   className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
                                 >
                                   <Download size={14} /> Stáhnout tiskové PNG
-                                </a>
+                                </button>
                               ) : (
                                 <span className="style-body text-black300 italic block animate-pulse">
                                   Načítám tiskové podklady z cloudu...
@@ -2048,7 +2064,7 @@ export default function AdminDashboard() {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 bg-black300/10 hover:bg-black300/20 text-secondary px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer border border-black300/20"
                               >
-                                <FileImage size={14} /> Stáhnout náhled
+                                <FileImage size={14} /> Zobrazit náhled
                               </a>
                             </div>
                           )}
