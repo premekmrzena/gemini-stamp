@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -7,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: '/obchodni-podminky' },
+    alternates: { canonical: '/obchodni-podminky', languages: localeAlternates('/obchodni-podminky') },
   };
 }
 

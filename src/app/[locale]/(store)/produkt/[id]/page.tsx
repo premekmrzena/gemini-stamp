@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from './ProductDetailClient';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { SITE_URL, SITE_NAME } from '@/lib/site';
+import { SITE_URL, SITE_NAME, localeAlternates } from '@/lib/site';
 import { Product } from '@/types/database';
 import { getLocalizedProductField } from '@/lib/product-i18n';
 import { getOrderCurrency, getLocalizedPrice } from '@/lib/currency';
@@ -50,7 +50,7 @@ export async function generateMetadata({
   return {
     title: name,
     description,
-    alternates: { canonical: `/produkt/${id}` },
+    alternates: { canonical: `/produkt/${id}`, languages: localeAlternates(`/produkt/${id}`) },
     openGraph: {
       title: name,
       description,

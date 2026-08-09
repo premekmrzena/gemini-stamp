@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import StampCategoriesSection from '@/components/StampCategoriesSection';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: '/co-je-kreativni-arch' },
+    alternates: { canonical: '/co-je-kreativni-arch', languages: localeAlternates('/co-je-kreativni-arch') },
   };
 }
 

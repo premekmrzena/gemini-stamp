@@ -7,6 +7,7 @@ import { ApplePayBadge, GooglePayBadge, AlipayBadge } from '@/components/PayBadg
 import { ArteVeritasLink } from '@/components/PickupPartner';
 import { ARTE_VERITAS_MAPS_URL } from '@/lib/pickupPartner';
 import { getShippingOptions, getMinInternationalPrice } from '@/lib/constants';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: '/jak-nakupovat' },
+    alternates: { canonical: '/jak-nakupovat', languages: localeAlternates('/jak-nakupovat') },
   };
 }
 

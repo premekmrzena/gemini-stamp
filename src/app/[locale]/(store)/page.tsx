@@ -4,10 +4,11 @@ import ReviewStrip from '@/components/ReviewStrip';
 import TrustBadges from '@/components/TrustBadges';
 import StampCategoriesSection from '@/components/StampCategoriesSection';
 import PurchaseCategoriesSection from '@/components/PurchaseCategoriesSection';
+import { localeAlternates } from '@/lib/site';
 
-// Homepage title/description dědí z výchozí hodnoty v app/layout.tsx (title.default).
+// Homepage title/description dědí z výchozí hodnoty v app/[locale]/layout.tsx (title.default).
 export const metadata = {
-  alternates: { canonical: '/' },
+  alternates: { canonical: '/', languages: localeAlternates('/') },
 };
 
 export const revalidate = 60;

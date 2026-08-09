@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({
   params,
@@ -11,7 +12,7 @@ export async function generateMetadata({
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: '/vytvorit-arch' },
+    alternates: { canonical: '/vytvorit-arch', languages: localeAlternates('/vytvorit-arch') },
   };
 }
 

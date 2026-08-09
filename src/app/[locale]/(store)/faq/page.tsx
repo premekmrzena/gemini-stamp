@@ -4,6 +4,7 @@ import Button from '@/components/Button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { ArteVeritasLink } from '@/components/PickupPartner';
 import { ARTE_VERITAS_MAPS_URL } from '@/lib/pickupPartner';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: '/faq' },
+    alternates: { canonical: '/faq', languages: localeAlternates('/faq') },
   };
 }
 

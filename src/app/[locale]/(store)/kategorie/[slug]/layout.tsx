@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { INDEXABLE_CATEGORY_SLUGS } from '@/lib/categoryContent';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({
   params,
@@ -20,7 +21,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/kategorie/${slug}` },
+    alternates: { canonical: `/kategorie/${slug}`, languages: localeAlternates(`/kategorie/${slug}`) },
     openGraph: {
       title,
       description,

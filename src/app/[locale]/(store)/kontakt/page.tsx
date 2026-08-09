@@ -5,6 +5,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import { BANK_ACCOUNT_NUMBER, BANK_NAME, BANK_IBAN, BANK_SWIFT } from '@/lib/czechQrPayment';
 import { ArteVeritasLink } from '@/components/PickupPartner';
 import { ARTE_VERITAS_ADDRESS } from '@/lib/pickupPartner';
+import { localeAlternates } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: '/kontakt' },
+    alternates: { canonical: '/kontakt', languages: localeAlternates('/kontakt') },
   };
 }
 

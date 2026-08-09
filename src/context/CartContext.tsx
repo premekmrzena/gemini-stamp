@@ -55,10 +55,10 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  // CartProvider žije v kořenovém app/layout.tsx, MIMO NextIntlClientProvider
-  // (ten je až v app/[locale]/layout.tsx) - useLocale() by tu spadl stejně
-  // jako dřív CartToast (viz [[project_i18n_phase_4b]] v paměti). usePathname()
-  // funguje všude, takže se měna určuje přímo z URL prefixu.
+  // CartProvider v app/[locale]/layout.tsx záměrně OBALUJE NextIntlClientProvider
+  // (ne naopak) - useLocale() by tu spadl stejně jako dřív CartToast (viz
+  // [[project_i18n_phase_4b]] v paměti). usePathname() funguje všude, takže se
+  // měna určuje přímo z URL prefixu.
   const pathname = usePathname();
   const currentCurrency = getOrderCurrency(pathname?.startsWith('/cs') ? 'cs' : 'en');
 
