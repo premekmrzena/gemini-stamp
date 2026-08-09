@@ -36,7 +36,7 @@ Tiskové URL (`custom_stamps.print_url`) se dotahují **dávkově pro všechny o
 - **Sekce Zákazník** — jméno, e-mail, telefon a **země** (`billing_country`, doplněno 2026-08-05), odděleně od doručovací adresy vedle (ta může mít jiný stát, pokud je zaškrtnuté „doručovací adresa jiná“)
 - Doručovací adresa
 - **Položky objednávky** — u každé položky název, množství × cena, mezisoučet
-- **Stažení tiskových podkladů** — u položek s `item_type === 'custom'` (Kreativní arch) tlačítko „Stáhnout tiskové PNG“ (odkazuje na `print_url` z `custom_stamps`, plné rozlišení 4130×2550 px bez šablony na pozadí — viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy)) a od 2026-07-26 i „Stáhnout náhled“ (`item.image_url` ze snapshotu objednávky, bez DB dotazu)
+- **Stažení tiskových podkladů** — u položek s `item_type === 'custom'` (Kreativní arch) tlačítko „Stáhnout tiskové PNG“ (odkazuje na `print_url` z `custom_stamps`, plné rozlišení 4130×2550 px – dočasně od 2026-08-09 se šablonou archu na pozadí, viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy)) a od 2026-07-26 i „Stáhnout náhled“ (`item.image_url` ze snapshotu objednávky, bez DB dotazu)
 - Platební metoda a celková cena k úhradě
 
 Admin jednotlivý tiskový soubor stáhne a pošle do tiskárny manuálně, nebo použije hromadný ZIP export výše — appka ale stále nepředává soubory tiskárně automaticky.

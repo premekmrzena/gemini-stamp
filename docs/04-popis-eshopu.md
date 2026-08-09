@@ -72,7 +72,11 @@ Mobilní zobrazení má jiné ovládání než desktop – prochází se sloty p
 
 Po dokončení (tlačítko „Dokončit“) se z plátna vygenerují **dva** obrázky a oba se nahrají do Vercel Blob:
 - **Náhled** (`preview_url`) – s obrázkem šablony na pozadí, zmenšený na 1080 px šířky. Slouží jen k zobrazení (např. v adminu, e-mailu).
-- **Arch pro tisk** (`print_url`) – v plném rozlišení 1:1 vůči originální šabloně (4130×2550 px), **bez** obrázku šablony na pozadí – na bílém plátně jsou jen zákazníkovy fotky a jeho text. Důvod: fyzický arch je předtištěný, dotiskují se na něj jen fotky a text z prázdných slotů.
+- **Arch pro tisk** (`print_url`) – v plném rozlišení 1:1 vůči originální šabloně (4130×2550 px).
+
+  **DOČASNÝ stav od 2026-08-09:** obsahuje i obrázek šablony na pozadí (stejně jako náhled, jen v plném rozlišení) – tiskne se totiž na prázdný papír, ne dotisk na předtištěný arch. Řídí se přepínačem `PRINT_INCLUDES_TEMPLATE_BACKGROUND` v `src/lib/editorConfig.ts`.
+
+  **Původní/budoucí chování** (`PRINT_INCLUDES_TEMPLATE_BACKGROUND = false`): **bez** obrázku šablony na pozadí – na bílém plátně jsou jen zákazníkovy fotky a jeho text. Používá se, když je fyzický arch předtištěný a dotiskují se na něj jen fotky a text z prázdných slotů. Až se na tento režim přejde zpět, stačí přepnout flag zpět na `false` – žádná jiná změna v kódu není potřeba (viz `src/lib/canvasUtils.ts#generateCanvasDataUrl`, parametr `includeBackground`).
 
 ## 4. Tlačítko „nahoru“ (od 2026-07-14)
 

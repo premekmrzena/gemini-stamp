@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import Button from '@/components/Button';
-import { TEMPLATES, Template, PhotoState, TextState } from '@/lib/editorConfig';
+import { TEMPLATES, Template, PhotoState, TextState, PRINT_INCLUDES_TEMPLATE_BACKGROUND } from '@/lib/editorConfig';
 import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
 import { supabase } from '@/lib/supabase';
 import TextControls from './TextControls';
@@ -248,7 +248,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
     setIsUploading(true);
     try {
       const previewDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, true, 1080);
-      const printDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, false);
+      const printDataUrl = await generateCanvasDataUrl(activeTemplate, photos, textState, PRINT_INCLUDES_TEMPLATE_BACKGROUND);
       const timestamp = Date.now();
       const previewUpload = await uploadBase64ToBlob(previewDataUrl, `arch-${timestamp}-nahled.jpg`, 'editor-orders');
       const printUpload = await uploadBase64ToBlob(printDataUrl, `arch-${timestamp}-tisk.jpg`, 'editor-orders');

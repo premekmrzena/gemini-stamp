@@ -42,6 +42,13 @@ export type TextState = {
   shadowBlur: number;
 };
 
+// DOČASNÉ (od 2026-08-09): po nějakou dobu po spuštění eshopu tiskneme fotky
+// i šablonu archu zároveň na prázdný papír (ne dotisk na předtištěné archy),
+// takže tiskový soubor (`custom_stamps.print_url`) musí obsahovat i obrázek
+// šablony na pozadí, stejně jako náhled. Až se přejde na tisk na předtištěné
+// archy, vrátit zpět na `false` (viz docs/04-popis-eshopu.md, sekce 3).
+export const PRINT_INCLUDES_TEMPLATE_BACKGROUND = true;
+
 export const TEMPLATES: Template[] = [
   {
     id: 'template-01',
