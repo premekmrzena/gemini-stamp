@@ -5,11 +5,17 @@
 ## Blokuje ostré spuštění (12. 8.)
 - **Česká pošta live přepnutí** – podací místo (`locationNumber`) se nepodařilo založit ručně přes web. Draft odpovědi (`docs/email-cp-odpoved-2026-08-07.md`) odeslán konzultantovi ČP 2026-08-09, čeká se na odpověď. Bez toho nejde přepnout `CESKA_POSTA_API_ENV=live`.
 
-## Kreativní archy — tiskové podklady bez ilustrace známek (4/5 hotovo)
+## Kreativní archy — tiskové podklady bez ilustrace známek (4/5 hotovo, potvrzeno funkční)
 Od 2026-08-09 se archy tisknou dočasně na prázdný papír (ne dotisk na předtištěné), takže tiskový soubor musí obsahovat i podklad šablony – ale bez ilustrace skutečných poštovních známek (ty se lepí ručně po vytištění, na jejich místě jen prázdný rám). Mechanismus (`getPrintBackgroundImage()` v `editorConfig.ts` + fallback v `canvasUtils.ts`) hotový, viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy).
-- ✅ Šablony **02, 03, 04, 05** dodány a pushnuty (`971964a`) – u každé ověřen pixelový diff proti `*_white-slots.jpg` (rozměr 4130×2550 shodný, fotosloty i text 100% nedotčené). Šablona 02 živě ověřena na produkci uživatelem; 03/04/05 zbývá potvrdit vizuálně na produkci.
+- ✅ Šablony **02, 03, 04, 05** dodány, pushnuty (`971964a`) a **uživatel potvrdil, že na produkci sedí perfektně**.
 - ⏳ **Šablona 01 zatím chybí** (`01_Architektura_print-slots.jpg`) – do té doby se tiskne provizorně se starým podkladem (s ilustrací známek), nic nerozbité.
 - Poznámka: nový podklad záměrně nemá ani tečkovaný perforovaný rámeček kolem bloku známek (ne jen ilustrace uvnitř) – potvrzeno uživatelem, plán reálné papírové perforace na předtištěných arších je odložen.
+
+## Admin: stažení tiskového archu (vyřešeno 2026-08-09)
+Tlačítka „Stáhnout tiskové PNG“ v adminu teď vynutí skutečné stažení (fetch → blob → download), ne jen otevření v nové kartě – Vercel Blob je jiná doména, takže obyčejný `download` atribut na `<a>` prohlížeč ignoroval. Objeveno při testu na objednávce #AF14D7 (největší arch, 3,85 MB, dřív se v novém tabu neotevřel spolehlivě). „Zobrazit náhled“ zůstává beze změny chování (otevírá v nové kartě). Push `e5cf6c6`.
+
+## Mobilní editor — oříznutá paleta barev (opraveno 2026-08-09, čeká na potvrzení testem)
+Při psaní textu (klávesnice otevřená) šla paleta barev oříznout shora, nešla vybrat bílá (levý horní roh). Příčina: dostupné místo se počítalo vůči layoutovým souřadnicím nejbližšího scrollovatelného rodiče, jen jednou při otevření. Opraveno počítáním vůči `window.visualViewport` (skutečně viditelná oblast) s přepočtem za běhu. Push `e455d61`. **Uživatel ještě otestuje na mobilu.**
 
 ## Doprava / celní (menší resty, ne blokující)
 - **CN22 pro Cenné psaní (VL)** je implementované (`idForm 56`), ale nikdy vizuálně neověřené v prohlížeči (chyběly admin přihlašovací údaje) – ověřit po přepnutí na live.
