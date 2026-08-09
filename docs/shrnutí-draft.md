@@ -5,6 +5,11 @@
 ## Blokuje ostré spuštění (12. 8.)
 - **Česká pošta live přepnutí** – podací místo (`locationNumber`) se nepodařilo založit ručně přes web. Draft odpovědi (`docs/email-cp-odpoved-2026-08-07.md`) odeslán konzultantovi ČP 2026-08-09, čeká se na odpověď. Bez toho nejde přepnout `CESKA_POSTA_API_ENV=live`.
 
+## Kreativní archy — tiskové podklady bez ilustrace známek (probíhá)
+Od 2026-08-09 se archy tisknou dočasně na prázdný papír (ne dotisk na předtištěné), takže tiskový soubor musí obsahovat i podklad šablony – ale bez ilustrace skutečných poštovních známek (ty se lepí ručně po vytištění, na jejich místě jen prázdný rám). Mechanismus je hotový a živě ověřený (`getPrintBackgroundImage()` v `editorConfig.ts`, tiše fallbackuje na starý podklad, dokud nový soubor pro danou šablonu neexistuje – viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy)).
+- ✅ Šablona 02 – nahráno, pushnuto (`70c18c4`), **živě otestováno na produkci, sedí**.
+- ⏳ Šablony 01, 03, 04, 05 – zatím chybí (uživatel je právě připravuje), do té doby se tisknou provizorně se starým podkladem (s ilustrací známek).
+
 ## Doprava / celní (menší resty, ne blokující)
 - **CN22 pro Cenné psaní (VL)** je implementované (`idForm 56`), ale nikdy vizuálně neověřené v prohlížeči (chyběly admin přihlašovací údaje) – ověřit po přepnutí na live.
 - **`weight_grams` jsou jen odhady**, ne změřené hodnoty – stálo by za to nechat uživatele časem zvážit aspoň jeden reálný produkt, hlavně kategorii *plakety* (zatím žádný produkt v katalogu).
