@@ -12,7 +12,7 @@
 - **Odesílatel na štítku** (`DVKS s.r.o.`) – v demu se ignoruje a tiskne testovací firma ČP, potvrdit až na live.
 
 ## Fakturace (iDoklad)
-- **Air Bank není napojená na automatické párování výpisů v iDokladu** + webhook není zaregistrovaný → platba převodem se dnes potvrzuje jen ručně v adminu.
+- **Air Bank auto-párování je nastavené na obou stranách (banka i iDoklad, přes e-mailové výpisy na `...bank@itsmybill.eu`), webhook v iDokladu je aktivní a produkční endpoint funguje** (ověřeno 2026-08-09 přímo přes iDoklad API) – zbývá jen první živé ověření, až přijde reálná platba převodem: potvrdit, že se výpis spáruje automaticky a objednávka přejde na "Zaplaceno" bez ručního zásahu. Do té doby platí ruční admin fallback.
 - **iDoklad licence brzy vyprší** (k 2026-08-05 odhad ~48 dní, tj. zhruba polovina září) – obnovit před vypršením.
 - Ověřit, že migrace `021_orders_idoklad_invoice.sql` proběhla a 3 env proměnné (`IDOKLAD_*`) jsou skutečně ve Vercel produkci, ne jen lokálně.
 
