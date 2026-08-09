@@ -70,6 +70,8 @@ V editoru zákazník:
 
 Mobilní zobrazení má jiné ovládání než desktop – prochází se sloty postupně (mini-mapa nahoře, šipky nahoru/dolů) s vysouvacím panelem pro textové úpravy. Tato mobilní část je hotová a uzamčená, úpravy se dělají jen na desktopové verzi (výjimkou jsou cílené opravy chyb na explicitní žádost – např. 2026-07-08 oprava ořezané palety barev (`ColorPickerInput.tsx`): paleta se nadále otevírá nahoru jako dřív, ale její výška se při otevření dynamicky dopočítá z reálně dostupného místa nad tlačítkem, takže se na mobilu vejde celá).
 
+**Navazující oprava 2026-08-09:** i po výše uvedené opravě šlo paletu při psaní textu (mobilní klávesnice otevřená) shora oříznout, takže nešla vybrat bílá (levý horní roh palety). Příčina: dostupné místo se počítalo vůči nejbližšímu scrollovatelnému rodiči přes `getBoundingClientRect()` (layoutové souřadnice), jen jednou při otevření – to nemusí odpovídat skutečně viditelné ploše nad klávesnicí a nereaguje na její doanimování. Přepočet teď jde vůči `window.visualViewport` (sleduje reálně viditelnou oblast) a přepočítává se za běhu (`resize`/`scroll` na `visualViewport`), ne jen při otevření.
+
 Po dokončení (tlačítko „Dokončit“) se z plátna vygenerují **dva** obrázky a oba se nahrají do Vercel Blob:
 - **Náhled** (`preview_url`) – s obrázkem šablony na pozadí, zmenšený na 1080 px šířky. Slouží jen k zobrazení (např. v adminu, e-mailu).
 - **Arch pro tisk** (`print_url`) – v plném rozlišení 1:1 vůči originální šabloně (4130×2550 px).

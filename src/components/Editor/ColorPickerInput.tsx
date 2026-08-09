@@ -12,11 +12,7 @@ type Props = {
 const DEFAULT_PICKER_HEIGHT = 200;
 const MIN_PICKER_HEIGHT = 130;
 const GAP = 8;
-
-function isScrollable(el: Element) {
-  const overflowY = getComputedStyle(el).overflowY;
-  return overflowY === 'auto' || overflowY === 'scroll';
-}
+const SCREEN_MARGIN = 8; // ať paleta nikdy nesahá až na úplný okraj viditelné obrazovky
 
 export default function ColorPickerInput({ value, onChange, size = 48 }: Props) {
   const [open, setOpen] = useState(false);
@@ -32,16 +28,31 @@ export default function ColorPickerInput({ value, onChange, size = 48 }: Props) 
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // Dopočet výšky palety podle SKUTEČNĚ viditelné plochy nad tlačítkem (2026-08-09
+  // oprava). Dřívější verze počítala dostupné místo vůči nejbližšímu scrollovatelnému
+  // rodiči přes getBoundingClientRect() - to jsou layoutové souřadnice, které při psaní
+  // textu (mobilní klávesnice otevřená) nemusí odpovídat tomu, co je opravdu vidět nad
+  // klávesnicí. Proto počítáme vůči window.visualViewport (sleduje reálně viditelnou
+  // oblast) a přepočítáváme i za běhu, ne jen jednou při otevření - jinak se paleta
+  // shora oříznula a nešlo vybrat bílou (levý horní roh palety).
   useEffect(() => {
     if (!open || !ref.current) return;
-    let scrollParent: Element | null = ref.current.parentElement;
-    while (scrollParent && !isScrollable(scrollParent)) {
-      scrollParent = scrollParent.parentElement;
+
+    function recalc() {
+      if (!ref.current) return;
+      const visualTop = window.visualViewport?.offsetTop ?? 0;
+      const triggerTop = ref.current.getBoundingClientRect().top;
+      const available = triggerTop - visualTop - GAP - SCREEN_MARGIN;
+      setPickerHeight(Math.max(MIN_PICKER_HEIGHT, Math.min(DEFAULT_PICKER_HEIGHT, available)));
     }
-    const topBound = scrollParent ? scrollParent.getBoundingClientRect().top : 0;
-    const triggerTop = ref.current.getBoundingClientRect().top;
-    const available = triggerTop - topBound - GAP;
-    setPickerHeight(Math.max(MIN_PICKER_HEIGHT, Math.min(DEFAULT_PICKER_HEIGHT, available)));
+
+    recalc();
+    window.visualViewport?.addEventListener('resize', recalc);
+    window.visualViewport?.addEventListener('scroll', recalc);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', recalc);
+      window.visualViewport?.removeEventListener('scroll', recalc);
+    };
   }, [open]);
 
   return (
