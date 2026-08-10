@@ -16,7 +16,7 @@ import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search, Globe, Phone,
   LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt,
-  Sparkles, Printer, History, FileImage, BarChart3, Info, MessageSquare,
+  Sparkles, Printer, History, FileImage, FileText, BarChart3, Info, MessageSquare,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip } from 'recharts';
@@ -51,6 +51,49 @@ async function downloadFile(url: string, filename: string) {
   } catch (err) {
     console.error('Chyba při stahování souboru:', err);
     alert('Stažení souboru se nezdařilo.');
+  }
+}
+
+// Points-per-inch v PDF (fixní jednotka formátu, nesouvisí s DPI obrázku).
+const PDF_POINTS_PER_INCH = 72;
+// Cílové DPI pro tiskárnu - určuje jen fyzickou velikost PDF stránky, pixely obrázku
+// se nijak nepřepočítávají (žádný resize/interpolace, viz downloadFileAsPdf níže).
+const PRINT_TARGET_DPI = 300;
+
+// Stáhne tiskový arch (custom_stamps.print_url, JPEG beze změny) jako PDF, beze ztráty
+// kvality - obrázek se vloží do PDF přesně tak, jak je (embedJpg nepřekódovává pixely),
+// jen se PDF stránka nastaví na fyzickou velikost = pixely / 300 DPI. Tím tiskárna
+// při otevření PDF vidí efektivní rozlišení 300 DPI, aniž by se jediný pixel měnil.
+async function downloadFileAsPdf(url: string, filename: string) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Stažení selhalo');
+    const contentType = res.headers.get('content-type') || '';
+    const bytes = await res.arrayBuffer();
+
+    const { PDFDocument } = await import('pdf-lib');
+    const pdfDoc = await PDFDocument.create();
+    const image = contentType.includes('png')
+      ? await pdfDoc.embedPng(bytes)
+      : await pdfDoc.embedJpg(bytes);
+
+    const pageWidthPt = (image.width / PRINT_TARGET_DPI) * PDF_POINTS_PER_INCH;
+    const pageHeightPt = (image.height / PRINT_TARGET_DPI) * PDF_POINTS_PER_INCH;
+    const page = pdfDoc.addPage([pageWidthPt, pageHeightPt]);
+    page.drawImage(image, { x: 0, y: 0, width: pageWidthPt, height: pageHeightPt });
+
+    const pdfBytes = await pdfDoc.save();
+    // pdf-lib vrací Uint8Array<ArrayBufferLike>, Blob chce konkrétně ArrayBuffer - cast je bezpečný,
+    // save() vždy alokuje vlastní čerstvý ArrayBuffer (nikdy SharedArrayBuffer).
+    const blobUrl = URL.createObjectURL(new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error('Chyba při generování PDF:', err);
+    alert('Vytvoření PDF se nezdařilo.');
   }
 }
 
@@ -216,13 +259,22 @@ function CustomStampQuickActions({ item, printUrl }: { item: CartItemSnapshot; p
   return (
     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
       {printUrl && (
-        <button
-          onClick={() => downloadFile(printUrl, `arch-tisk-${item.id}.png`)}
-          title="Stáhnout tiskové PNG"
-          className="p-1.5 text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
-        >
-          <Download size={14} />
-        </button>
+        <>
+          <button
+            onClick={() => downloadFile(printUrl, `arch-tisk-${item.id}.png`)}
+            title="Stáhnout tiskové PNG"
+            className="p-1.5 text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
+          >
+            <Download size={14} />
+          </button>
+          <button
+            onClick={() => downloadFileAsPdf(printUrl, `arch-tisk-${item.id}.pdf`)}
+            title="Stáhnout tiskové PDF (300 DPI)"
+            className="p-1.5 text-primary hover:bg-primary/10 rounded-[4px] transition-all cursor-pointer"
+          >
+            <FileText size={14} />
+          </button>
+        </>
       )}
       <a
         href={item.image_url}
@@ -1942,13 +1994,21 @@ export default function AdminDashboard() {
                       {customItems.map((item, idx) => {
                         const printUrl = printUrlsByItemId[item.id];
                         return printUrl ? (
-                          <button
-                            key={item.id}
-                            onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.png`)}
-                            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                          >
-                            <Download size={14} /> {customItems.length > 1 ? `Stáhnout arch ${idx + 1}` : 'Stáhnout tiskové PNG'}
-                          </button>
+                          <div key={item.id} className="flex items-center gap-2">
+                            <button
+                              onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.png`)}
+                              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                            >
+                              <Download size={14} /> {customItems.length > 1 ? `Stáhnout arch ${idx + 1}` : 'Stáhnout tiskové PNG'}
+                            </button>
+                            <button
+                              onClick={() => downloadFileAsPdf(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.pdf`)}
+                              title="Stáhnout tiskové PDF (300 DPI)"
+                              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                            >
+                              <FileText size={14} /> PDF
+                            </button>
+                          </div>
                         ) : (
                           <span key={item.id} className="style-body text-black300 italic animate-pulse">Načítám...</span>
                         );
@@ -2047,12 +2107,21 @@ export default function AdminDashboard() {
                           {isCustomStamp && (
                             <div className="pt-2 flex flex-wrap items-center gap-2">
                               {printUrl ? (
-                                <button
-                                  onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${i + 1}.png`)}
-                                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
-                                >
-                                  <Download size={14} /> Stáhnout tiskové PNG
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${i + 1}.png`)}
+                                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
+                                  >
+                                    <Download size={14} /> Stáhnout tiskové PNG
+                                  </button>
+                                  <button
+                                    onClick={() => downloadFileAsPdf(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${i + 1}.pdf`)}
+                                    title="Stáhnout tiskové PDF (300 DPI)"
+                                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
+                                  >
+                                    <FileText size={14} /> Stáhnout tiskové PDF
+                                  </button>
+                                </>
                               ) : (
                                 <span className="style-body text-black300 italic block animate-pulse">
                                   Načítám tiskové podklady z cloudu...
