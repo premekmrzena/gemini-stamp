@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { HexColorPicker } from 'react-colorful';
+import { HexColorPicker, HexColorInput } from 'react-colorful';
 
 type Props = {
   value: string;
@@ -10,7 +10,15 @@ type Props = {
   size?: number;
 };
 
+// Přesně trefit prstem na dotykovém displeji roh 200×200px gradientu (= čistá bílá/černá)
+// je prakticky nemožné - i "vizuálně" přesně v rohu vyjde typicky S/V pár jednotek % mimo,
+// tedy barva jako #FCFDFD místo #FFFFFF (nahlášeno uživatelem 2026-08-10, viz
+// [[feedback_color_picker_corner_precision_touch]]). Řešení: hex vstup + rychlé předvolby
+// bílá/černá vedle gradientu, aby se přesná barva nemusela trefit tažením.
+const PRESETS = ['#FFFFFF', '#000000'];
+
 const PICKER_WIDTH = 200; // výchozí šířka .react-colorful (react-colorful/dist/index.js), nikde nepřepisujeme
+const FOOTER_HEIGHT = 44; // hex input + předvolby pod gradientem
 const DEFAULT_PICKER_HEIGHT = 200;
 const MIN_PICKER_HEIGHT = 130;
 const GAP = 8;
@@ -48,7 +56,7 @@ export default function ColorPickerInput({ value, onChange, size = 48 }: Props) 
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
       const visualTop = window.visualViewport?.offsetTop ?? 0;
-      const availableHeight = rect.top - visualTop - GAP - SCREEN_MARGIN;
+      const availableHeight = rect.top - visualTop - GAP - SCREEN_MARGIN - FOOTER_HEIGHT;
       const height = Math.max(MIN_PICKER_HEIGHT, Math.min(DEFAULT_PICKER_HEIGHT, availableHeight));
       setPickerHeight(height);
 
@@ -58,17 +66,19 @@ export default function ColorPickerInput({ value, onChange, size = 48 }: Props) 
         Math.max(rect.right - PICKER_WIDTH, viewportLeft + SCREEN_MARGIN),
         viewportLeft + viewportWidth - PICKER_WIDTH - SCREEN_MARGIN
       );
-      setPopupPos({ top: rect.top - GAP - height, left });
+      setPopupPos({ top: rect.top - GAP - height - FOOTER_HEIGHT, left });
     }
 
+    // Jen visualViewport (reaguje na vysunutí klávesnice) - ne obecný `window` scroll
+    // listener. Ten by se spouštěl i při odrazovém/rubber-band scrollu vyvolaném tažením
+    // prstem přímo po gradientu, což by za běhu přepočítalo pozici/velikost palety
+    // uprostřed gesta - riziko nekonzistence, žádný skutečný přínos to nemá.
     recalc();
     window.visualViewport?.addEventListener('resize', recalc);
     window.visualViewport?.addEventListener('scroll', recalc);
-    window.addEventListener('scroll', recalc, true);
     return () => {
       window.visualViewport?.removeEventListener('resize', recalc);
       window.visualViewport?.removeEventListener('scroll', recalc);
-      window.removeEventListener('scroll', recalc, true);
     };
   }, [open]);
 
@@ -82,8 +92,31 @@ export default function ColorPickerInput({ value, onChange, size = 48 }: Props) 
       />
       {open && popupPos && typeof document !== 'undefined' &&
         createPortal(
-          <div ref={popupRef} className="fixed z-[300]" style={{ top: popupPos.top, left: popupPos.left }}>
+          <div
+            ref={popupRef}
+            className="fixed z-[300] rounded-[8px] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.3)]"
+            style={{ top: popupPos.top, left: popupPos.left, width: PICKER_WIDTH }}
+          >
             <HexColorPicker color={value} onChange={onChange} style={{ height: pickerHeight, width: PICKER_WIDTH }} />
+            <div className="flex items-center gap-1 bg-secondary px-2" style={{ height: FOOTER_HEIGHT }}>
+              <span className="text-black300 style-body-bold shrink-0">#</span>
+              <HexColorInput
+                color={value}
+                onChange={onChange}
+                prefixed={false}
+                className="min-w-0 flex-1 bg-transparent text-black rounded-[4px] px-1.5 py-1 text-sm outline-none border border-black300/20 focus:ring-2 focus:ring-success uppercase"
+              />
+              {PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  aria-label={preset}
+                  onClick={() => onChange(preset)}
+                  className="w-5 h-5 rounded-full border border-black300/30 shrink-0"
+                  style={{ backgroundColor: preset }}
+                />
+              ))}
+            </div>
           </div>,
           document.body
         )}
