@@ -475,7 +475,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
                     {isMobileTextStep && (
                       <>
                         {mainText && (
-                          <div className="absolute cursor-move select-none p-3 whitespace-pre active:opacity-80 w-max max-w-full touch-none"
+                          <div className="absolute cursor-move select-none p-3 whitespace-pre w-max max-w-full touch-none"
                             style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: 'translate(-50%, -50%)', color: textColor, fontSize: `${fontSize / safeRatio}px`, fontFamily, fontWeight: '600', textAlign, lineHeight: 1.2, textShadow: useShadow ? `3px 3px ${shadowBlur / safeRatio}px ${shadowColor}` : 'none', zIndex: 40 }}
                             onTouchStart={(e) => handleTouchStart('text', currentMobileSlot!.id, e)}
                             onClick={() => setShowTextPanel(true)}
