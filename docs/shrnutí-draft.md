@@ -3,7 +3,7 @@
 > Pracovní seznam pro uživatele, sestavený 2026-08-09. Zdroj pravdy je `docs/06-odlozene-ulohy.md` (a číslované sekce 00–10) — tohle je jen výtah pro rychlou orientaci, mazat/aktualizovat podle potřeby.
 
 ## Blokuje ostré spuštění (12. 8.)
-- **Česká pošta live přepnutí** – podací místo (`locationNumber`) se nepodařilo založit ručně přes web. Draft odpovědi (`docs/email-cp-odpoved-2026-08-07.md`) odeslán konzultantovi ČP 2026-08-09, čeká se na odpověď. Bez toho nejde přepnout `CESKA_POSTA_API_ENV=live`.
+- **Česká pošta live přepnutí** – 2026-08-10: `locationNumber` (`0`) úspěšně dohledán po přihlášení novým uživatelem, `.env.local` i Vercel doplněny (`CUSTOMER_ID`/`POST_CODE`/`LOCATION_NUMBER`). CN22 dotaz (VL vs. EM) potvrzen konzultantem ČP – EMS má celní prohlášení už v sobě (`idForm 62`), žádná změna kódu potřeba. Zbývá jen vizuálně ověřit odesílatele na štítku a CN22 tisk po přepnutí `CESKA_POSTA_API_ENV=live` (viz `docs/06-odlozene-ulohy.md`) – jinak není nic, co by přepnutí blokovalo.
 
 ## Kreativní archy — tiskové podklady bez ilustrace známek (4/5 hotovo, potvrzeno funkční)
 Od 2026-08-09 se archy tisknou dočasně na prázdný papír (ne dotisk na předtištěné), takže tiskový soubor musí obsahovat i podklad šablony – ale bez ilustrace skutečných poštovních známek (ty se lepí ručně po vytištění, na jejich místě jen prázdný rám). Mechanismus (`getPrintBackgroundImage()` v `editorConfig.ts` + fallback v `canvasUtils.ts`) hotový, viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy).
