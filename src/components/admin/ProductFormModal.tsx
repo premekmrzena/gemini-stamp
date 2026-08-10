@@ -106,6 +106,7 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeLocale, setActiveLocale] = useState<TranslationLocaleKey>('en');
+  const [relatedSearch, setRelatedSearch] = useState('');
   const backdropHandlers = useBackdropClose(onClose);
 
   function set<K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) {
@@ -195,7 +196,7 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50" {...backdropHandlers}>
       <div
-        className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl"
+        className="bg-black400 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
@@ -458,30 +459,71 @@ export function ProductFormModal({ product, allProducts, onClose, onSaved }: Pro
             </div>
           </div>
 
-          {/* SOUVISEJÍCÍ PRODUKTY */}
+          {/* SOUVISEJÍCÍ PRODUKTY - vyhledávání místo procházení všech produktů (desítky položek) */}
           <div>
             <label className={labelClass}>Související produkty</label>
             <p className="style-body text-black300/70 mb-2">
               Zobrazí se na detailu produktu. Když nevybereš žádné, appka sama doplní 3 nejnovější jiné produkty.
             </p>
-            <div className="max-h-[180px] overflow-y-auto flex flex-wrap gap-2 bg-black border border-black300/50 rounded-[4px] p-3">
-              {allProducts.filter((p) => p.id !== product?.id).map((p) => {
-                const selected = (form.related_stamp_id || []).includes(p.id);
+
+            {(form.related_stamp_id || []).length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {(form.related_stamp_id || []).map((id) => {
+                  const p = allProducts.find((ap) => ap.id === id);
+                  if (!p) return null;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1.5 style-body pl-3 pr-2 h-[32px] rounded-full bg-primary border border-primary text-black"
+                    >
+                      {p.name}
+                      <button
+                        type="button"
+                        onClick={() => toggleRelatedProduct(id)}
+                        className="hover:opacity-70 transition-opacity cursor-pointer"
+                        title="Odebrat"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="relative">
+              <input
+                type="text"
+                value={relatedSearch}
+                onChange={(e) => setRelatedSearch(e.target.value)}
+                placeholder="Hledat produkt podle názvu..."
+                className={inputClass}
+              />
+              {relatedSearch.trim() && (() => {
+                const query = relatedSearch.trim().toLowerCase();
+                const results = allProducts
+                  .filter((p) => p.id !== product?.id && !(form.related_stamp_id || []).includes(p.id))
+                  .filter((p) => p.name.toLowerCase().includes(query))
+                  .slice(0, 20);
                 return (
-                  <button
-                    type="button"
-                    key={p.id}
-                    onClick={() => toggleRelatedProduct(p.id)}
-                    className={`style-body px-3 h-[32px] rounded-full border transition-all cursor-pointer ${
-                      selected
-                        ? 'bg-primary border-primary text-black'
-                        : 'border-black300/30 text-secondary hover:bg-black300/10'
-                    }`}
-                  >
-                    {p.name}
-                  </button>
+                  <div className="absolute z-20 mt-1 w-full max-h-[220px] overflow-y-auto bg-black border border-black300/50 rounded-[4px] shadow-2xl">
+                    {results.length === 0 ? (
+                      <p className="style-body text-black300/70 p-3">Nic nenalezeno.</p>
+                    ) : (
+                      results.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          onClick={() => { toggleRelatedProduct(p.id); setRelatedSearch(''); }}
+                          className="w-full text-left style-body px-3 py-2 text-secondary hover:bg-black300/10 transition-colors cursor-pointer"
+                        >
+                          {p.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
                 );
-              })}
+              })()}
             </div>
           </div>
 

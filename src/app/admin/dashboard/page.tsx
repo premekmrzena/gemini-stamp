@@ -16,7 +16,7 @@ import {
   ShoppingBag, TrendingUp, X, Package, User,
   MapPin, Calendar, Search, Globe, Phone,
   LogOut, Lock, Mail, Download, Home, Eye, EyeOff, Plus, Pencil, Trash2, AlertTriangle, Archive, Tag, Coins, Truck, Receipt,
-  Sparkles, Printer, History, FileImage, FileText, BarChart3, Info, MessageSquare,
+  Sparkles, Printer, History, FileImage, FileText, BarChart3, Info, MessageSquare, ChevronDown,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip } from 'recharts';
@@ -1850,7 +1850,7 @@ export default function AdminDashboard() {
       {/* DETAIL OBJEDNÁVKY MODAL */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all" {...orderModalBackdrop}>
-          <div className="bg-black400 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-black400 w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-[4px] border border-black300/30 shadow-2xl animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-black400/90 backdrop-blur-md p-6 border-b border-black300/30 flex justify-between items-center z-10">
               <div>
                 <h2 className="style-h3 text-secondary flex items-center gap-2">
@@ -1864,289 +1864,274 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="p-6 space-y-8">
-              {/* AKCE STAVU */}
-              <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                <span className="style-product-tag text-black300">Změnit stav:</span>
-                <div className="flex items-center gap-3">
-                  {getNextStatus(selectedOrder) && (
-                    <button
-                      onClick={() => updateOrderStatus(selectedOrder.id, getNextStatus(selectedOrder)!)}
-                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                    >
-                      Další krok: {getNextStatus(selectedOrder)}
-                    </button>
-                  )}
-                  <select
-                    value={selectedOrder.status || 'Nová'}
-                    onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
-                    className="bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
-                  >
-                    {ORDER_STATUSES.map(({ value }) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
 
-              {/* HISTORIE STAVŮ */}
-              {orderStatusHistory.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="style-product-tag text-black300 flex items-center gap-2">
-                    <History size={14} className="text-primary" /> Historie stavů
-                  </h3>
-                  <div className="bg-black rounded-[4px] border border-black300/20 divide-y divide-black300/20">
-                    {orderStatusHistory.map((entry) => (
-                      <div key={entry.id} className="p-3 flex items-center justify-between gap-4">
-                        <OrderStatusBadge status={entry.status} />
-                        <span className="style-body text-black300">{new Date(entry.changed_at).toLocaleString('cs-CZ')}</span>
+                {/* LEVÝ SLOUPEC: OBSAH OBJEDNÁVKY (co je uvnitř, čte se, needituje) */}
+                <div className="space-y-8 min-w-0 order-2 lg:order-1">
+                  {/* ZÁKAZNÍK A DORUČENÍ */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                        <User size={14} className="text-primary" /> Zákazník
+                      </h3>
+                      <div>
+                        <p className="style-h4 text-secondary">{selectedOrder.billing_first_name} {selectedOrder.billing_last_name}</p>
+                        <p className="style-body text-black300 mt-1 flex items-center gap-1.5"><Mail size={12} /> {selectedOrder.billing_email}</p>
+                        <p className="style-body text-black300 flex items-center gap-1.5"><Phone size={12} /> {selectedOrder.billing_phone}</p>
+                        <p className="style-body text-black300 flex items-center gap-1.5"><Globe size={12} /> {selectedOrder.billing_country}</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* SLEDOVACÍ ČÍSLO ZÁSILKY - primárně jen ke čtení, ruční zadání je fallback */}
-              <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                <span className="style-product-tag text-black300">Sledovací číslo:</span>
-                <div className="flex items-center gap-3">
-                  {selectedOrder.tracking_number ? (
-                    <span className="style-body-bold text-secondary font-mono">{selectedOrder.tracking_number}</span>
-                  ) : (
-                    <span className="style-body text-black300 italic">Zatím nepřiděleno – vytvoř zásilku u České pošty níže.</span>
-                  )}
-                  <button
-                    onClick={() => setShowManualTracking((v) => !v)}
-                    className="style-label text-black300 hover:text-primary underline decoration-dotted cursor-pointer whitespace-nowrap"
-                  >
-                    Zadat ručně
-                  </button>
-                </div>
-              </div>
-              {showManualTracking && (
-                <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20 -mt-4">
-                  <span className="style-product-tag text-black300">Ruční zadání (okrajové případy):</span>
-                  <div className="flex items-center gap-3 flex-1 min-w-[220px]">
-                    <input
-                      type="text"
-                      value={trackingNumberInput}
-                      onChange={(e) => setTrackingNumberInput(e.target.value)}
-                      placeholder="např. CP123456789CZ"
-                      className="flex-1 bg-black300/10 border border-black300/30 rounded-[4px] px-3 py-2 style-body text-secondary placeholder:text-black300/50 outline-none focus:border-primary transition-all"
-                    />
-                    <button
-                      onClick={handleSaveTrackingNumber}
-                      disabled={savingTracking || !trackingNumberInput.trim()}
-                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
-                    >
-                      <Mail size={14} /> {savingTracking ? 'Odesílám...' : 'Uložit a poslat e-mail'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* VYTVOŘIT ZÁSILKU + TISK ŠTÍTKU */}
-              {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && (
-                <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                  <span className="style-product-tag text-black300">Podání u dopravce:</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setShipmentOrder(selectedOrder)}
-                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                    >
-                      <Truck size={14} /> Vytvořit zásilku
-                    </button>
-                    {selectedOrder.tracking_number && (
-                      <a
-                        href={`/api/admin/print-shipping-label?orderId=${selectedOrder.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                      >
-                        <Printer size={14} /> Vytisknout štítek
-                      </a>
-                    )}
-                    {/* CN22 je u Cenného psaní (VL) samostatný dokument navíc ke štítku
-                        (na rozdíl od EMS, kde je celní prohlášení už na štítku samotném) -
-                        viz komentář v print-shipping-label/route.ts. */}
-                    {selectedOrder.tracking_number?.startsWith('VL') && (
-                      <a
-                        href={`/api/admin/print-shipping-label?orderId=${selectedOrder.id}&type=cn22`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                      >
-                        <Printer size={14} /> Vytisknout CN22
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* TISKOVÝ ARCH (Kreativní arch) */}
-              {(() => {
-                const customItems = (selectedOrder.cart_items || []).filter(isCustomStampItem);
-                if (customItems.length === 0) return null;
-                return (
-                  <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                    <span className="style-product-tag text-black300 flex items-center gap-1.5"><Sparkles size={14} className="text-primary" /> Tiskový arch:</span>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {customItems.map((item, idx) => {
-                        const printUrl = printUrlsByItemId[item.id];
-                        return printUrl ? (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <button
-                              onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.png`)}
-                              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                            >
-                              <Download size={14} /> {customItems.length > 1 ? `Stáhnout arch ${idx + 1}` : 'Stáhnout tiskové PNG'}
-                            </button>
-                            <button
-                              onClick={() => downloadFileAsPdf(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.pdf`)}
-                              title="Stáhnout tiskové PDF (300 DPI)"
-                              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                            >
-                              <FileText size={14} /> PDF
-                            </button>
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                        <MapPin size={14} className="text-primary" /> Doručení
+                      </h3>
+                      {(() => {
+                        const addr = getDeliveryAddress(selectedOrder);
+                        return (
+                          <div className="style-body text-black200">
+                            {addr.line1}<br />
+                            {addr.line2 && <>{addr.line2}<br /></>}
+                            {addr.city}{addr.region ? `, ${addr.region}` : ''}, {addr.zip}<br />
+                            {addr.country}
                           </div>
-                        ) : (
-                          <span key={item.id} className="style-body text-black300 italic animate-pulse">Načítám...</span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* POZNÁMKA ZÁKAZNÍKA Z KOŠÍKU */}
+                  {selectedOrder.customer_note && (
+                    <div className="bg-tag-novinka/5 border border-tag-novinka/20 p-4 rounded-[4px] space-y-1">
+                      <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                        <MessageSquare size={14} className="text-tag-novinka" /> Poznámka zákazníka
+                      </h3>
+                      <p className="style-body text-secondary whitespace-pre-line">{selectedOrder.customer_note}</p>
+                    </div>
+                  )}
+
+                  {/* POLOŽKY OBJEDNÁVKY - jen přehled obsahu, stažení tiskových podkladů
+                      je jen v akčním sloupci vpravo (dřív duplicitně na obou místech). */}
+                  <div className="space-y-3">
+                    <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                      <ShoppingBag size={14} className="text-primary" /> Položky objednávky
+                    </h3>
+                    <div className="bg-black rounded-[4px] border border-black300/20 overflow-hidden">
+                      {selectedOrder.cart_items?.map((item, i) => {
+                        const isCustomStamp = isCustomStampItem(item);
+                        return (
+                          <div key={i} className="p-4 border-b border-black300/20 last:border-0 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                            <div className="space-y-1">
+                              <p className="style-body-bold text-secondary">{item.name}</p>
+                              <p className="style-product-tag text-black300 lowercase">{item.quantity} x {formatPrice(item.price, selectedOrder.currency)}</p>
+                              {isCustomStamp && (
+                                <a
+                                  href={item.image_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-1 inline-flex items-center gap-1.5 style-label text-black300 hover:text-primary transition-colors cursor-pointer"
+                                >
+                                  <FileImage size={12} /> Zobrazit náhled
+                                </a>
+                              )}
+                            </div>
+                            <p className="style-body-bold text-primary sm:text-right shrink-0">{formatPrice(item.price * item.quantity, selectedOrder.currency)}</p>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
-                );
-              })()}
 
-              {/* FAKTURA (IDOKLAD) */}
-              <div className="bg-black p-4 rounded-[4px] flex flex-wrap gap-4 items-center justify-between border border-black300/20">
-                <span className="style-product-tag text-black300">Faktura:</span>
-                {selectedOrder.idoklad_invoice_number ? (
-                  <a
-                    href={`/api/admin/idoklad-invoice-pdf?orderId=${selectedOrder.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
-                  >
-                    <Receipt size={14} /> {selectedOrder.idoklad_invoice_number} - stáhnout PDF
-                  </a>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    {selectedOrder.idoklad_proforma_id && (
-                      <span className="style-body text-black300 italic">Zálohová faktura vystavena, čeká na spárování platby</span>
-                    )}
-                    <button
-                      onClick={handleCreateIdokladInvoice}
-                      disabled={creatingInvoice}
-                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer whitespace-nowrap"
-                    >
-                      <Receipt size={14} /> {creatingInvoice ? 'Vystavuji...' : selectedOrder.idoklad_proforma_id ? 'Potvrdit platbu a vystavit fakturu' : 'Vystavit fakturu'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* ADRESA A INFO */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-                <div className="space-y-3">
-                  <h3 className="style-product-tag text-black300 flex items-center gap-2">
-                    <User size={14} className="text-primary" /> Zákazník
-                  </h3>
-                  <div>
-                    <p className="style-h4 text-secondary">{selectedOrder.billing_first_name} {selectedOrder.billing_last_name}</p>
-                    <p className="style-body text-black300 mt-1 flex items-center gap-1.5"><Mail size={12} /> {selectedOrder.billing_email}</p>
-                    <p className="style-body text-black300 flex items-center gap-1.5"><Phone size={12} /> {selectedOrder.billing_phone}</p>
-                    <p className="style-body text-black300 flex items-center gap-1.5"><Globe size={12} /> {selectedOrder.billing_country}</p>
-                  </div>
+                  {/* HISTORIE STAVŮ - sbaleno defaultně, čte se zřídka */}
+                  {orderStatusHistory.length > 0 && (
+                    <details className="group">
+                      <summary className="style-product-tag text-black300 flex items-center gap-2 cursor-pointer select-none list-none">
+                        <History size={14} className="text-primary" /> Historie stavů
+                        <ChevronDown size={14} className="text-black300 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <div className="mt-2 bg-black rounded-[4px] border border-black300/20 divide-y divide-black300/20">
+                        {orderStatusHistory.map((entry) => (
+                          <div key={entry.id} className="p-3 flex items-center justify-between gap-4">
+                            <OrderStatusBadge status={entry.status} />
+                            <span className="style-body text-black300">{new Date(entry.changed_at).toLocaleString('cs-CZ')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
                 </div>
-                <div className="space-y-3">
-                  <h3 className="style-product-tag text-black300 flex items-center gap-2">
-                    <MapPin size={14} className="text-primary" /> Doručení
-                  </h3>
+
+                {/* PRAVÝ SLOUPEC: AKCE (co je potřeba udělat) - sticky, aby zůstal
+                    viditelný i při scrollování dlouhého obsahu vlevo. */}
+                <div className="space-y-4 min-w-0 order-1 lg:order-2 lg:sticky lg:top-[92px]">
+                  {/* STAV OBJEDNÁVKY */}
+                  <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-3">
+                    <span className="style-product-tag text-black300">Stav objednávky</span>
+                    <select
+                      value={selectedOrder.status || 'Nová'}
+                      onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
+                      className="w-full bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
+                    >
+                      {ORDER_STATUSES.map(({ value }) => (
+                        <option key={value} value={value}>{value}</option>
+                      ))}
+                    </select>
+                    {getNextStatus(selectedOrder) && (
+                      <button
+                        onClick={() => updateOrderStatus(selectedOrder.id, getNextStatus(selectedOrder)!)}
+                        className="w-full flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                      >
+                        Další krok: {getNextStatus(selectedOrder)}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* TISKOVÝ ARCH (Kreativní arch) - jediné místo v modalu se stažením PNG/PDF */}
                   {(() => {
-                    const addr = getDeliveryAddress(selectedOrder);
+                    const customItems = (selectedOrder.cart_items || []).filter(isCustomStampItem);
+                    if (customItems.length === 0) return null;
                     return (
-                      <div className="style-body text-black200">
-                        {addr.line1}<br />
-                        {addr.line2 && <>{addr.line2}<br /></>}
-                        {addr.city}{addr.region ? `, ${addr.region}` : ''}, {addr.zip}<br />
-                        {addr.country}
+                      <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-3">
+                        <span className="style-product-tag text-black300 flex items-center gap-1.5"><Sparkles size={14} className="text-primary" /> Tiskový arch</span>
+                        <div className="space-y-3">
+                          {customItems.map((item, idx) => {
+                            const printUrl = printUrlsByItemId[item.id];
+                            return (
+                              <div key={item.id} className="space-y-1.5">
+                                {customItems.length > 1 && (
+                                  <p className="style-label text-black300">Arch {idx + 1}</p>
+                                )}
+                                {printUrl ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.png`)}
+                                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                                    >
+                                      <Download size={14} /> PNG
+                                    </button>
+                                    <button
+                                      onClick={() => downloadFileAsPdf(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${idx + 1}.pdf`)}
+                                      title="Stáhnout tiskové PDF (300 DPI)"
+                                      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                                    >
+                                      <FileText size={14} /> PDF
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="style-body text-black300 italic animate-pulse">Načítám...</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })()}
-                </div>
-              </div>
 
-              {/* POZNÁMKA ZÁKAZNÍKA Z KOŠÍKU */}
-              {selectedOrder.customer_note && (
-                <div className="bg-tag-novinka/5 border border-tag-novinka/20 p-4 rounded-[4px] space-y-1">
-                  <h3 className="style-product-tag text-black300 flex items-center gap-2">
-                    <MessageSquare size={14} className="text-tag-novinka" /> Poznámka zákazníka
-                  </h3>
-                  <p className="style-body text-secondary whitespace-pre-line">{selectedOrder.customer_note}</p>
-                </div>
-              )}
-
-              {/* POLOŽKY VČETNĚ STAŽENÍ TISKOVÝCH PODKLADŮ */}
-              <div className="space-y-3">
-                <h3 className="style-product-tag text-black300 flex items-center gap-2">
-                  <ShoppingBag size={14} className="text-primary" /> Položky objednávky
-                </h3>
-                <div className="bg-black rounded-[4px] border border-black300/20 overflow-hidden">
-                  {selectedOrder.cart_items?.map((item, i) => {
-                    const isCustomStamp = isCustomStampItem(item);
-                    const printUrl = printUrlsByItemId[item.id];
-
-                    return (
-                      <div key={i} className="p-4 border-b border-black300/20 last:border-0 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                        <div className="space-y-1">
-                          <p className="style-body-bold text-secondary">{item.name}</p>
-                          <p className="style-product-tag text-black300 lowercase">{item.quantity} x {formatPrice(item.price, selectedOrder.currency)}</p>
-
-                          {/* DYNAMICKÁ TLAČÍTKA PRO STAŽENÍ TISKOVÉHO A NÁHLEDOVÉHO SOUBORU */}
-                          {isCustomStamp && (
-                            <div className="pt-2 flex flex-wrap items-center gap-2">
-                              {printUrl ? (
-                                <>
-                                  <button
-                                    onClick={() => downloadFile(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${i + 1}.png`)}
-                                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
-                                  >
-                                    <Download size={14} /> Stáhnout tiskové PNG
-                                  </button>
-                                  <button
-                                    onClick={() => downloadFileAsPdf(printUrl, `${selectedOrder.id.slice(-6).toUpperCase()}_${i + 1}.pdf`)}
-                                    title="Stáhnout tiskové PDF (300 DPI)"
-                                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer"
-                                  >
-                                    <FileText size={14} /> Stáhnout tiskové PDF
-                                  </button>
-                                </>
-                              ) : (
-                                <span className="style-body text-black300 italic block animate-pulse">
-                                  Načítám tiskové podklady z cloudu...
-                                </span>
-                              )}
-                              <a
-                                href={item.image_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 bg-black300/10 hover:bg-black300/20 text-secondary px-4 py-2 rounded-[4px] style-body transition-all cursor-pointer border border-black300/20"
-                              >
-                                <FileImage size={14} /> Zobrazit náhled
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                        <p className="style-body-bold text-primary sm:text-right shrink-0">{formatPrice(item.price * item.quantity, selectedOrder.currency)}</p>
+                  {/* SLEDOVACÍ ČÍSLO ZÁSILKY - primárně jen ke čtení, ruční zadání je fallback */}
+                  <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-2">
+                    <span className="style-product-tag text-black300">Sledovací číslo</span>
+                    {selectedOrder.tracking_number ? (
+                      <p className="style-body-bold text-secondary font-mono">{selectedOrder.tracking_number}</p>
+                    ) : (
+                      <p className="style-body text-black300 italic">Zatím nepřiděleno – vytvoř zásilku níže.</p>
+                    )}
+                    <button
+                      onClick={() => setShowManualTracking((v) => !v)}
+                      className="style-label text-black300 hover:text-primary underline decoration-dotted cursor-pointer"
+                    >
+                      Zadat ručně
+                    </button>
+                    {showManualTracking && (
+                      <div className="pt-2 space-y-2">
+                        <input
+                          type="text"
+                          value={trackingNumberInput}
+                          onChange={(e) => setTrackingNumberInput(e.target.value)}
+                          placeholder="např. CP123456789CZ"
+                          className="w-full bg-black300/10 border border-black300/30 rounded-[4px] px-3 py-2 style-body text-secondary placeholder:text-black300/50 outline-none focus:border-primary transition-all"
+                        />
+                        <button
+                          onClick={handleSaveTrackingNumber}
+                          disabled={savingTracking || !trackingNumberInput.trim()}
+                          className="w-full flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                        >
+                          <Mail size={14} /> {savingTracking ? 'Odesílám...' : 'Uložit a poslat e-mail'}
+                        </button>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+
+                  {/* VYTVOŘIT ZÁSILKU + TISK ŠTÍTKU */}
+                  {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && (
+                    <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-2">
+                      <span className="style-product-tag text-black300">Podání u dopravce</span>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => setShipmentOrder(selectedOrder)}
+                          className="flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                        >
+                          <Truck size={14} /> Vytvořit zásilku
+                        </button>
+                        {selectedOrder.tracking_number && (
+                          <a
+                            href={`/api/admin/print-shipping-label?orderId=${selectedOrder.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                          >
+                            <Printer size={14} /> Vytisknout štítek
+                          </a>
+                        )}
+                        {/* CN22 je u Cenného psaní (VL) samostatný dokument navíc ke štítku
+                            (na rozdíl od EMS, kde je celní prohlášení už na štítku samotném) -
+                            viz komentář v print-shipping-label/route.ts. */}
+                        {selectedOrder.tracking_number?.startsWith('VL') && (
+                          <a
+                            href={`/api/admin/print-shipping-label?orderId=${selectedOrder.id}&type=cn22`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                          >
+                            <Printer size={14} /> Vytisknout CN22
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FAKTURA (IDOKLAD) */}
+                  <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-2">
+                    <span className="style-product-tag text-black300">Faktura</span>
+                    {selectedOrder.idoklad_invoice_number ? (
+                      <a
+                        href={`/api/admin/idoklad-invoice-pdf?orderId=${selectedOrder.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                      >
+                        <Receipt size={14} /> {selectedOrder.idoklad_invoice_number} - stáhnout PDF
+                      </a>
+                    ) : (
+                      <div className="space-y-2">
+                        {selectedOrder.idoklad_proforma_id && (
+                          <p className="style-body text-black300 italic">Zálohová faktura vystavena, čeká na spárování platby</p>
+                        )}
+                        <button
+                          onClick={handleCreateIdokladInvoice}
+                          disabled={creatingInvoice}
+                          className="w-full flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-black disabled:opacity-50 border border-primary/20 px-3 py-2 rounded-[4px] style-body-bold transition-all cursor-pointer"
+                        >
+                          <Receipt size={14} /> {creatingInvoice ? 'Vystavuji...' : selectedOrder.idoklad_proforma_id ? 'Potvrdit platbu a vystavit fakturu' : 'Vystavit fakturu'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* PATIČKA MODALU */}
-              <div className="pt-6 border-t border-black300/30 flex justify-between items-center">
+              <div className="mt-8 pt-6 border-t border-black300/30 flex justify-between items-center">
                 <div className="style-body text-black300">
                   Platba: <span className="text-secondary">{selectedOrder.payment_method}</span>
                 </div>
