@@ -1920,20 +1920,28 @@ export default function AdminDashboard() {
                       {selectedOrder.cart_items?.map((item, i) => {
                         const isCustomStamp = isCustomStampItem(item);
                         return (
-                          <div key={i} className="p-4 border-b border-black300/20 last:border-0 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                            <div className="space-y-1">
-                              <p className="style-body-bold text-secondary">{item.name}</p>
-                              <p className="style-product-tag text-black300 lowercase">{item.quantity} x {formatPrice(item.price, selectedOrder.currency)}</p>
+                          <div key={i} className="p-4 border-b border-black300/20 last:border-0 flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                               {isCustomStamp && (
                                 <a
                                   href={item.image_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="mt-1 inline-flex items-center gap-1.5 style-label text-black300 hover:text-primary transition-colors cursor-pointer"
+                                  title="Zobrazit náhled archu v plné velikosti"
+                                  className="shrink-0"
                                 >
-                                  <FileImage size={12} /> Zobrazit náhled
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- item.image_url je Vercel Blob (cizí doména), next/image by vyžadoval remotePatterns */}
+                                  <img
+                                    src={item.image_url}
+                                    alt="Náhled kompletního tiskového archu"
+                                    className="w-16 h-16 object-cover rounded-[4px] border border-black300/30 hover:border-primary transition-colors"
+                                  />
                                 </a>
                               )}
+                              <div className="space-y-1 min-w-0">
+                                <p className="style-body-bold text-secondary">{item.name}</p>
+                                <p className="style-product-tag text-black300 lowercase">{item.quantity} x {formatPrice(item.price, selectedOrder.currency)}</p>
+                              </div>
                             </div>
                             <p className="style-body-bold text-primary sm:text-right shrink-0">{formatPrice(item.price * item.quantity, selectedOrder.currency)}</p>
                           </div>
