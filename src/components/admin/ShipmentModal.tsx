@@ -250,8 +250,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
           <div className="bg-primary/5 border border-primary/20 p-4 rounded-[4px] flex gap-3 items-start">
             <AlertTriangle size={18} className="text-primary shrink-0 mt-0.5" />
             <p className="style-body text-black200">
-              Podává se zatím jen proti <span className="text-secondary">demo</span> prostředí České pošty - žádná reálná zásilka
-              nevznikne, dokud se vědomě nepřepne na ostrý provoz.
+              Podání jde na ostré rozhraní České pošty a vytvoří skutečnou zásilku - zkontroluj údaje před odesláním.
             </p>
           </div>
 
@@ -276,7 +275,7 @@ export function ShipmentModal({ order, onClose, onShipped }: ShipmentModalProps)
                   <Loader2 size={16} className="animate-spin" /> Podávám...
                 </>
               ) : (
-                'Podat u České pošty (demo)'
+                'Podat u České pošty'
               )}
             </button>
           )}
