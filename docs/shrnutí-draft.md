@@ -29,9 +29,9 @@ Při psaní textu (klávesnice otevřená) šla paleta barev oříznout shora, n
 - Ověřit, že migrace `021_orders_idoklad_invoice.sql` proběhla a 3 env proměnné (`IDOKLAD_*`) jsou skutečně ve Vercel produkci, ne jen lokálně.
 
 ## Administrace a bezpečnost
-- **Žádné role/oprávnění** – kdokoli s platným Supabase Auth účtem vidí a mění všechno.
-- **Žádný audit log** stavů objednávek.
-- **Žádná validace přechodů stavu objednávky** – z adminu lze přeskočit rovnou na jakýkoli stav.
+- ⏸️ **Role/oprávnění vědomě odloženo o měsíc (2026-08-13)** – kdokoli s platným Supabase Auth účtem zatím vidí a mění všechno, ale admin teď obsluhuje jen uživatel sám, takže to prozatím není riziko. Připomenout cca v polovině září.
+- ~~Žádný audit log stavů objednávek~~ – **ve skutečnosti existuje** (`order_status_history` + DB trigger, `docs/sql/024_order_status_history.sql`, od 2026-07-26) – tenhle bod byl v draftu omylem, oprava 2026-08-13.
+- ✅ **Validace přechodů stavu objednávky** (2026-08-13) – `ORDER_STATUS_TRANSITIONS` v `src/lib/constants.ts`, vynucené server-side v `/api/admin/update-order` (409 při zakázaném přechodu), select v adminu nabízí jen povolené další kroky. Viz [sekce 2](02-stavy-objednavky.md#validace-přechodů-mezi-stavy-od-2026-08-13).
 - Tiskové archy se tiskárně stále předávají ručně (ZIP export, žádná automatizace).
 
 ## SEO (menší, nekritické)
