@@ -45,9 +45,12 @@ export default function LandingContent({ lang, onSelectLang, linkBasePath }: Pro
       {/* TOP BAR - jen logo + přepínač jazyků, žádná plná navigace (fokusovaná
           kampaňová stránka, ne kopie hlavního webu) */}
       <div className="layout-container flex items-center justify-between py-6">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={28} height={28} />
-          <span className="style-body-bold hidden sm:inline">My Creative Stamp</span>
+        <Link href="/" className="shrink-0">
+          {/* SVG (viewBox 262×69) je celý wordmark - ikona + "My Creative Stamp"
+              text v jednom, stejně jako v Header.tsx (tam width=250 height=69).
+              Dřív se čtverečkovalo do 28×28 (ořízlo skoro celé) a text se
+              přidával ještě jednou ručně vedle - duplicitní a zmáčknuté. */}
+          <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={180} height={47} />
         </Link>
         {/* font-cjk natvrdo (ne podmíněně) - vlastní název jazyka (日本語, 한국어...)
             musí být čitelný, i když je zrovna aktivní jiný jazyk. */}

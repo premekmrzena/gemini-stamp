@@ -26,9 +26,10 @@ export default function PragueGiftPage() {
     <main className="flex flex-col w-full min-h-screen bg-black text-secondary">
       {/* TOP BAR - jen logo, žádný jazykový přepínač (jediná cílová skupina) */}
       <div className="layout-container flex items-center py-6">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={28} height={28} />
-          <span className="style-body-bold">My Creative Stamp</span>
+        <Link href="/" className="shrink-0">
+          {/* SVG (viewBox 262×69) je celý wordmark - ikona + text v jednom,
+              stejně jako Header.tsx - viz LandingContent.tsx pro plné vysvětlení. */}
+          <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={180} height={47} />
         </Link>
       </div>
 
