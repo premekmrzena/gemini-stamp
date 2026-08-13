@@ -5,7 +5,7 @@ import { routing } from '@/i18n/routing';
 
 const GATE_COOKIE = 'site_access';
 // next-intl si pamatuje poslední navštívenou mutaci v NEXT_LOCALE - potřebujeme
-// jí umět smazat (viz blokace /cs níže), jinak by středoevropský fanoušek
+// jí umět nastavit (viz blokace /cs níže), jinak by středoevropský fanoušek
 // interního náhledu skončil v nekonečné smyčce přesměrování.
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 
@@ -56,9 +56,13 @@ export function proxy(request: NextRequest) {
     url.pathname = '/';
     url.search = '';
     const response = NextResponse.redirect(url);
-    // Bez smazání téhle cookie by next-intl middleware (NEXT_LOCALE nastavená
-    // na "cs" předchozí návštěvou) rovnou přesměroval zpátky na /cs.
-    response.cookies.delete(LOCALE_COOKIE);
+    // Nestačí tuhle cookie smazat - next-intl by si jazyk zase odvodil z
+    // Accept-Language hlavičky prohlížeče (má-li návštěvník "cs" jako
+    // preferovaný jazyk, což je běžné) a rovnou přesměroval zpátky na /cs =
+    // nekonečná smyčka bez ohledu na cookie. Musíme jazyk natvrdo nastavit na
+    // výchozí "en", aby ho next-intl při dalším requestu vzal z cookie (má
+    // přednost před Accept-Language) a smyčku tím přerušil.
+    response.cookies.set(LOCALE_COOKIE, routing.defaultLocale, { path: '/' });
     return response;
   }
 
