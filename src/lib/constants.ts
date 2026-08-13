@@ -22,6 +22,36 @@ export const ORDER_STATUSES: { value: OrderStatus; group: 'neutral' | 'success' 
   { value: 'Ztracená zásilka', group: 'danger' },
 ];
 
+// Validace přechodů mezi stavy objednávky (docs/02-stavy-objednavky.md, otevřený bod
+// z 2026-08-09) - dřív šlo z adminu nastavit jakýkoli stav v jakémkoli pořadí, např.
+// z 'Čekáme na platbu' rovnou na 'Uzavřeno'. Mapa níže je jediný zdroj pravdy, kontroluje
+// se z obou stran: server (`/api/admin/update-order`, nutné - klient se dá obejít) i
+// klient (`admin/dashboard/page.tsx`, jen zúží nabídku v selectu, ať admin nevidí
+// možnosti, které stejně dostane zpátky jako chybu).
+//
+// Odlišné od PICKUP_FLOW/SHIPPING_FLOW v dashboardu - ty popisují JEDNU "šťastnou cestu"
+// podle způsobu dopravy (pro tlačítko "Další krok"), tahle mapa povoluje VĚTVENÍ na
+// všechny realistické další kroky včetně výjimek (zrušení, reklamace, ztráta zásilky).
+// 'Nová' se chová jako alias 'Čekáme na platbu' (appka ho sama nezapisuje, ale historické
+// objednávky ho můžou mít). 'Uzavřeno' je skoro terminální - jediná povolená cesta ven je
+// dodatečná reklamace, která přijde až po vyřízení.
+export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  'Nová': ['Čekáme na platbu', 'Zaplaceno', 'Zrušeno'],
+  'Čekáme na platbu': ['Zaplaceno', 'Zrušeno'],
+  'Zaplaceno': ['Připravujeme', 'Zrušeno'],
+  'Připravujeme': ['Odesláno', 'K vyzvednutí', 'Zrušeno'],
+  'Odesláno': ['Doručeno', 'Ztracená zásilka', 'Vráceno'],
+  'K vyzvednutí': ['Vyzvednuto', 'Zrušeno'],
+  'Doručeno': ['Uzavřeno', 'Reklamace', 'Vráceno'],
+  'Vyzvednuto': ['Uzavřeno', 'Reklamace', 'Vráceno'],
+  'Zrušeno': ['Vráceny peníze', 'Uzavřeno'],
+  'Vráceno': ['Vráceny peníze', 'Uzavřeno'],
+  'Ztracená zásilka': ['Vráceny peníze', 'Uzavřeno'],
+  'Reklamace': ['Vráceny peníze', 'Uzavřeno'],
+  'Vráceny peníze': ['Uzavřeno'],
+  'Uzavřeno': ['Reklamace'],
+};
+
 export type ShippingOption = {
   id: string;
   name: string;

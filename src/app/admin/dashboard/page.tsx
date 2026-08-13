@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { ORDER_STATUSES } from '@/lib/constants';
+import { ORDER_STATUSES, ORDER_STATUS_TRANSITIONS } from '@/lib/constants';
 import { OrderStatus, Order, Product, ProductCategory, DiscountCode, CurrencyCode, ExchangeRate, CartItemSnapshot, OrderStatusHistoryEntry } from '@/types/database';
 import { ProductFormModal, CATEGORY_LABELS } from '@/components/admin/ProductFormModal';
 import { DiscountCodeFormModal } from '@/components/admin/DiscountCodeFormModal';
@@ -647,7 +647,10 @@ export default function AdminDashboard() {
     });
 
     if (!res.ok) {
-      alert('Chyba při aktualizaci stavu');
+      // Server validuje povolené přechody (ORDER_STATUS_TRANSITIONS) a vrací konkrétní
+      // důvod v `error` - zobrazit ho, ne generickou hlášku, ať je jasné, co se stalo.
+      const body = await res.json().catch(() => null);
+      alert(body?.error || 'Chyba při aktualizaci stavu');
       return;
     }
 
@@ -1980,7 +1983,14 @@ export default function AdminDashboard() {
                       onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
                       className="w-full bg-black400 border border-black300/30 rounded-[4px] px-3 h-[40px] style-body text-secondary outline-none focus:border-primary transition-all cursor-pointer"
                     >
-                      {ORDER_STATUSES.map(({ value }) => (
+                      {/* Nabídka je zúžená na aktuální stav + povolené další kroky
+                          (ORDER_STATUS_TRANSITIONS) - jen UX zrcadlení, závazně to
+                          validuje server v /api/admin/update-order. */}
+                      {ORDER_STATUSES.filter(
+                        ({ value }) =>
+                          value === selectedOrder.status ||
+                          (ORDER_STATUS_TRANSITIONS[selectedOrder.status || 'Nová'] ?? []).includes(value)
+                      ).map(({ value }) => (
                         <option key={value} value={value}>{value}</option>
                       ))}
                     </select>

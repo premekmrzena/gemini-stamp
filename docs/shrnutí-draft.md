@@ -8,7 +8,7 @@
 ## Kreativní archy — tiskové podklady bez ilustrace známek (4/5 hotovo, potvrzeno funkční)
 Od 2026-08-09 se archy tisknou dočasně na prázdný papír (ne dotisk na předtištěné), takže tiskový soubor musí obsahovat i podklad šablony – ale bez ilustrace skutečných poštovních známek (ty se lepí ručně po vytištění, na jejich místě jen prázdný rám). Mechanismus (`getPrintBackgroundImage()` v `editorConfig.ts` + fallback v `canvasUtils.ts`) hotový, viz [sekce 4](04-popis-eshopu.md#3-editor-kreativní-archy).
 - ✅ Šablony **02, 03, 04, 05** dodány, pushnuty (`971964a`) a **uživatel potvrdil, že na produkci sedí perfektně**.
-- ⏳ **Šablona 01 zatím chybí** (`01_Architektura_print-slots.jpg`) – do té doby se tiskne provizorně se starým podkladem (s ilustrací známek), nic nerozbité.
+- ⏸️ **Šablona 01 vědomě odložena na neurčito** (2026-08-13, rozhodnutí uživatele) – tiskne se dál provizorně se starým podkladem (`01_Architektura_white-slots.jpg`, s ilustrací známek), nic nerozbité, jen bez plánovaného data dokončení.
 - Poznámka: nový podklad záměrně nemá ani tečkovaný perforovaný rámeček kolem bloku známek (ne jen ilustrace uvnitř) – potvrzeno uživatelem, plán reálné papírové perforace na předtištěných arších je odložen.
 
 ## Admin: stažení tiskového archu (vyřešeno 2026-08-09)

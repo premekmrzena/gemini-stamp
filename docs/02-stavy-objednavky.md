@@ -42,5 +42,12 @@ DB `CHECK` constraint (`orders_status_check`, `docs/sql/025_orders_status_waitin
 ## Notifikační e-maily podle stavu (rozšířeno 2026-08-05 na všechny stavy kromě dvou)
 `src/app/admin/dashboard/page.tsx`'s `updateOrderStatus()` po úspěšné změně stavu zavolá `POST /api/admin/notify-order-status`, který podle `STATUS_EMAIL_NOTIFICATIONS` pošle e-mail pro každý stav kromě `Nová` a `Odesláno` (infrastruktura viz [sekce 1](01-technicka-infrastruktura.md#e-maily--resend), obsah šablon a přehled spouštěčů viz [sekce 11](11-emaily.md)). `Odesláno` má vlastní oddělenou cestu přes sledovací číslo (`ShipmentModal`/ruční zadání → `/api/send-shipping-notification`), ne přes tenhle mechanismus. `Nová` e-mail nespouští tudy (je to jen výchozí stav při vytvoření, zákazník dostane potvrzení objednávky samostatně přes `OrderConfirmationEmail`).
 
+## Validace přechodů mezi stavy (od 2026-08-13)
+`ORDER_STATUS_TRANSITIONS` v `src/lib/constants.ts` je jediný zdroj pravdy pro to, na jaké stavy lze z aktuálního stavu přejít – větší graf než `PICKUP_FLOW`/`SHIPPING_FLOW` výše (ty popisují jen jednu "šťastnou cestu" pro tlačítko "Další krok"), povoluje i realistické výjimky (zrušení, reklamace, ztracená zásilka, vrácení peněz). `Nová` se chová jako alias `Čekáme na platbu`. `Uzavřeno` je skoro terminální stav, jediná cesta ven je dodatečná `Reklamace`.
+
+Validuje se na dvou místech:
+- **Server** (`/api/admin/update-order`) – závazné, request s nepovoleným přechodem vrátí `409` s textem, jaké stavy jsou z aktuálního stavu povolené. Dá se obejít jen přímým zápisem do DB (service role), ne přes appku.
+- **Klient** (`admin/dashboard/page.tsx`) – select "Změnit stav" nabízí jen aktuální stav + povolené další kroky, čistě UX (ať admin nevidí možnost, kterou stejně dostane zpátky jako chybu).
+
 ## Otevřené body
-- Žádná validace přechodů mezi stavy (z adminu lze nastavit jakýkoli stav v jakémkoli pořadí, např. z `Čekáme na platbu` přímo na `Uzavřeno`)
+*(žádné – validace přechodů byla poslední otevřený bod)*
