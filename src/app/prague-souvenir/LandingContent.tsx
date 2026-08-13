@@ -21,13 +21,13 @@ function PrimaryCta({ children, className = '' }: { children: React.ReactNode; c
 
 type Props = {
   lang: LangCode;
-  /** Kořenová (auto-detekující) stránka: přepínač mění jen lokální state, URL zůstává. */
+  /** Jen kořenová (auto-detekující) stránka ji předává - přepínač jazyků se
+   *  zobrazí jen tam. Pevné /prague-souvenir/[lang] cesty ho vůbec nemají,
+   *  viz komentář u přepínače níže. */
   onSelectLang?: (lang: LangCode) => void;
-  /** Pevné /prague-souvenir/[lang] cesty: přepínač naviguje na sesterskou URL. */
-  linkBasePath?: string;
 };
 
-export default function LandingContent({ lang, onSelectLang, linkBasePath }: Props) {
+export default function LandingContent({ lang, onSelectLang }: Props) {
   const c = CONTENT[lang];
   // Poppins nemá CJK znaky (viz .font-cjk v globals.css) - anglický obsah zůstává
   // v brandovém Poppins, ostatní 4 jazyky přepnou na systémový CJK stack.
@@ -52,11 +52,15 @@ export default function LandingContent({ lang, onSelectLang, linkBasePath }: Pro
               přidával ještě jednou ručně vedle - duplicitní a zmáčknuté. */}
           <Image src="/images/creative-stamp_logo.svg" alt="My Creative Stamp" width={180} height={47} />
         </Link>
-        {/* font-cjk natvrdo (ne podmíněně) - vlastní název jazyka (日本語, 한국어...)
-            musí být čitelný, i když je zrovna aktivní jiný jazyk. */}
-        <div className="flex flex-wrap justify-end gap-1.5 font-cjk" role="group" aria-label="Language">
-          {LANGS.map(({ code, label }) =>
-            onSelectLang ? (
+        {/* Přepínač jen na kořenové (auto-detekující) stránce - onSelectLang je
+            předaný jen odtamtud. Pevné /prague-souvenir/[lang] URL (linkBasePath)
+            žádný nemají: kdo přijde z cílené reklamy na konkrétní jazyk, ten už
+            je ve správném jazyce, přepínač by tam byl jen navíc. */}
+        {onSelectLang && (
+          // font-cjk natvrdo (ne podmíněně) - vlastní název jazyka (日本語, 한국어...)
+          // musí být čitelný, i když je zrovna aktivní jiný jazyk.
+          <div className="flex flex-wrap justify-end gap-1.5 font-cjk" role="group" aria-label="Language">
+            {LANGS.map(({ code, label }) => (
               <button
                 key={code}
                 onClick={() => onSelectLang(code)}
@@ -69,22 +73,9 @@ export default function LandingContent({ lang, onSelectLang, linkBasePath }: Pro
               >
                 {label}
               </button>
-            ) : (
-              <Link
-                key={code}
-                href={`${linkBasePath}/${code}`}
-                aria-current={lang === code ? 'page' : undefined}
-                className={`style-label px-2.5 py-1.5 rounded-[4px] border transition-colors ${
-                  lang === code
-                    ? 'bg-primary text-black border-primary'
-                    : 'border-black300/30 text-black300 hover:text-secondary hover:border-black300/60'
-                }`}
-              >
-                {label}
-              </Link>
-            )
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* HERO - split layout, stejná barevná logika jako homepage Hero (bg-black,

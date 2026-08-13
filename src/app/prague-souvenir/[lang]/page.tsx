@@ -46,5 +46,5 @@ export default async function PragueSouvenirLangPage({
   const { lang } = await params;
   if (!isLangCode(lang)) notFound();
 
-  return <LandingContent lang={lang} linkBasePath="/prague-souvenir" />;
+  return <LandingContent lang={lang} />;
 }
