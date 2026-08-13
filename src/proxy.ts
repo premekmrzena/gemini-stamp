@@ -14,8 +14,18 @@ const LOCALE_COOKIE = 'NEXT_LOCALE';
 // /rekonstrukce zůstávají mimo, viz docs/09-jazykove-mutace.md.
 const handleI18nRouting = createMiddleware(routing);
 
+// Cesty mimo next-intl routing úplně - vlastní jazykový přepínač si řeší samy (viz
+// /prague-souvenir), next-intl by je jinak bral jako neprefixovanou výchozí (en) mutaci
+// a při Accept-Language jiné než en přesměrovával na neexistující /ja/..., /ko/... atd.
+// (přesně bug z feedback_proxy_locale_redirect_loop, jen jednou cestou navíc).
+const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-souvenir'];
+
 function isLocalizedPath(pathname: string): boolean {
-  return !pathname.startsWith('/admin') && !pathname.startsWith('/api') && pathname !== '/rekonstrukce';
+  return (
+    !pathname.startsWith('/admin') &&
+    !pathname.startsWith('/api') &&
+    !LOCALE_EXEMPT_PATHS.includes(pathname)
+  );
 }
 
 // /cs (viz src/i18n/routing.ts) je jen interní pracovní náhled pro srovnání

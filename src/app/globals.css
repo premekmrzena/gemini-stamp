@@ -65,6 +65,22 @@ body {
   display: none;
 }
 
+/* CJK systémový font stack - Poppins (--font-sans výše) nemá čínské/japonské/
+ * korejské znaky vůbec. Prohlížeč by měl chybějící glyfy dohledat v systémovém
+ * fontu automaticky i bez tohohle pravidla, ale spoléhat na to je křehké -
+ * ověřeno na /prague-souvenir (viz project_target_customer_asian_tourist):
+ * headless Chromium bez nainstalovaného CJK fontu vykresloval čisté "tofu"
+ * čtverečky. Explicitní stack systémových CJK fontů místo implicitního
+ * fallbacku - PingFang (macOS/iOS zjednodušená/tradiční čínština), Hiragino
+ * (macOS/iOS japonština), Meiryo/Yu Gothic (Windows japonština), Malgun Gothic/
+ * Apple SD Gothic Neo (korejština), Noto Sans CJK (Android/Linux).
+ */
+.font-cjk {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'PingFang TC', 'Hiragino Sans',
+    'Hiragino Kaku Gothic Pro', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Microsoft YaHei',
+    'Microsoft JhengHei', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+}
+
 /* 3. NAŠE STYLY Z FIGMY */
 @keyframes kenburns {
   0%   { transform: scale(1)    translate(0,    0);    }
