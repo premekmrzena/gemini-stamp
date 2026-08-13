@@ -18,7 +18,9 @@ const handleI18nRouting = createMiddleware(routing);
 // /prague-souvenir), next-intl by je jinak bral jako neprefixovanou výchozí (en) mutaci
 // a při Accept-Language jiné než en přesměrovával na neexistující /ja/..., /ko/... atd.
 // (přesně bug z feedback_proxy_locale_redirect_loop, jen jednou cestou navíc).
-const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-souvenir'];
+// /prague-gift je sesterská kampaňová stránka (západní turisté, jen EN, samostatná
+// URL kvůli čistému A/B měření proti /prague-souvenir - viz project_prague_gift_landing).
+const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-souvenir', '/prague-gift'];
 
 function isLocalizedPath(pathname: string): boolean {
   return (
