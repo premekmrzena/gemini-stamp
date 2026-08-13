@@ -51,33 +51,47 @@ Obě stránky **do 13. 8. odpoledne neměly GA4 zapojené vůbec** (žily mimo `
 
 **POZOR:** JA/ZH-Hans/ZH-Hant/KO texty na `/prague-souvenir` jsou strojový překlad, neověřený rodilým mluvčím – stejná kategorie rizika jako EN právní texty (VOP/GDPR). Než se do kampaní nalije větší rozpočet, stálo by za to nechat je zkontrolovat (viz konkrétní návod v paměti session – r/translator, Fiverr/Gengo, Konfuciova akademie/Japonské centrum v Praze).
 
-## Registrace a nástroje
-Nástroje potřebné k rozjezdu kampaní – většina zatím nezaložená, viz aktuální stav v artefaktu "Poštovní itinerář".
+## Google Merchant Center feed (doplněno 2026-08-13)
+`src/app/feed/google-merchant.xml/route.ts` (`GET /feed/google-merchant.xml`) – RSS 2.0 + `g:` namespace feed generovaný přímo z `products` v Supabase, žádná ruční správa produktů v Merchant Center.
 
-| Nástroj | Účel | Odkaz |
-|---|---|---|
-| Google Search Console | Indexace, sitemap | https://search.google.com/search-console/welcome |
-| Bing Webmaster Tools | Indexace (Bing) | https://www.bing.com/webmasters |
-| Google Merchant Center | Produktový feed pro Shopping/Performance Max | https://merchants.google.com |
-| Google Ads | Search kampaně, segmentace | https://ads.google.com |
-| Google Analytics (GA4) | Propojení GA4 → Ads (Admin → Product links) | https://analytics.google.com |
-| Meta Business Suite / Events Manager | Instagram profil, Meta Pixel | https://business.facebook.com |
-| Xiaohongshu (小红书/RED) | Objevovací platforma pro čínský segment | https://www.xiaohongshu.com |
-| Naver Ads | Placená inzerce (Korea) | https://searchad.naver.com |
-| LINE Ads Platform | Placená inzerce (Japonsko) | https://www.linebiz.com/jp/service/line-ad/ |
-| Kakao Moment | Placená inzerce (Korea) | https://moment.kakao.com |
-| Stripe – platební metody | Kontrola WeChat Pay/Alipay dostupnosti | https://dashboard.stripe.com/settings/payment_methods |
-| Resend Audiences | Newsletter/e-mail capture | https://resend.com/audiences |
+- Vynechává kategorii `kreativni-archy` (nemá vlastní "koupit" stránku – vede do editoru `/vytvorit-arch`, ne přímo do košíku) a produkty bez vyplněné `price_eur`.
+- `title`/`description` anglicky (`name_en`/`short_description_en` s fallbackem na CZ), `link` na `/produkt/{id}` (EN výchozí locale, EUR ceny) – stejný zdroj dat jako existující Product JSON-LD (viz [sekce 7](07-seo.md)).
+- `g:availability` natvrdo `in stock` u všech aktivních produktů – vědomé rozhodnutí, protože sklad je jen informativní a nikdy neblokuje nákup (viz [sekce 4](04-popis-eshopu.md)), na rozdíl od Product JSON-LD, které gatuje `InStock`/`OutOfStock` podle `stock_quantity` (nekonzistence ponechaná vědomě – u reklamního feedu má "out of stock" reálný dopad na viditelnost, u JSON-LD ne).
+- `g:identifier_exists = no` – žádné GTIN/MPN, `catalog_number` je jen filatelistické katalogové číslo.
+- `.xml` v cestě záměrně bypassuje next-intl/gate middleware (`proxy.ts` matcher vylučuje jakoukoli cestu s tečkou) – stejný trik jako `sitemap.xml`.
+- **Merchant Center nastavení:** Scheduled fetch na tu URL, feed label `CZ` (cílový zákazník je turista fyzicky v ČR), jazyk English, zobrazení ve všech zemích (checkout podporuje doručení do 145 zemí).
+- **Napojeno na Google Ads:** GA4 ↔ Ads i Merchant Center ↔ Ads propojené, Ads účet (`dvks.admin@gmail.com`, standardní/expert režim, EUR). Import `purchase` eventu jako primární conversion action vědomě odložen na chvíli zakládání první kampaně.
+- **Zbývá ověřit:** jestli Google feed schválil bez disapprovals – nejčastější první potíž bývá chybějící `google_product_category` (feed má zatím jen volný `g:product_type`, ne oficiální taxonomy ID).
+
+## Registrace a nástroje
+Nástroje potřebné k rozjezdu kampaní – aktuální stav (✅ hotovo) níže, podrobný průběžný plán v artefaktu "Poštovní itinerář".
+
+| Nástroj | Účel | Stav | Odkaz |
+|---|---|---|---|
+| Google Search Console | Indexace, sitemap | ✅ hotovo | https://search.google.com/search-console/welcome |
+| Bing Webmaster Tools | Indexace (Bing) | ✅ hotovo | https://www.bing.com/webmasters |
+| Google Merchant Center | Produktový feed pro Shopping/Performance Max | ✅ hotovo | https://merchants.google.com |
+| Google Ads | Search kampaně, segmentace | účet založen, kampaň zbývá | https://ads.google.com |
+| Google Analytics (GA4) | Propojení GA4 → Ads (Admin → Product links) | ✅ hotovo (import konverze zbývá) | https://analytics.google.com |
+| Meta Business Suite / Events Manager | Instagram profil, Meta Pixel | Instagram ✅, Pixel zbývá | https://business.facebook.com |
+| Xiaohongshu (小红书/RED) | Objevovací platforma pro čínský segment | ✅ hotovo | https://www.xiaohongshu.com |
+| Naver Ads | Placená inzerce (Korea) | zbývá | https://searchad.naver.com |
+| LINE Ads Platform | Placená inzerce (Japonsko) | zbývá | https://www.linebiz.com/jp/service/line-ad/ |
+| Kakao Moment | Placená inzerce (Korea) | zbývá | https://moment.kakao.com |
+| Stripe – platební metody | Kontrola WeChat Pay/Alipay dostupnosti | nerozhodnuto | https://dashboard.stripe.com/settings/payment_methods |
+| Resend Audiences | Newsletter/e-mail capture | zbývá | https://resend.com/audiences |
 
 ## Návaznost na existující infrastrukturu
 - **GA4 e-commerce trychtýř** (`view_item → purchase`) + Consent Mode v2 – hotové a živě ověřené na hlavním webu, viz [sekce 12](12-analytika.md); od 13. 8. běží (pageview + Consent Mode) i na obou kampaňových stránkách, viz výše. Ecommerce eventy (`view_item`/`add_to_cart`/...) se ale odehrávají až na `/vytvorit-arch` a dál v checkoutu, ne na landing pages samotných – ty mají jen pageview.
-- **Product/Organization/BreadcrumbList JSON-LD** na každé indexovatelné stránce, viz [sekce 7](07-seo.md) – základ pro Merchant Center feed.
+- **Product/Organization/BreadcrumbList JSON-LD** na každé indexovatelné stránce, viz [sekce 7](07-seo.md) – stejný zdroj dat (cena, obrázek, dostupnost) jako [Merchant Center feed](#google-merchant-center-feed-doplněno-2026-08-13) výše.
 - **Odběrné místo In Arte Veritas** (Malá Strana, viz [[project_pickup_partner_arte_veritas]]) – přímo v turistické zóně u Karlova mostu, relevantní i jako levný offline kanál (signage/QR kód) pro kolemjdoucí turisty.
 - **Sitemap** (`src/app/sitemap.ts`) obsahuje všech 6 URL `/prague-souvenir` variant (kořen + 5 pevných jazyků) + `/prague-gift`.
 
 ## Otevřené body
-- Sociální profily (Instagram, Xiaohongshu) zatím nezaložené – landing pages jsou hotové a měří, ale nemají kam organicky odkazovat ani přes co spustit placenou inzerci na Meta.
-- Google Ads/Merchant Center/GA4↔Ads propojení zatím nezaložené.
+- ~~Sociální profily (Instagram, Xiaohongshu) zatím nezaložené~~ **HOTOVO** – oba profily založené.
+- ~~Google Search Console / Bing Webmaster Tools~~ **HOTOVO 2026-08-13** – oba zaregistrované, sitemap odeslaná.
+- ~~Google Merchant Center~~ **HOTOVO 2026-08-13** – produktový feed zaregistrován, viz [sekce výše](#google-merchant-center-feed-doplněno-2026-08-13).
+- ~~Google Ads účet + GA4↔Ads propojení~~ **HOTOVO 2026-08-13** – účet založen, GA4 i Merchant Center propojené s Ads. **Zbývá:** import GA4 `purchase` konverze (vědomě odloženo na založení první kampaně) a samotná první kampaň/segmentace.
 - Platební metody pro čínský segment (WeChat Pay/Alipay) – nerozhodnuto, jestli/jak řešit.
 - Dedikovaný OG banner 1200×630 (viz [sekce 7](07-seo.md), Otevřené body) by se hodil i pro sdílení kampaňových landing pages, zatím se používá `hero01.png`/`hero02.png` v poměru 4:3.
 - KO/JA/ZH mutace **celého** storefrontu (next-intl) zůstávají vědomě odložené – `/prague-souvenir` je záměrně jen dílčí, levný první krok, ne náhrada plné lokalizace. Viz [sekce 9](09-jazykove-mutace.md).
