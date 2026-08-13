@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import '../globals.css';
 import { poppins } from '@/lib/fonts';
 import { SITE_URL, SITE_NAME } from '@/lib/site';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import AnalyticsPageview from '@/components/AnalyticsPageview';
+import CampaignCookieConsent from '@/components/CampaignCookieConsent';
 
 // Vlastní root layout (Next.js "multiple root layouts") - stejný vzor jako
 // src/app/admin/layout.tsx a src/app/rekonstrukce/layout.tsx. Tahle stránka
@@ -40,7 +44,17 @@ export default function PragueSouvenirLayout({ children }: { children: React.Rea
   return (
     <html lang="en">
       <body className={`${poppins.className} flex flex-col min-h-screen bg-black`}>
+        {/* GA4 + Consent Mode v2 - do 2026-08-13 tahle stránka neměla ŽÁDNÉ
+            měření (žila mimo [locale], kde GoogleAnalytics/AnalyticsPageview/
+            CookieConsent normálně bydlí). Bez tohohle by kampaně cílené sem
+            nešlo vůbec vyhodnotit. Vlastní (ne next-intl) CookieConsent verze,
+            viz komentář v tom souboru. */}
+        <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <AnalyticsPageview />
+        </Suspense>
         {children}
+        <CampaignCookieConsent />
       </body>
     </html>
   );

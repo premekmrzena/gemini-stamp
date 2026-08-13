@@ -1,6 +1,11 @@
 import Script from 'next/script';
 import { GA_MEASUREMENT_ID } from '@/lib/gtag';
 
+// Přesunuto z src/app/[locale]/GoogleAnalytics.tsx (2026-08-13) do sdíleného
+// src/components/ - potřebují ji teď 3 nezávislé root layouty ([locale],
+// prague-souvenir, prague-gift, viz docs/13-marketing.md), ne jen jeden.
+// Nemá žádnou závislost na next-intl/locale, je to čistě GA4 skript.
+//
 // Consent Mode v2: dataLayer a výchozí "denied" musí být nastavené ještě před
 // načtením gtag.js (proto beforeInteractive), jinak by GA stihl odeslat hit
 // dřív, než víme, jestli má uživatel souhlas. wait_for_update dá CookieConsent

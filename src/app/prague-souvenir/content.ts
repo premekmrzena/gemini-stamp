@@ -169,12 +169,20 @@ export const CONTENT: Record<LangCode, Content> = {
 };
 
 // Detekce jen pro kořenovou (auto) stránku - pevné /[lang] cesty svůj jazyk znají
-// napřímo z URL, detekci nepotřebují.
-export function detectLang(): LangCode {
-  if (typeof window === 'undefined') return 'en';
-
+// napřímo z URL, detekci nepotřebují. Rozděleno na dvě funkce, protože kořenová
+// stránka se s nimi chová jinak: explicitní ?lang= je záměrný lokální override
+// (zůstat na /prague-souvenir, jen přepnout obsah - hodí se na testování), zatímco
+// jazyk odvozený z prohlížeče spouští přesměrování na pevnou /[lang] URL (viz
+// page.tsx) - žádný důvod zůstávat na kořeni, když z prohlížeče víme jistě, že
+// návštěvník čte japonsky/čínsky/korejsky.
+export function detectLangFromQuery(): LangCode | null {
+  if (typeof window === 'undefined') return null;
   const fromQuery = new URLSearchParams(window.location.search).get('lang');
-  if (fromQuery && isLangCode(fromQuery)) return fromQuery;
+  return fromQuery && isLangCode(fromQuery) ? fromQuery : null;
+}
+
+export function detectLangFromBrowser(): LangCode {
+  if (typeof window === 'undefined') return 'en';
 
   const browserLang = (navigator.language || '').toLowerCase();
   if (browserLang.startsWith('ja')) return 'ja';

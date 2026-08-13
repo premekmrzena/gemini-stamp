@@ -8,7 +8,7 @@ import { routing } from '@/i18n/routing';
 import { CartProvider } from '@/context/CartContext';
 import { poppins } from '@/lib/fonts';
 import { SITE_URL, SITE_NAME, SITE_DEFAULT_TITLE, SITE_DEFAULT_DESCRIPTION } from '@/lib/site';
-import GoogleAnalytics from './GoogleAnalytics';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 import AnalyticsPageview from '@/components/AnalyticsPageview';
 import CookieConsent from '@/components/CookieConsent';
 import CartToast from '@/components/CartToast';

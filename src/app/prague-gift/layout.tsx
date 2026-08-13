@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import '../globals.css';
 import { poppins } from '@/lib/fonts';
 import { SITE_URL, SITE_NAME } from '@/lib/site';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import AnalyticsPageview from '@/components/AnalyticsPageview';
+import CampaignCookieConsent from '@/components/CampaignCookieConsent';
 
 // Sesterská kampaňová stránka k /prague-souvenir (viz ten layout pro plné
 // vysvětlení vzoru "multiple root layouts" + proxy.ts LOCALE_EXEMPT_PATHS).
@@ -36,7 +40,15 @@ export default function PragueGiftLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className={`${poppins.className} flex flex-col min-h-screen bg-black`}>
+        {/* GA4 + Consent Mode v2 - viz stejný komentář v prague-souvenir/layout.tsx.
+            Chyběl tu do 2026-08-13 (oversight - "čisté A/B měření" v komentáři
+            výše počítalo s tím, že GA4 fakt běží, ale nikdy to sem nikdo nepřipojil). */}
+        <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <AnalyticsPageview />
+        </Suspense>
         {children}
+        <CampaignCookieConsent />
       </body>
     </html>
   );
