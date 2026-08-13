@@ -14,6 +14,15 @@ const staticRoutes = [
   { path: '/faq', priority: 0.4, changeFrequency: 'monthly' as const },
   { path: '/obchodni-podminky', priority: 0.2, changeFrequency: 'yearly' as const },
   { path: '/ochrana-osobnich-udaju', priority: 0.2, changeFrequency: 'yearly' as const },
+  // Kampaňové landing pages (viz docs/13-marketing.md) - mimo next-intl [locale],
+  // ale pořád indexovatelné (robots: index/follow v jejich vlastních layoutech).
+  { path: '/prague-souvenir', priority: 0.5, changeFrequency: 'monthly' as const },
+  { path: '/prague-souvenir/en', priority: 0.4, changeFrequency: 'monthly' as const },
+  { path: '/prague-souvenir/ja', priority: 0.4, changeFrequency: 'monthly' as const },
+  { path: '/prague-souvenir/zh-Hans', priority: 0.4, changeFrequency: 'monthly' as const },
+  { path: '/prague-souvenir/zh-Hant', priority: 0.4, changeFrequency: 'monthly' as const },
+  { path: '/prague-souvenir/ko', priority: 0.4, changeFrequency: 'monthly' as const },
+  { path: '/prague-gift', priority: 0.5, changeFrequency: 'monthly' as const },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

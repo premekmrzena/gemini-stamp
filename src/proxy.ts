@@ -20,14 +20,19 @@ const handleI18nRouting = createMiddleware(routing);
 // (přesně bug z feedback_proxy_locale_redirect_loop, jen jednou cestou navíc).
 // /prague-gift je sesterská kampaňová stránka (západní turisté, jen EN, samostatná
 // URL kvůli čistému A/B měření proti /prague-souvenir - viz project_prague_gift_landing).
-const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-souvenir', '/prague-gift'];
+const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-gift'];
+
+// /prague-souvenir má navíc pevné podcesty na konkrétní jazyk (/prague-souvenir/ja,
+// /zh-Hans, /zh-Hant, /ko, /en - viz [lang]/page.tsx) - musí být vyjmuté i ONY, ne
+// jen holý kořen, jinak next-intl vezme /prague-souvenir/ja jako svou vlastní
+// (neexistující) trasu a spadne na 404 dřív, než se dostane k appce.
+const LOCALE_EXEMPT_PREFIXES = ['/prague-souvenir'];
 
 function isLocalizedPath(pathname: string): boolean {
-  return (
-    !pathname.startsWith('/admin') &&
-    !pathname.startsWith('/api') &&
-    !LOCALE_EXEMPT_PATHS.includes(pathname)
-  );
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api')) return false;
+  if (LOCALE_EXEMPT_PATHS.includes(pathname)) return false;
+  if (LOCALE_EXEMPT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return false;
+  return true;
 }
 
 // /cs (viz src/i18n/routing.ts) je jen interní pracovní náhled pro srovnání
