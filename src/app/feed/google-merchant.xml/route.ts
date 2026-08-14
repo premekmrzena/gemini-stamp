@@ -12,7 +12,7 @@ import { Product } from '@/types/database';
 export const revalidate = 3600;
 
 const FEED_COLUMNS =
-  'id, name, name_en, short_description, short_description_en, category, image_url, price, sale_price, price_eur, sale_price_eur, is_active, catalog_number';
+  'id, name, name_en, short_description, short_description_en, category, image_url, price, sale_price, price_eur, sale_price_eur, is_active, catalog_number, weight_grams';
 
 type FeedProduct = Pick<
   Product,
@@ -29,6 +29,7 @@ type FeedProduct = Pick<
   | 'sale_price_eur'
   | 'is_active'
   | 'catalog_number'
+  | 'weight_grams'
 >;
 
 // Volný text (ne Google Product Taxonomy ID) - jen orientační pro kampaně,
@@ -85,6 +86,13 @@ export async function GET() {
       // pravidlo jako u Product JSON-LD na /produkt/[id].
       if (!localizedPrice) return null;
 
+      // Merchant Center má nastavené vážené dopravní sazby (viz shipping
+      // policies v Merchant Center) - bez váhy Google neví, do kterého
+      // pásma produkt spadá, a celý ho zamítne. Radši produkt vůbec
+      // nenabízet, než ho nechat spadnout do disapproval kvůli chybějícím
+      // datům v adminu (stejný vzor jako chybějící EUR cena výše).
+      if (!product.weight_grams || product.weight_grams <= 0) return null;
+
       const title = getLocalizedProductField(product, 'en', 'name');
       const description =
         getLocalizedProductField(product, 'en', 'short_description') ||
@@ -105,6 +113,7 @@ export async function GET() {
       <g:availability>in stock</g:availability>
       <g:price>${formatEur(localizedPrice.price)}</g:price>
       ${hasSale ? `<g:sale_price>${formatEur(localizedPrice.salePrice as number)}</g:sale_price>` : ''}
+      <g:shipping_weight>${product.weight_grams} g</g:shipping_weight>
       <g:brand>${escapeXml(SITE_NAME)}</g:brand>
       <!-- catalog_number je filatelistické katalogové číslo, ne GTIN/MPN -
            bez skutečného identifikátoru musí být tohle "no", jinak Google
