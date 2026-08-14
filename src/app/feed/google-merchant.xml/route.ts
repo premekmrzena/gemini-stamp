@@ -12,7 +12,7 @@ import { Product } from '@/types/database';
 export const revalidate = 3600;
 
 const FEED_COLUMNS =
-  'id, name, name_en, short_description, short_description_en, category, image_url, price, sale_price, price_eur, sale_price_eur, is_active, catalog_number';
+  'id, name, name_en, short_description, short_description_en, category, image_url, price, sale_price, price_eur, sale_price_eur, is_active, catalog_number, weight_grams';
 
 type FeedProduct = Pick<
   Product,
@@ -29,6 +29,7 @@ type FeedProduct = Pick<
   | 'sale_price_eur'
   | 'is_active'
   | 'catalog_number'
+  | 'weight_grams'
 >;
 
 // Volný text (ne Google Product Taxonomy ID) - jen orientační pro kampaně,
@@ -38,6 +39,20 @@ const CATEGORY_LABELS: Record<string, string> = {
   'znamkove-archy': 'Stamp sheets',
   fdc: 'First Day Cover (FDC)',
   plakety: 'Gift plaques',
+};
+
+// Oficiální Google Product Taxonomy ID (na rozdíl od g:product_type výše toto
+// Google skutečně parsuje a používá pro řazení do Shopping kategorií/Performance
+// Max asset groups). Zdroj: google.com/basepages/producttype/taxonomy-with-ids.en-US.txt.
+// Taxonomie nemá samostatnou větev pro FDC ani suvenýrové plakety se
+// znaménkovým motivem - u obou je jádrem nabídky reprodukce známky, proto
+// mapováno na stejné ID jako samotné známky (216 "Collectibles" by bylo
+// obecnější, ale méně přesné).
+const GOOGLE_PRODUCT_CATEGORY: Record<string, string> = {
+  znamky: '219', // Arts & Entertainment > Hobbies & Creative Arts > Collectibles > Postage Stamps
+  'znamkove-archy': '219',
+  fdc: '219',
+  plakety: '219',
 };
 
 function escapeXml(value: string): string {
@@ -71,6 +86,13 @@ export async function GET() {
       // pravidlo jako u Product JSON-LD na /produkt/[id].
       if (!localizedPrice) return null;
 
+      // Merchant Center má nastavené vážené dopravní sazby (viz shipping
+      // policies v Merchant Center) - bez váhy Google neví, do kterého
+      // pásma produkt spadá, a celý ho zamítne. Radši produkt vůbec
+      // nenabízet, než ho nechat spadnout do disapproval kvůli chybějícím
+      // datům v adminu (stejný vzor jako chybějící EUR cena výše).
+      if (!product.weight_grams || product.weight_grams <= 0) return null;
+
       const title = getLocalizedProductField(product, 'en', 'name');
       const description =
         getLocalizedProductField(product, 'en', 'short_description') ||
@@ -91,11 +113,13 @@ export async function GET() {
       <g:availability>in stock</g:availability>
       <g:price>${formatEur(localizedPrice.price)}</g:price>
       ${hasSale ? `<g:sale_price>${formatEur(localizedPrice.salePrice as number)}</g:sale_price>` : ''}
+      <g:shipping_weight>${product.weight_grams} g</g:shipping_weight>
       <g:brand>${escapeXml(SITE_NAME)}</g:brand>
       <!-- catalog_number je filatelistické katalogové číslo, ne GTIN/MPN -
            bez skutečného identifikátoru musí být tohle "no", jinak Google
            položku zamítne kvůli chybějícímu GTIN. -->
       <g:identifier_exists>no</g:identifier_exists>
+      ${product.category && GOOGLE_PRODUCT_CATEGORY[product.category] ? `<g:google_product_category>${GOOGLE_PRODUCT_CATEGORY[product.category]}</g:google_product_category>` : ''}
       ${product.category && CATEGORY_LABELS[product.category] ? `<g:product_type>${escapeXml(CATEGORY_LABELS[product.category])}</g:product_type>` : ''}
     </item>`;
     })
