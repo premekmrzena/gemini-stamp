@@ -40,6 +40,20 @@ const CATEGORY_LABELS: Record<string, string> = {
   plakety: 'Gift plaques',
 };
 
+// Oficiální Google Product Taxonomy ID (na rozdíl od g:product_type výše toto
+// Google skutečně parsuje a používá pro řazení do Shopping kategorií/Performance
+// Max asset groups). Zdroj: google.com/basepages/producttype/taxonomy-with-ids.en-US.txt.
+// Taxonomie nemá samostatnou větev pro FDC ani suvenýrové plakety se
+// znaménkovým motivem - u obou je jádrem nabídky reprodukce známky, proto
+// mapováno na stejné ID jako samotné známky (216 "Collectibles" by bylo
+// obecnější, ale méně přesné).
+const GOOGLE_PRODUCT_CATEGORY: Record<string, string> = {
+  znamky: '219', // Arts & Entertainment > Hobbies & Creative Arts > Collectibles > Postage Stamps
+  'znamkove-archy': '219',
+  fdc: '219',
+  plakety: '219',
+};
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -96,6 +110,7 @@ export async function GET() {
            bez skutečného identifikátoru musí být tohle "no", jinak Google
            položku zamítne kvůli chybějícímu GTIN. -->
       <g:identifier_exists>no</g:identifier_exists>
+      ${product.category && GOOGLE_PRODUCT_CATEGORY[product.category] ? `<g:google_product_category>${GOOGLE_PRODUCT_CATEGORY[product.category]}</g:google_product_category>` : ''}
       ${product.category && CATEGORY_LABELS[product.category] ? `<g:product_type>${escapeXml(CATEGORY_LABELS[product.category])}</g:product_type>` : ''}
     </item>`;
     })
