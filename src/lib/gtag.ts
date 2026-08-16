@@ -63,11 +63,18 @@ export function gtagBeginCheckout(items: GaItem[], value: number, currency: Curr
   gtagEvent('begin_checkout', { currency, value, items, ...(coupon ? { coupon } : {}) });
 }
 
-export function gtagPurchase(orderId: string, value: number, currency: Currency, items: GaItem[]) {
+export function gtagPurchase(
+  orderId: string,
+  value: number,
+  currency: Currency,
+  items: GaItem[],
+  coupon?: string | null
+) {
   gtagEvent('purchase', {
     transaction_id: orderId,
     currency,
     value,
     items,
+    ...(coupon ? { coupon } : {}),
   });
 }
