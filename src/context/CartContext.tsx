@@ -125,11 +125,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     setIsLoaded(true);
 
+    // ?code=... v URL (QR kód na letáku, viz project_product_page_500_jsdom_incident
+    // sourozenec - GIFT8 kampaň) má přednost před uloženým kódem v localStorage -
+    // čerstvý sken QR je silnější signál záměru než starší uložený kód z jiné
+    // návštěvy. window.location, ne useSearchParams, ať zůstanou /prague-souvenir
+    // i tahle stránka staticky prerenderované (žádná Suspense hranice navíc).
+    const urlCode = new URLSearchParams(window.location.search).get('code');
     const savedCode = localStorage.getItem(DISCOUNT_STORAGE_KEY);
-    if (savedCode) {
+    const codeToApply = urlCode || savedCode;
+    if (codeToApply) {
       // Tichá revalidace — kód mohl mezitím expirovat nebo být deaktivován,
-      // takže se nespoléhá na to, co bylo uloženo v localStorage.
-      applyDiscountCode(savedCode, { silent: true });
+      // takže se nespoléhá na to, co bylo uloženo v localStorage/URL.
+      applyDiscountCode(codeToApply, { silent: true });
     }
     // currentCurrency vědomě mimo deps - tohle je jednorázová hydratace při
     // mountu (viz komentář výše), ne synchronizace při každé změně cesty/locale.
