@@ -20,6 +20,11 @@ function ThankYouContent() {
   const displayId = orderId ? orderId.slice(-8).toUpperCase() : null;
   const totalParam = searchParams.get('total');
   const currencyParam = searchParams.get('currency') as Currency | null;
+  // Z URL, ne z CartContext.appliedDiscount - po fresh reloadu (viz komentář níže
+  // u window.location.href) by tichá revalidace uloženého kódu mohla doběhnout
+  // až PO odeslání purchase eventu (race). URL parametr nastavuje useCheckout.ts/
+  // StripePaymentForm.tsx jen tehdy, když server objednávku s kódem skutečně přijal.
+  const couponParam = searchParams.get('coupon');
 
   // Stripe u karetních plateb vyžadujících přesměrování (typicky 3D Secure)
   // vždy přesměruje na return_url bez ohledu na výsledek - úspěch/neúspěch
@@ -44,7 +49,8 @@ function ThankYouContent() {
         orderId,
         Number(totalParam),
         currencyParam,
-        cartItems.map((item) => ({ item_id: item.id, item_name: item.name, price: item.price, quantity: item.quantity }))
+        cartItems.map((item) => ({ item_id: item.id, item_name: item.name, price: item.price, quantity: item.quantity })),
+        couponParam
       );
     }
 

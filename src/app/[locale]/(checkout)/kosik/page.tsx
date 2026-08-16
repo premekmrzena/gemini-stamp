@@ -278,7 +278,7 @@ const CheckoutPage = () => {
               <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 -m-2 text-black300 hover:text-secondary hover:bg-black300/10 rounded-full transition-colors cursor-pointer text-2xl leading-none">×</button>
             </div>
             <div className="p-6 bg-black400">
-              <StripePaymentForm amount={serverTotal ?? totalOrderPrice} currency={serverCurrency ?? currency} orderId={createdOrderId} />
+              <StripePaymentForm amount={serverTotal ?? totalOrderPrice} currency={serverCurrency ?? currency} orderId={createdOrderId} discountCode={appliedDiscount?.code ?? null} />
             </div>
           </div>
         </div>

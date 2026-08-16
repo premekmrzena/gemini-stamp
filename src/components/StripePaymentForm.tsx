@@ -19,7 +19,7 @@ function toStripeLocale(locale: string): 'en' | 'auto' {
 
 // --- VNITŘNÍ KOMPONENTA: Samotný formulář s tlačítkem ---
 // Přidali jsme orderId do props
-const CheckoutForm = ({ amount, currency, orderId }: { amount: number, currency: Currency, orderId: string }) => {
+const CheckoutForm = ({ amount, currency, orderId, discountCode }: { amount: number, currency: Currency, orderId: string, discountCode?: string | null }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -36,8 +36,9 @@ const CheckoutForm = ({ amount, currency, orderId }: { amount: number, currency:
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // PŘESMĚROVÁNÍ PO ÚSPĚŠNÉ PLATBĚ S ID OBJEDNÁVKY
-        return_url: `${window.location.origin}/dekujeme?orderId=${orderId}&total=${amount}&currency=${currency}`,
+        // PŘESMĚROVÁNÍ PO ÚSPĚŠNÉ PLATBĚ S ID OBJEDNÁVKY (+ slevový kód pro
+        // GA4 purchase.coupon, viz komentář u stejného vzoru v useCheckout.ts)
+        return_url: `${window.location.origin}/dekujeme?orderId=${orderId}&total=${amount}&currency=${currency}${discountCode ? `&coupon=${encodeURIComponent(discountCode)}` : ''}`,
       },
     });
 
@@ -72,7 +73,7 @@ const CheckoutForm = ({ amount, currency, orderId }: { amount: number, currency:
 
 // --- HLAVNÍ KOMPONENTA ---
 // Přidali jsme orderId do parametrů funkce
-export default function StripePaymentForm({ amount, currency, orderId }: { amount: number, currency: Currency, orderId: string }) {
+export default function StripePaymentForm({ amount, currency, orderId, discountCode }: { amount: number, currency: Currency, orderId: string, discountCode?: string | null }) {
   const [clientSecret, setClientSecret] = useState('');
   const t = useTranslations('checkout.payment');
   const locale = useLocale();
@@ -137,8 +138,8 @@ export default function StripePaymentForm({ amount, currency, orderId }: { amoun
           } 
         }}
       >
-        {/* Předáme orderId dolů do vnitřního formuláře */}
-        <CheckoutForm amount={amount} currency={currency} orderId={orderId} />
+        {/* Předáme orderId + discountCode dolů do vnitřního formuláře */}
+        <CheckoutForm amount={amount} currency={currency} orderId={orderId} discountCode={discountCode} />
       </Elements>
     </div>
   );

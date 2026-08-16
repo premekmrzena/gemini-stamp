@@ -59,7 +59,12 @@ export function useCheckout() {
       if (params.selectedPayment === 'karta') {
         setIsPaymentModalOpen(true);
       } else {
-        window.location.href = `/dekujeme?orderId=${data.orderId}&total=${data.totalPrice}&currency=${data.currency}`;
+        // discountCode tady je ten, co server vytvoření objednávky výše přijal
+        // jako platný (jinak by /api/create-order vrátilo chybu dřív) - bezpečný
+        // zdroj pro GA4 purchase.coupon, na rozdíl od CartContext.appliedDiscount
+        // po fresh reloadu /dekujeme (tam by šlo o race s tichou revalidací).
+        const couponParam = params.discountCode ? `&coupon=${encodeURIComponent(params.discountCode)}` : '';
+        window.location.href = `/dekujeme?orderId=${data.orderId}&total=${data.totalPrice}&currency=${data.currency}${couponParam}`;
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Něco se pokazilo.';
