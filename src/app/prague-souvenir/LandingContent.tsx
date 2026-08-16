@@ -2,16 +2,26 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { CONTENT, HTML_LANG, LANGS, LangCode } from './content';
 
 // Primární CTA - stejné třídy jako Button.tsx (variant="contained"), replikované
 // na <Link>, protože <button> uvnitř <a> je neplatné HTML a odkaz musí vést na
 // /vytvorit-arch (cesta je mimo next-intl [locale], next/link stačí přímo).
 function PrimaryCta({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const [href, setHref] = useState('/vytvorit-arch');
+
+  useEffect(() => {
+    // Přenese ?code=... (slevový kód z QR na letáku, viz GIFT8) na checkout -
+    // CartContext ho tam po příchodu tiše ověří a rovnou aplikuje. window.location,
+    // ne useSearchParams, ať stránka zůstane staticky prerenderovaná.
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) setHref(`/vytvorit-arch?code=${encodeURIComponent(code)}`);
+  }, []);
+
   return (
     <Link
-      href="/vytvorit-arch"
+      href={href}
       className={`inline-flex items-center justify-center font-medium tracking-[-0.02em] leading-[1.1] rounded-[12px] transition-all duration-300 hover:scale-[1.03] active:scale-95 text-[16px] md:text-[18px] p-[16px] bg-primary text-black hover:bg-primary-hover ${className}`}
     >
       {children}
