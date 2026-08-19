@@ -160,7 +160,6 @@ export default async function KontaktPage() {
       lines: [
         { label: t('rows.info.email'), value: 'info@mycreativestamp.com', href: 'mailto:info@mycreativestamp.com' },
         { label: t('rows.info.web'), value: 'mycreativestamp.com', href: '/' },
-        { label: t('rows.info.phone'), value: '+420 123 456 789', href: 'tel:+420123456789' },
       ],
       icon: 'mail',
     },
