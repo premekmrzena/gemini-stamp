@@ -3,8 +3,8 @@
 // "Oslovení CK s asijskými turisty"). Natvrdo v souboru, ne přes next-intl -
 // stejný vzor jako prague-souvenir/content.ts (stránka žije mimo [locale]).
 //
-// Hodnoty v [hranatých závorkách] jsou zatím nepotvrzené a čekají na rozhodnutí
-// (čas uzávěrky pro expres, víkendy apod.) - před rozesláním e-mailů doplnit.
+// POZOR: expres na hotel, pole hotel/datum odjezdu a kódy CK s automatickým
+// přiřazením objednávek zatím v e-shopu nejsou - doplní se s první ostrou zakázkou.
 
 export type PartnerLang = 'cs' | 'en';
 
@@ -118,11 +118,11 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     delivery: [
       {
         title: 'Expres na hotel v Praze',
-        text: 'Objednávka do [14:00] = doručení kurýrem na hotel druhý den. Vhodné pro skupiny, které v Praze spí aspoň 2 noci.',
+        text: 'Objednávka do 14:00 = doručení kurýrem na hotel druhý den. Vhodné pro skupiny, které v Praze spí aspoň 2 noci.',
       },
       {
         title: 'Víkendy a svátky',
-        text: 'Objednávky z pátku po [14:00] a z víkendu doručujeme [v pondělí]. Při kratším pobytu doporučte doručení domů.',
+        text: 'Objednávky z pátku po 14:00 a z víkendu doručujeme v pondělí. Při kratším pobytu doporučte doručení domů.',
       },
       {
         title: 'Jen hotely v Praze',
@@ -238,11 +238,11 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     delivery: [
       {
         title: 'Express to Prague hotels',
-        text: 'Order by [2 pm] = courier delivery to the hotel the next day. Best for groups staying at least 2 nights in Prague.',
+        text: 'Order by 2 pm = courier delivery to the hotel the next day. Best for groups staying at least 2 nights in Prague.',
       },
       {
         title: 'Weekends and holidays',
-        text: 'Orders placed after [2 pm] on Friday or over the weekend are delivered [on Monday]. For shorter stays, recommend home delivery.',
+        text: 'Orders placed after 2 pm on Friday or over the weekend are delivered on Monday. For shorter stays, recommend home delivery.',
       },
       {
         title: 'Prague hotels only',
