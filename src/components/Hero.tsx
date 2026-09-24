@@ -4,13 +4,7 @@ import Image from 'next/image';
 import Button from '@/components/Button';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useState, useEffect, useRef } from 'react';
-
-const sliderImages = [
-  '/images/hero01.png',
-  '/images/hero02.png',
-  '/images/hero03.png',
-];
+import HeroSlider from '@/components/HeroSlider';
 
 export default function Hero() {
   const t = useTranslations('home.hero');
@@ -19,63 +13,6 @@ export default function Hero() {
     { id: 2, title: t('step2Title'), mobileTitle: t('step2MobileTitle'), text: t('step2Text') },
     { id: 3, title: t('step3Title'), mobileTitle: t('step3MobileTitle'), text: t('step3Text') },
   ];
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const kenburnsRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
-    }, 5500);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Restart Ken Burns on newly active slide and keep inactive slides paused,
-  // so a hidden slide never finishes zooming in (and freezing zoomed) before it's shown
-  useEffect(() => {
-    Object.values(kenburnsRefs.current).forEach((refs) => {
-      refs.forEach((el, index) => {
-        if (!el) return;
-        if (index === currentSlide) {
-          el.style.animation = 'none';
-          void el.offsetHeight; // force reflow
-          el.style.animation = '';
-          el.style.animationPlayState = 'running';
-        } else {
-          el.style.animationPlayState = 'paused';
-        }
-      });
-    });
-  }, [currentSlide]);
-
-  const renderSlider = (variant: 'desktop' | 'mobile', className?: string) => (
-    <div className={`relative w-full aspect-[7/5] lg:aspect-[4/3] ${className ?? ''}`}>
-      {sliderImages.map((src, index) => (
-        <div
-          key={index}
-          className={`absolute inset-0 transition-opacity ease-in-out duration-[1500ms] ${
-            index === currentSlide ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <div
-            ref={(el) => {
-              if (!kenburnsRefs.current[variant]) kenburnsRefs.current[variant] = [];
-              kenburnsRefs.current[variant][index] = el;
-            }}
-            className="absolute inset-0 animate-kenburns"
-          >
-            <Image
-              src={src}
-              alt={t('sliderAlt')}
-              fill
-              sizes="(max-width: 767px) 535px, 750px"
-              preload={index === 0}
-              className="object-contain drop-shadow-2xl"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 
   return (
     <section className="bg-black text-secondary w-full overflow-hidden">
@@ -108,14 +45,14 @@ export default function Hero() {
             href="/vytvorit-arch"
             className="order-1 lg:order-2 block w-full max-w-[700px] lg:max-w-[525px] shrink relative"
           >
-            {renderSlider('desktop')}
+            <HeroSlider alt={t('sliderAlt')} />
           </Link>
         </div>
 
         {/* Mobile */}
         <div className="md:hidden w-full flex flex-col items-center mt-6 mb-8">
           <Link href="/vytvorit-arch" className="block w-full max-w-[500px]">
-            {renderSlider('mobile', 'max-w-[500px]')}
+            <HeroSlider alt={t('sliderAlt')} className="max-w-[500px]" />
           </Link>
         </div>
 

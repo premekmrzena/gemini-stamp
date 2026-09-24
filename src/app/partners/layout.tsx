@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default function PartnersLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} flex flex-col min-h-screen bg-white`}>
+      <body className={`${poppins.className} flex flex-col min-h-screen bg-black`}>
         <GoogleAnalytics />
         <Suspense fallback={null}>
           <AnalyticsPageview />

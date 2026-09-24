@@ -18,6 +18,8 @@ export function isPartnerLang(value: unknown): value is PartnerLang {
 }
 
 export const CONTACT_EMAIL = 'info@mycreativestamp.com';
+export const CONTACT_PHONE = '+420 603 423 690';
+export const CONTACT_PHONE_HREF = 'tel:+420603423690';
 
 type Item = { title: string; text: string };
 
@@ -26,13 +28,23 @@ export type PartnerContent = {
   metaDescription: string;
   badge: string;
   heroTitle: string;
+  /** Perex je rozdělený kvůli tučné části uprostřed (heroTextStrong). */
   heroText: string;
+  heroTextStrong: string;
+  heroTextAfter: string;
   heroCta: string;
   heroImageAlt: string;
 
-  whatTitle: string;
-  whatText: string;
-  gallery: { src: string; alt: string }[];
+  categories: {
+    title: string;
+    intro: string;
+    exploreLink: string;
+    featuredBadge: string;
+    stamps: Item;
+    sheets: Item;
+    fdc: Item;
+    plaques: Item;
+  };
 
   howTitle: string;
   howText: string;
@@ -46,6 +58,8 @@ export type PartnerContent = {
   pricingText: string;
   /** Text pod rozpětím cen, které se načítá ze Supabase (page.tsx). */
   guestPriceTitle: string;
+  /** Přibližná cena v Kč pod eurovou cenou (jen v CZ verzi). */
+  guestPriceCzkApprox?: string;
   guestPriceText: string;
   guestPriceFallback: string;
   commissionTitle: string;
@@ -67,9 +81,19 @@ export type PartnerContent = {
 
   contactTitle: string;
   contactText: string;
-  contactCta: string;
-  contactSubject: string;
-  contactBody: string;
+  contactOr: string;
+  form: {
+    name: string;
+    agency: string;
+    email: string;
+    phone: string;
+    message: string;
+    messagePlaceholder: string;
+    submit: string;
+    sending: string;
+    success: string;
+    error: string;
+  };
 
   footerText: string;
   footerTerms: string;
@@ -82,19 +106,22 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     metaDescription: 'Podmínky spolupráce s My Creative Stamp pro cestovní kanceláře, incomingové agentury a průvodce.',
     badge: 'Pro cestovní kanceláře a průvodce',
     heroTitle: 'Suvenýr z Prahy, který si vaši hosté navrhnou sami',
-    heroText:
-      'Kreativní arch z pravých českých poštovních známek, doplněný vlastními fotkami z cesty. Host ho objedná z mobilu za pár minut, vy dostanete provizi z každé objednávky.',
+    heroText: 'Kreativní arch s pravými českými poštovními známkami, doplněný o vlastní fotky z cesty. Host ho objedná z mobilu za pár minut, ',
+    heroTextStrong: 'vy dostanete provizi',
+    heroTextAfter: ' z každé objednávky.',
     heroCta: 'Chci spolupracovat',
     heroImageAlt: 'Hotový kreativní arch se známkami a fotkami z Prahy',
 
-    whatTitle: 'Co to je',
-    whatText:
-      'Arch pravých poštovních známek (Alfons Mucha, Praha, Český Krumlov), do kterého host vloží své fotky a text. Vznikne originální suvenýr, který jinde nekoupí.',
-    gallery: [
-      { src: '/images/hero01.png', alt: 'Kreativní arch s fotkami z cesty' },
-      { src: '/images/jak-nakupovat_kreativni-archy.jpg', alt: 'Kreativní archy s fotkami z Prahy' },
-      { src: '/images/hero03.png', alt: 'Skupina turistů v Českém Krumlově' },
-    ],
+    categories: {
+      title: 'Co si u nás hosté mohou koupit',
+      intro: 'Čtyři kategorie produktů z pravých českých poštovních známek. Pro skupiny doporučujeme kreativní arch s vlastními fotkami z cesty.',
+      exploreLink: '→ Jak vzniká kreativní arch',
+      featuredBadge: 'Pro skupiny',
+      stamps: { title: 'Poštovní známky', text: 'Sběratelské i klasické známky s českou a evropskou historií, uměním nebo přírodou.' },
+      sheets: { title: 'Kreativní archy', text: 'Arch ze skutečných poštovních známek doplněný o fotografie a text hosta. Hlavní produkt pro skupiny.' },
+      fdc: { title: 'First Day Cover (FDC)', text: 'Obálky prvního dne vydání se známkou a razítkem k datu, kdy známka poprvé vyšla.' },
+      plaques: { title: 'Dárkové plakety', text: 'Reprezentativní plakety k darování nebo jako doplněk sběratelské kolekce.' },
+    },
 
     howTitle: 'Jak to funguje pro skupinu',
     howText: 'Průvodce nemusí nic prodávat ani vybírat peníze. Stačí rozdat leták.',
@@ -118,11 +145,11 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     delivery: [
       {
         title: 'Expres na hotel v Praze',
-        text: 'Objednávka do 14:00 = doručení kurýrem na hotel druhý den. Vhodné pro skupiny, které v Praze spí aspoň 2 noci.',
+        text: 'Objednávka do 14:00 = doručení kurýrem na hotel další doručovací den. Vhodné pro skupiny, které v Praze spí aspoň 2 noci.',
       },
       {
-        title: 'Víkendy a svátky',
-        text: 'Objednávky z pátku po 14:00 a z víkendu doručujeme v pondělí. Při kratším pobytu doporučte doručení domů.',
+        title: 'Doručujeme pondělí až sobota',
+        text: 'Objednávka ze čtvrtka po 14:00 dorazí v sobotu. Objednávky ze soboty po 14:00 a z neděle doručíme v pondělí.',
       },
       {
         title: 'Jen hotely v Praze',
@@ -137,6 +164,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     pricingTitle: 'Ceny a provize',
     pricingText: 'Hosté platí běžnou cenu z e-shopu. Vy dostáváte provizi z každé objednávky přes váš kód.',
     guestPriceTitle: 'Cena pro hosty',
+    guestPriceCzkApprox: 'cca {czk}',
     guestPriceText: 'Za kreativní arch, podle šablony. Doprava se účtuje zvlášť.',
     guestPriceFallback: 'Aktuální ceny kreativních archů najdete na mycreativestamp.com.',
     commissionTitle: 'Provize pro vás',
@@ -156,7 +184,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       { title: 'Kód pro každého průvodce', text: 'Na přání vytvoříme samostatné kódy pro jednotlivé průvodce nebo zájezdy.' },
     ],
 
-    materialsTitle: 'Materiály pro vás',
+    materialsTitle: 'Materiály, které pro vás připravíme',
     materialsText: 'Připravíme vše, co průvodce potřebuje. Materiály obsahují váš kód.',
     materials: [
       { title: 'Letáky s QR kódem', text: 'Formát A5 v japonštině, korejštině, čínštině a angličtině.' },
@@ -170,7 +198,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     faq: [
       {
         q: 'Jak mohou hosté platit?',
-        a: 'Kartou, Apple Pay, Google Pay nebo Alipay. E-shop je v angličtině, ceny v eurech.',
+        a: 'Kartou, Apple Pay, Google Pay nebo Alipay. E-shop je pro hosty v angličtině a platí se v eurech.',
       },
       {
         q: 'Co když host změní hotel nebo odjede dřív?',
@@ -188,9 +216,19 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
 
     contactTitle: 'Chcete to vyzkoušet?',
     contactText: 'Napište nám. Přineseme ukázky a jeden arch pro vaše průvodce zdarma.',
-    contactCta: 'Chci spolupracovat',
-    contactSubject: 'Spolupráce – My Creative Stamp',
-    contactBody: 'Dobrý den,\n\nmáme zájem o spolupráci.\n\nKancelář:\nKontaktní osoba:\nTelefon:\n',
+    contactOr: 'Nebo nám rovnou zavolejte či napište:',
+    form: {
+      name: 'Jméno a příjmení',
+      agency: 'Cestovní kancelář',
+      email: 'E-mail',
+      phone: 'Telefon',
+      message: 'Zpráva',
+      messagePlaceholder: 'S jakými skupinami pracujete, odkud jsou hosté…',
+      submit: 'Odeslat',
+      sending: 'Odesílám…',
+      success: 'Děkujeme, ozveme se vám do jednoho pracovního dne.',
+      error: 'Zprávu se nepodařilo odeslat. Napište nám prosím e-mail nebo zavolejte.',
+    },
 
     footerText: 'My Creative Stamp · DVKS s.r.o. · Praha',
     footerTerms: 'Obchodní podmínky',
@@ -202,19 +240,22 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     metaDescription: 'Partnership terms with My Creative Stamp for travel agencies, DMCs and tour guides.',
     badge: 'For travel agencies and tour guides',
     heroTitle: 'A Prague souvenir your guests design themselves',
-    heroText:
-      'A sheet of genuine Czech postage stamps, personalised with the guest’s own travel photos. Guests order from their phone in a few minutes, and you earn a commission on every order.',
+    heroText: 'A creative sheet of genuine Czech postage stamps, personalised with the guest’s own travel photos. Guests order from their phone in a few minutes, and ',
+    heroTextStrong: 'you earn a commission',
+    heroTextAfter: ' on every order.',
     heroCta: 'Become a partner',
     heroImageAlt: 'A finished creative sheet with stamps and photos from Prague',
 
-    whatTitle: 'What it is',
-    whatText:
-      'A sheet of real postage stamps (Alfons Mucha, Prague, Český Krumlov) that guests fill with their own photos and text. A one-of-a-kind souvenir they can’t buy anywhere else.',
-    gallery: [
-      { src: '/images/hero01.png', alt: 'Creative sheet with travel photos' },
-      { src: '/images/jak-nakupovat_kreativni-archy.jpg', alt: 'Creative sheets with photos from Prague' },
-      { src: '/images/hero03.png', alt: 'A tour group in Český Krumlov' },
-    ],
+    categories: {
+      title: 'What your guests can buy',
+      intro: 'Four product categories made from genuine Czech postage stamps. For groups we recommend the creative sheet with the guest’s own travel photos.',
+      exploreLink: '→ How a creative sheet is made',
+      featuredBadge: 'For groups',
+      stamps: { title: 'Postage stamps', text: 'Collectible and classic stamps featuring Czech and European history, art or nature.' },
+      sheets: { title: 'Creative Sheets', text: 'A sheet of real postage stamps complemented by the guest’s own photos and text. Our main product for groups.' },
+      fdc: { title: 'First Day Cover (FDC)', text: 'First-day-of-issue envelopes with a stamp and postmark from the day the stamp was first issued.' },
+      plaques: { title: 'Gift Plaques', text: 'Representative plaques to give as a gift or as an addition to a collector’s set.' },
+    },
 
     howTitle: 'How it works for a group',
     howText: 'Your guide doesn’t sell anything or handle money. Just hand out a flyer.',
@@ -238,11 +279,11 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     delivery: [
       {
         title: 'Express to Prague hotels',
-        text: 'Order by 2 pm = courier delivery to the hotel the next day. Best for groups staying at least 2 nights in Prague.',
+        text: 'Order by 2 pm = courier delivery to the hotel on the next delivery day. Best for groups staying at least 2 nights in Prague.',
       },
       {
-        title: 'Weekends and holidays',
-        text: 'Orders placed after 2 pm on Friday or over the weekend are delivered on Monday. For shorter stays, recommend home delivery.',
+        title: 'We deliver Monday to Saturday',
+        text: 'Orders placed on Thursday after 2 pm arrive on Saturday. Orders placed on Saturday after 2 pm or on Sunday arrive on Monday.',
       },
       {
         title: 'Prague hotels only',
@@ -276,7 +317,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       { title: 'A code for each guide', text: 'On request we create separate codes for individual guides or tours.' },
     ],
 
-    materialsTitle: 'Materials for you',
+    materialsTitle: 'Materials we prepare for you',
     materialsText: 'We prepare everything your guides need. All materials carry your code.',
     materials: [
       { title: 'Flyers with QR code', text: 'A5 format in Japanese, Korean, Chinese and English.' },
@@ -308,9 +349,19 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
 
     contactTitle: 'Want to give it a try?',
     contactText: 'Write to us. We’ll bring samples and one free sheet for your guides.',
-    contactCta: 'Become a partner',
-    contactSubject: 'Partnership – My Creative Stamp',
-    contactBody: 'Hello,\n\nwe are interested in a partnership.\n\nAgency:\nContact person:\nPhone:\n',
+    contactOr: 'Or call or e-mail us directly:',
+    form: {
+      name: 'Full name',
+      agency: 'Travel agency',
+      email: 'E-mail',
+      phone: 'Phone',
+      message: 'Message',
+      messagePlaceholder: 'Which groups you work with, where your guests come from…',
+      submit: 'Send',
+      sending: 'Sending…',
+      success: 'Thank you, we’ll get back to you within one business day.',
+      error: 'The message could not be sent. Please e-mail or call us instead.',
+    },
 
     footerText: 'My Creative Stamp · DVKS s.r.o. · Prague, Czech Republic',
     footerTerms: 'Terms',
