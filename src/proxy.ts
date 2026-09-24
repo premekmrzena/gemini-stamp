@@ -20,7 +20,7 @@ const handleI18nRouting = createMiddleware(routing);
 // (přesně bug z feedback_proxy_locale_redirect_loop, jen jednou cestou navíc).
 // /prague-gift je sesterská kampaňová stránka (západní turisté, jen EN, samostatná
 // URL kvůli čistému A/B měření proti /prague-souvenir - viz project_prague_gift_landing).
-const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-gift'];
+const LOCALE_EXEMPT_PATHS = ['/rekonstrukce', '/prague-gift', '/partners'];
 
 // /prague-souvenir má navíc pevné podcesty na konkrétní jazyk (/prague-souvenir/ja,
 // /zh-Hans, /zh-Hant, /ko, /en - viz [lang]/page.tsx) - musí být vyjmuté i ONY, ne
