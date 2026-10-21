@@ -352,7 +352,7 @@
         },
         "expres-hotel": {
           "name": "Express to your hotel (Prague)",
-          "desc": "Personal delivery to your hotel in Prague on {date}. Orders placed on a working day by 2 pm are delivered the next working day, no weekend deliveries."
+          "desc": "Personal delivery to your hotel in Prague on {date}. Orders placed on a working day by 2 pm are delivered the next working day, Friday and weekend orders on Monday. No deliveries at weekends or on public holidays."
         },
         "karta": {
           "name": "Card payment online",
