@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDeliveryDate } from '@/lib/expressDelivery';
 import { useEffect, useMemo, useState } from 'react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import Image from 'next/image';
@@ -1913,6 +1914,20 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
+                  {/* EXPRES NA HOTEL - doručuje se osobně, ne přes ČP */}
+                  {selectedOrder.hotel_name && (
+                    <div className="bg-primary/5 border border-primary/20 p-4 rounded-[4px] space-y-1">
+                      <h3 className="style-product-tag text-black300 flex items-center gap-2">
+                        <Truck size={14} className="text-primary" /> Expres na hotel
+                      </h3>
+                      <p className="style-body text-secondary whitespace-pre-line">{selectedOrder.hotel_name}</p>
+                      <p className="style-body text-black200">
+                        Doručit: <span className="text-secondary">{selectedOrder.express_delivery_date ? formatDeliveryDate(selectedOrder.express_delivery_date, 'cs') : '–'}</span>
+                        {' · '}Odjezd: <span className="text-secondary">{selectedOrder.departure_date ? formatDeliveryDate(selectedOrder.departure_date, 'cs') : '–'}</span>
+                      </p>
+                    </div>
+                  )}
+
                   {/* POLOŽKY OBJEDNÁVKY - jen přehled obsahu, stažení tiskových podkladů
                       je jen v akčním sloupci vpravo (dřív duplicitně na obou místech). */}
                   <div className="space-y-3">
@@ -2081,7 +2096,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* VYTVOŘIT ZÁSILKU + TISK ŠTÍTKU */}
-                  {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && (
+                  {!selectedOrder.shipping_method.toLowerCase().includes('osobní odběr') && !selectedOrder.hotel_name && (
                     <div className="bg-black p-4 rounded-[4px] border border-black300/20 space-y-2">
                       <span className="style-product-tag text-black300">Podání u dopravce</span>
                       <div className="flex flex-col gap-2">

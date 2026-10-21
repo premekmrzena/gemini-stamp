@@ -100,7 +100,7 @@ async function sendOrderConfirmationForCardPayment(orderId: string) {
 
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, billing_email, billing_first_name, total_price, currency, cart_items, idoklad_invoice_id, idoklad_invoice_number')
+    .select('id, billing_email, billing_first_name, total_price, currency, cart_items, idoklad_invoice_id, idoklad_invoice_number, hotel_name, express_delivery_date')
     .eq('id', orderId)
     .single();
 
@@ -131,6 +131,9 @@ async function sendOrderConfirmationForCardPayment(orderId: string) {
       cartItems: order.cart_items as CartItemSnapshot[],
       isBankTransfer: false,
       invoicePdf,
+      hotelDelivery: order.hotel_name && order.express_delivery_date
+        ? { hotelName: order.hotel_name, deliveryDate: order.express_delivery_date }
+        : null,
     });
   } catch (err) {
     console.error('Chyba při odesílání potvrzovacího emailu po platbě kartou:', err);

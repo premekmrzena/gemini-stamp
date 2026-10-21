@@ -129,6 +129,10 @@ export type Order = {
   billing_zip: string;
   billing_country: string;
   shipping_is_different: boolean;
+  // Jen u dopravy "Expres na hotel (Praha)", jinak null (docs/sql/030_orders_express_hotel_delivery.sql).
+  hotel_name: string | null;
+  departure_date: string | null;
+  express_delivery_date: string | null;
   shipping_first_name: string;
   shipping_last_name: string;
   shipping_phone: string;

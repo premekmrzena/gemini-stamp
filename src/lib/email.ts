@@ -33,6 +33,8 @@ type SendOrderConfirmationParams = {
   cartItems: CartItemSnapshot[];
   isBankTransfer: boolean;
   invoicePdf?: InvoicePdfAttachment;
+  /** Jen u expresu na hotel - hotel a den doručení (YYYY-MM-DD). */
+  hotelDelivery?: { hotelName: string; deliveryDate: string } | null;
 };
 
 export async function sendOrderConfirmation({
@@ -44,6 +46,7 @@ export async function sendOrderConfirmation({
   cartItems,
   isBankTransfer,
   invoicePdf,
+  hotelDelivery = null,
 }: SendOrderConfirmationParams) {
   // Bank transfer je dnes jen pro CZK objednávky - create-order odmítá
   // 'prevod' u EUR (žádný EUR bankovní účet), takže isBankTransfer &&
@@ -61,7 +64,7 @@ export async function sendOrderConfirmation({
     : null;
 
   const emailHtml = await render(
-    React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, currency, cartItems, bankTransfer })
+    React.createElement(OrderConfirmationEmail, { orderId, customerName, totalPrice, currency, cartItems, bankTransfer, hotelDelivery })
   );
 
   const attachments = [

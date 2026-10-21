@@ -14,7 +14,8 @@ import { useCheckout } from '@/hooks/useCheckout';
 import { gtagBeginCheckout } from '@/lib/gtag';
 import CartStep from '@/components/checkout/CartStep';
 import ShippingStep from '@/components/checkout/ShippingStep';
-import AddressForm from '@/components/checkout/AddressForm';
+import AddressForm, { HotelDelivery } from '@/components/checkout/AddressForm';
+import { EXPRESS_HOTEL_ID } from '@/lib/expressDelivery';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import Stepper from '@/components/checkout/Stepper';
@@ -46,6 +47,9 @@ const CheckoutPage = () => {
   const [customerNote, setCustomerNote] = useState('');
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [shippingIsDifferent, setShippingIsDifferent] = useState(false);
+  // Mimo formData záměrně - create-order ukládá formData do orders 1:1, hotelová pole posílá
+  // zvlášť a jen u expresu na hotel (viz docs/sql/030_orders_express_hotel_delivery.sql).
+  const [hotelDelivery, setHotelDelivery] = useState<HotelDelivery>({ hotel_name: '', departure_date: '' });
   const [previewArchImage, setPreviewArchImage] = useState<string | null>(null);
   // Kurz CZK->EUR pro odhad ceny dopravy před odesláním objednávky (jen pro
   // zobrazení - autoritativní přepočet dělá create-order server-side znovu).
@@ -129,7 +133,10 @@ const CheckoutPage = () => {
     // billing_country zdvojuje roli "cílové země zásilky", dokud zákazník nezvolí doručení na
     // jinou adresu - při přepnutí zpátky na tuzemskou dopravu ji resetujeme, ať se v adresním
     // kroku needitovaně neuloží dřívější zahraniční volba pod zobrazenou "Česká republika".
-    if (id === 'osobni') {
+    if (id === EXPRESS_HOTEL_ID) {
+      // Hotel je doručovací adresa sám o sobě - "Doručit na jinou adresu" se u expresu nenabízí.
+      setShippingIsDifferent(false);
+    } else if (id === 'osobni') {
       // Osobní odběr nemá adresní krok "Doručit na jinou adresu" (AddressForm ho pro tuto
       // variantu skrývá) - reset ať se needitovaně neodešle dřívější volba spolu s objednávkou.
       setShippingIsDifferent(false);
@@ -152,6 +159,7 @@ const CheckoutPage = () => {
     e.preventDefault();
     submitOrder({
       cartItems, selectedShipping, selectedPayment, formData, customerNote, shippingIsDifferent,
+      hotelDelivery: selectedShipping === EXPRESS_HOTEL_ID ? hotelDelivery : null,
       discountCode: appliedDiscount?.code ?? null,
       // Server (create-order) si z tohohle odvozuje měnu (getOrderCurrency) - musí
       // odpovídat cartCurrency, ne aktuální stránce, jinak by se objednávka spočítala
@@ -215,6 +223,9 @@ const CheckoutPage = () => {
                 onNoteChange={setCustomerNote}
                 isMezinarodni={isMezinarodni}
                 isPersonalPickup={selectedShipping === 'osobni'}
+                isExpressHotel={selectedShipping === EXPRESS_HOTEL_ID}
+                hotelDelivery={hotelDelivery}
+                onHotelDeliveryChange={setHotelDelivery}
                 shippingIsDifferent={shippingIsDifferent}
                 onShippingIsDifferentChange={setShippingIsDifferent}
               />

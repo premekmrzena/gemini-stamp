@@ -3,6 +3,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { CartItem } from '@/context/CartContext';
 import { Currency, formatPrice } from '@/lib/currency';
+import ExpressDeliveryNote from '@/components/ExpressDeliveryNote';
 
 type Props = {
   cartItems: CartItem[];
@@ -79,6 +80,7 @@ export default function CartStep({ cartItems, currency, removeFromCart, updateQu
           </div>
         );
       })}
+      <ExpressDeliveryNote className="mt-3" />
     </div>
   );
 }

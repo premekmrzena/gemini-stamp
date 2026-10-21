@@ -1,8 +1,9 @@
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { ShippingOption, PaymentOption, INTERNATIONAL_COUNTRIES } from '@/lib/constants';
 import { Currency, formatPrice } from '@/lib/currency';
 import { ApplePayBadge, GooglePayBadge, AlipayBadge } from '@/components/PayBadges';
 import { AddressMapLink } from '@/components/PickupPartner';
+import { EXPRESS_HOTEL_ID, getExpressDeliveryDate, formatDeliveryDate } from '@/lib/expressDelivery';
 
 type Props = {
   shippingOptions: ShippingOption[];
@@ -25,8 +26,9 @@ export default function ShippingStep({
   const t = useTranslations('checkout.shipping');
   const tCountries = useTranslations('checkout.countries');
   const tAddress = useTranslations('checkout.address');
+  const locale = useLocale();
 
-  const domesticOptions = shippingOptions.filter((o) => o.id === 'osobni' || o.id === 'ceska');
+  const domesticOptions = shippingOptions.filter((o) => o.id === 'osobni' || o.id === EXPRESS_HOTEL_ID || o.id === 'ceska');
   const internationalOptions = shippingOptions.filter((o) => o.id === 'cenne-psani' || o.id === 'ems');
   // "Mezinárodní doprava" je vlastní radio (ne konkrétní kupovatelná možnost) - dokud
   // zákazník nedovybere zemi a konkrétní službu (Cenné psaní/EMS), zůstává jen rozcestníkem.
@@ -49,7 +51,9 @@ export default function ShippingStep({
         })
       : option.id === 'ceska'
         ? t('options.ceska.descRegistered')
-        : t(`options.${option.id}.desc`);
+        : option.id === EXPRESS_HOTEL_ID
+          ? t(`options.${EXPRESS_HOTEL_ID}.desc`, { date: formatDeliveryDate(getExpressDeliveryDate(), locale) })
+          : t(`options.${option.id}.desc`);
     return (
       <label key={option.id} className={`py-5 flex items-start gap-4 cursor-pointer ${withBorder ? 'border-b border-white/10' : ''}`}>
         <div className={`mt-[2px] w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center ${selectedShipping === option.id ? 'border-secondary' : 'border-black200'}`}>

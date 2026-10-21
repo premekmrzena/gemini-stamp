@@ -1,3 +1,4 @@
+import { EXPRESS_HOTEL_ID } from '@/lib/expressDelivery';
 import { OrderStatus, ProductCategory } from '@/types/database';
 
 // Pořadí odpovídá skutečnému toku objednávky (viz PICKUP_FLOW/SHIPPING_FLOW v adminu) -
@@ -56,6 +57,8 @@ export type ShippingOption = {
   id: string;
   name: string;
   price: number;
+  /** Pevná cena v EUR místo přepočtu kurzem (zatím jen expres na hotel: 150 Kč / 6 €). */
+  priceEur?: number;
   desc: string;
 };
 
@@ -590,6 +593,15 @@ export const getShippingOptions = (weightGrams: number, orderValueCzk: number = 
       name: 'Česká republika',
       price: Math.round(czPrice * PACKAGING_MARKUP),
       desc: 'Doporučené psaní',
+    },
+    // Doručuje majitel osobně, nezávisle na zemi fakturační adresy (hosté z ciziny) -
+    // podmínky viz src/lib/expressDelivery.ts. Bez obalového navýšení, cena je pevná.
+    {
+      id: EXPRESS_HOTEL_ID,
+      name: 'Expres na hotel (Praha)',
+      price: 150,
+      priceEur: 6,
+      desc: 'Osobní doručení na hotel v Praze další pracovní den (objednávka do 14:00)',
     },
   ];
 

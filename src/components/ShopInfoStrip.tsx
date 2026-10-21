@@ -2,6 +2,19 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
 const ITEMS = [
+  // Expres na hotel první a na mobilu přes celou šířku (5 položek v mřížce po 2) -
+  // docs/14-plan-marketing-2026-10.md, bod 4.
+  {
+    key: 'express',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 21h18" />
+        <path d="M5 21V7l7-4 7 4v14" />
+        <path d="M9 21v-4h6v4" />
+        <path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01" />
+      </svg>
+    ),
+  },
   {
     key: 'shipping',
     icon: (
@@ -47,12 +60,12 @@ export default function ShopInfoStrip() {
   return (
     <section className="w-full">
       <div className="layout-container">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {ITEMS.map((item) => (
             <Link
               key={item.key}
               href="/jak-nakupovat"
-              className="flex items-center gap-3 bg-black500 rounded px-4 py-3 hover:bg-black400 transition-colors"
+              className={`flex items-center gap-3 bg-black500 rounded px-4 py-3 hover:bg-black400 transition-colors ${item.key === 'express' ? 'col-span-2 md:col-span-1' : ''}`}
             >
               <div className="shrink-0 text-success">
                 {item.icon}

@@ -6,6 +6,7 @@ import { getShippingOptionsInCurrency, getPaymentOptionsInCurrency } from '@/lib
 import { sendOrderConfirmation } from '@/lib/email';
 import { createProformaForOrder, getProformaPdf } from '@/lib/idoklad';
 import { CartItemSnapshot } from '@/types/database';
+import { EXPRESS_HOTEL_ID, getExpressDeliveryDate, isDepartureAfterDelivery } from '@/lib/expressDelivery';
 
 type JoinedStampProduct = {
   id: string;
@@ -24,6 +25,7 @@ type CreateOrderBody = {
   formData: Record<string, string>;
   customerNote: string;
   shippingIsDifferent: boolean;
+  hotelDelivery?: { hotel_name: string; departure_date: string } | null;
   discountCode: string | null;
   locale: string;
 };
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent, discountCode, locale } = body;
+    const { cartItems, shippingMethodId, paymentMethodId, formData, customerNote, shippingIsDifferent, hotelDelivery, discountCode, locale } = body;
 
     if (!cartItems?.length) {
       return NextResponse.json({ error: 'Košík je prázdný' }, { status: 400 });
@@ -153,6 +155,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Neplatná metoda dopravy' }, { status: 400 });
     }
 
+    // Expres na hotel: hotel a datum odjezdu jsou povinné, odjezd až po dni doručení
+    // (stejná kontrola jako v AddressForm, tady autoritativně v pražském čase serveru).
+    let expressFields: { hotel_name: string; departure_date: string; express_delivery_date: string } | null = null;
+    if (shippingMethodId === EXPRESS_HOTEL_ID) {
+      const hotelName = hotelDelivery?.hotel_name?.trim() ?? '';
+      const departureDate = hotelDelivery?.departure_date ?? '';
+      if (!hotelName) {
+        return NextResponse.json({ error: 'Vyplňte prosím název a adresu hotelu.' }, { status: 400 });
+      }
+      if (!isDepartureAfterDelivery(departureDate)) {
+        return NextResponse.json(
+          { error: 'Datum odjezdu musí být až po dni doručení na hotel. Zvolte prosím doručení domů.', code: 'DEPARTURE_TOO_EARLY' },
+          { status: 400 }
+        );
+      }
+      expressFields = { hotel_name: hotelName, departure_date: departureDate, express_delivery_date: getExpressDeliveryDate() };
+    }
+
     // U EUR objednávek getPaymentOptionsInCurrency vynechává 'prevod' (žádný
     // EUR bankovní účet) - i kdyby to klient obešel, server ho tu odmítne
     // stejně jako jakoukoli jinou neplatnou metodu platby.
@@ -212,6 +232,7 @@ export async function POST(req: Request) {
       discount_code: discountCode ?? null,
       discount_amount: discountAmount,
       ...formData,
+      ...expressFields,
     };
 
     const { data, error: insertError } = await supabase
@@ -277,6 +298,7 @@ export async function POST(req: Request) {
             cartItems: validatedItems,
             isBankTransfer: paymentMethodId === 'prevod',
             invoicePdf: proformaPdf,
+            hotelDelivery: expressFields ? { hotelName: expressFields.hotel_name, deliveryDate: expressFields.express_delivery_date } : null,
           });
         } catch (err) {
           console.error('Email error:', err);

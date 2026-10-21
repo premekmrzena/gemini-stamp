@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import ExpressDeliveryNote from '@/components/ExpressDeliveryNote';
 import Button from '@/components/Button';
 import { Paintbrush } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
@@ -214,6 +215,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   {t('addToCart')}
                 </Button>
               )}
+              <ExpressDeliveryNote className="mt-1" />
             </div>
 
             {/* PARAMETRY */}

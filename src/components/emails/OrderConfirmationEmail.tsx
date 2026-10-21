@@ -2,6 +2,7 @@ import * as React from 'react';
 import { CartItemSnapshot, Currency } from '@/types/database';
 import { BANK_ACCOUNT_NUMBER, BANK_IBAN, BANK_SWIFT } from '@/lib/czechQrPayment';
 import { formatPrice } from '@/lib/currency';
+import { formatDeliveryDate } from '@/lib/expressDelivery';
 import { EmailLayout } from './EmailLayout';
 
 interface OrderEmailProps {
@@ -11,6 +12,7 @@ interface OrderEmailProps {
   currency: Currency;
   cartItems: CartItemSnapshot[];
   bankTransfer: { variableSymbol: string; qrCodeCid: string } | null;
+  hotelDelivery?: { hotelName: string; deliveryDate: string } | null;
 }
 
 export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
@@ -20,6 +22,7 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
   currency,
   cartItems,
   bankTransfer,
+  hotelDelivery,
 }) => {
   return (
     <EmailLayout footerNote="This email confirms that we've received your order in our system.">
@@ -30,6 +33,13 @@ export const OrderConfirmationEmail: React.FC<Readonly<OrderEmailProps>> = ({
         Hi {customerName},<br />
         your order <strong style={{ color: '#FDFBF7' }}>#{orderId}</strong>&nbsp;has been successfully received and we&apos;ll start preparing it soon.
       </p>
+
+      {hotelDelivery && (
+        <p style={{ lineHeight: '1.6', fontSize: '15px', color: '#CBD5E1', marginTop: '16px' }}>
+          We&apos;ll deliver it to your hotel <strong style={{ color: '#FDFBF7' }}>{hotelDelivery.hotelName}</strong>&nbsp;on{' '}
+          <strong style={{ color: '#FDFBF7' }}>{formatDeliveryDate(hotelDelivery.deliveryDate)}</strong>&nbsp;(reception).
+        </p>
+      )}
 
       {/* TABULKA POLOŽEK */}
       <div style={{ marginTop: '32px' }}>

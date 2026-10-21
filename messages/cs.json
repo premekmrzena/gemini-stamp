@@ -1,4 +1,7 @@
 {
+  "expressDelivery": {
+    "note": "Doručení na hotel v Praze: další pracovní den za 150 Kč (objednávka do 14:00, Po–Pá)."
+  },
   "common": {
     "scrollToTop": "Nahoru"
   },
@@ -98,7 +101,8 @@
       "shipping": { "title": "Doprava", "text": "Do celého světa" },
       "pickup": { "title": "Osobní odběr", "text": "Zdarma v Praze" },
       "fastProduction": { "title": "Rychlá výroba", "text": "2–7 pracovních dnů" },
-      "securePayment": { "title": "Bezpečná platba", "text": "ApplePay nebo GooglePay" }
+      "securePayment": { "title": "Bezpečná platba", "text": "ApplePay nebo GooglePay" },
+      "express": { "title": "Doručení na hotel", "text": "Praha, další pracovní den" }
     },
     "stampCategories": {
       "title": "Kreativní arch s kouskem historie",
@@ -164,7 +168,13 @@
       "shipToDifferent": "Doručit na jinou adresu",
       "shippingAddressTitle": "Doručovací adresa",
       "note": "Poznámka",
-      "notePlaceholder": "Doplňující info..."
+      "notePlaceholder": "Doplňující info...",
+      "hotelTitle": "Doručení na hotel",
+      "hotelName": "Název a adresa hotelu *",
+      "departureDate": "Datum odjezdu (check-out) *",
+      "hotelHint": "Objednávku předáme na recepci hotelu: {date}.",
+      "departureTooEarly": "Doručujeme {date}, datum odjezdu proto musí být pozdější. Pokud odjíždíte dřív, zvolte prosím doručení domů.",
+      "billingCountry": "Země *"
     },
     "countries": {
       "Albánie": "Albánie",
@@ -339,6 +349,10 @@
         "ems": {
           "name": "EMS",
           "desc": "Expresní doprava, nejrychlejší doručení do zahraničí, nutné převzetí"
+        },
+        "expres-hotel": {
+          "name": "Expres na hotel (Praha)",
+          "desc": "Osobní doručení na hotel v Praze: {date}. Objednávky v pracovní den do 14:00 doručujeme další pracovní den, o víkendu nedoručujeme."
         },
         "karta": {
           "name": "Online platba kartou",

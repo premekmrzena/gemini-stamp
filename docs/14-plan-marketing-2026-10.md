@@ -72,7 +72,7 @@
 |---|---|---|---|
 | 1 | sleva 25 % v DB (2) + mikrokonverze + cookie lišta (8) | Claude | ✅ sleva v DB 21. 10., kód v PR; zbývá označit klíčové události v GA4 a import do Ads |
 | 2 | landing pages: „cena od“ + upoutávka na aršík Karlův most (3, 5) | Claude | ✅ v PR (expres doplní fáze 3) |
-| 3 | expres doručení na hotel: checkout, info na webu, oprava /partners (3, 4) | Claude | /partners ✅ v PR, checkout čeká |
+| 3 | expres doručení na hotel: checkout, info na webu, oprava /partners (3, 4) | Claude | ✅ v PR, před merge spustit SQL 030 |
 | 4 | Search kampaně: CPC, klíčová slova, texty s 25 % a hotel delivery, rozpočet (7) | Claude v Ads | po fázi 3 |
 | 5 | šablony s opravenou URL (1) | ty obrázky, Claude nasazení | čeká na obrázky |
 | 6 | Meta Pixel → účet → první FB/IG kampaň (9) | Claude pixel, ty účet a kreativu | poslední |

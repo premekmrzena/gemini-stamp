@@ -126,11 +126,11 @@ export default function LandingContent({ lang, onSelectLang }: Props) {
       {/* ZNÁMKY - levnější alternativa k archu, odkaz do kategorie známek */}
       <LandingStampsTeaser text={c.offer} />
 
-      {/* DOPRAVA / ODBĚR - dvě rovnocenné karty, ne kroky (bez čísel) */}
+      {/* DOPRAVA / ODBĚR / EXPRES NA HOTEL - rovnocenné karty, ne kroky (bez čísel) */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
           <h2 className="style-h2 text-center mb-12 md:mb-16">{c.trustTitle}</h2>
-          <div className="grid sm:grid-cols-2 gap-6 max-w-[760px] mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-[1100px] mx-auto">
             <div className="bg-black border border-white/5 rounded-[4px] p-6">
               <h3 className="style-h3 mb-2">{c.shipTitle}</h3>
               <p className="style-body text-secondary/60">{c.shipText}</p>
@@ -138,6 +138,10 @@ export default function LandingContent({ lang, onSelectLang }: Props) {
             <div className="bg-black border border-white/5 rounded-[4px] p-6">
               <h3 className="style-h3 mb-2">{c.pickupTitle}</h3>
               <p className="style-body text-secondary/60">{c.pickupText}</p>
+            </div>
+            <div className="bg-black border border-white/5 rounded-[4px] p-6">
+              <h3 className="style-h3 mb-2">{c.expressTitle}</h3>
+              <p className="style-body text-secondary/60">{c.expressText}</p>
             </div>
           </div>
         </div>

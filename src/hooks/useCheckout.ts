@@ -13,6 +13,7 @@ type CheckoutSubmitParams = {
   formData: FormData;
   customerNote: string;
   shippingIsDifferent: boolean;
+  hotelDelivery: { hotel_name: string; departure_date: string } | null;
   discountCode: string | null;
   locale: string;
 };
@@ -44,6 +45,7 @@ export function useCheckout() {
           formData: params.formData,
           customerNote: params.customerNote,
           shippingIsDifferent: params.shippingIsDifferent,
+          hotelDelivery: params.hotelDelivery,
           discountCode: params.discountCode,
           locale: params.locale,
         }),

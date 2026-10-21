@@ -14,6 +14,16 @@
 
 Interní stav `selectedShipping` má mezistav `'mezinarodni'` (rozcestník bez ceny — zvolení jen otevře select země, není to kupovatelná položka). Tlačítko „Další krok" validuje `shippingOptions.some(o => o.id === selectedShipping)`, takže nejde pokračovat, dokud zákazník nedovybere konkrétní produkt (Cenné psaní/EMS).
 
+### Expres na hotel (Praha) – od 2026-10-21
+
+Doprava `expres-hotel` (`src/lib/constants.ts`), doručuje majitel osobně, mimo Českou poštu.
+- **Cena:** 150 Kč / pevně 6 € (`ShippingOption.priceEur`, ne přepočet kurzem).
+- **Termín** (`src/lib/expressDelivery.ts`, pražský čas): objednávka v pracovní den do 14:00 = doručení další pracovní den, jinak o pracovní den později. Víkendy se nevyřizují ani nedoručují. Státní svátky zatím neřešeny.
+- **Checkout:** v kroku Adresa povinný hotel a datum odjezdu. Odjezd musí být až po dni doručení (kontrola na klientovi i v `create-order`). Fakturační země je volitelná (hosté ze zahraničí), „Doručit na jinou adresu“ se nenabízí.
+- **DB:** `orders.hotel_name`, `departure_date`, `express_delivery_date` (`docs/sql/030_orders_express_hotel_delivery.sql`). U ostatních doprav null.
+- **Admin:** v detailu objednávky blok „Expres na hotel“, tlačítko „Vytvořit zásilku“ se nezobrazuje.
+- **E-mail:** potvrzení objednávky obsahuje hotel a den doručení.
+
 ## 2. Admin — „Vytvořit zásilku"
 
 V detailu objednávky (`src/app/admin/dashboard/page.tsx`) je tlačítko **„Vytvořit zásilku"** (skryté pro osobní odběr), otevírá `ShipmentModal.tsx`:

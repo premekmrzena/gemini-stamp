@@ -45,6 +45,9 @@ export type Content = {
   shipText: string;
   pickupTitle: string;
   pickupText: string;
+  /** Expres na hotel (docs/14-plan-marketing-2026-10.md, bod 3). */
+  expressTitle: string;
+  expressText: string;
   finalTitle: string;
   finalSubtitle: string;
   finalCta: string;
@@ -76,6 +79,9 @@ export const CONTENT: Record<LangCode, Content> = {
     pickupTitle: 'Or pick it up in Prague',
     pickupText:
       'Buy it in person at our partner shop In Arte Veritas, Malá Strana — a short walk from Charles Bridge.',
+    expressTitle: 'Or have it delivered to your hotel',
+    expressText:
+      'Staying in Prague a little longer? We hand-deliver it to your hotel the next working day for €6 (order by 2 pm, Mon–Fri).',
     finalTitle: 'Start with your own photos.',
     finalSubtitle: 'It takes a few minutes to design, and it lasts a lot longer than the trip.',
     finalCta: 'Create Your Stamp Sheet',
@@ -108,6 +114,8 @@ export const CONTENT: Record<LangCode, Content> = {
     shipText: '今すぐ注文すれば、帰国後にお手元に届きます。',
     pickupTitle: 'プラハで直接受け取りも',
     pickupText: '提携ショップ In Arte Veritas（マラー・ストラナ地区、カレル橋からすぐ）で直接お受け取りいただけます。',
+    expressTitle: 'プラハのホテルへお届け',
+    expressText: 'プラハにもう少し滞在しますか？翌営業日にホテルへ直接お届けします（6ユーロ、平日14時までのご注文）。',
     finalTitle: 'あなたの写真から、はじめよう。',
     finalSubtitle: 'デザインは数分で完成。旅よりずっと長く残ります。',
     finalCta: '切手シートを作る',
@@ -139,6 +147,8 @@ export const CONTENT: Record<LangCode, Content> = {
     shipText: '现在下单,回国后就能收到。',
     pickupTitle: '也可以在布拉格现场取货',
     pickupText: '前往合作门店 In Arte Veritas(小城区,查理大桥附近)现场取货。',
+    expressTitle: '或送到你的酒店',
+    expressText: '还会在布拉格多待几天？我们会在下一个工作日亲自送到你的酒店，运费6欧元（工作日14:00前下单）。',
     finalTitle: '从你的照片开始。',
     finalSubtitle: '设计只需几分钟,留存却比这趟旅行更久。',
     finalCta: '制作我的邮票纪念页',
@@ -170,6 +180,8 @@ export const CONTENT: Record<LangCode, Content> = {
     shipText: '現在下單,回國後就能收到。',
     pickupTitle: '也可以在布拉格現場取貨',
     pickupText: '前往合作門店 In Arte Veritas(小城區,查理大橋附近)現場取貨。',
+    expressTitle: '或送到你的飯店',
+    expressText: '還會在布拉格多待幾天？我們會在下一個工作日親自送到你的飯店，運費6歐元（工作日14:00前下單）。',
     finalTitle: '從你的照片開始。',
     finalSubtitle: '設計只需幾分鐘,留存卻比這趟旅行更久。',
     finalCta: '製作我的郵票紀念頁',
@@ -201,6 +213,8 @@ export const CONTENT: Record<LangCode, Content> = {
     shipText: '지금 주문하면 귀국 후 집에서 받아보실 수 있어요.',
     pickupTitle: '프라하에서 직접 수령도 가능',
     pickupText: '파트너 매장 In Arte Veritas(말라스트라나, 카를교 근처)에서 직접 받아가실 수 있습니다.',
+    expressTitle: '호텔로 배송받기',
+    expressText: '프라하에 조금 더 머무르시나요? 다음 영업일에 호텔로 직접 전달해 드립니다(6유로, 평일 오후 2시까지 주문).',
     finalTitle: '여러분의 사진으로 시작하세요.',
     finalSubtitle: '디자인은 몇 분이면 완성되고, 여행보다 훨씬 오래 남습니다.',
     finalCta: '우표 시트 만들기',

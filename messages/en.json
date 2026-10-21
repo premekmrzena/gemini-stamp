@@ -1,4 +1,7 @@
 {
+  "expressDelivery": {
+    "note": "Hotel delivery in Prague: next working day for €6 (order by 2 pm, Mon–Fri)."
+  },
   "common": {
     "scrollToTop": "Scroll to top"
   },
@@ -98,7 +101,8 @@
       "shipping": { "title": "Shipping", "text": "Worldwide" },
       "pickup": { "title": "Local pickup", "text": "Free in Prague" },
       "fastProduction": { "title": "Fast production", "text": "2-7 business days" },
-      "securePayment": { "title": "Secure payment", "text": "ApplePay or GooglePay" }
+      "securePayment": { "title": "Secure payment", "text": "ApplePay or GooglePay" },
+      "express": { "title": "Hotel delivery", "text": "Prague, next working day" }
     },
     "stampCategories": {
       "title": "A Creative Sheet with a piece of history",
@@ -164,7 +168,13 @@
       "shipToDifferent": "Ship to a different address",
       "shippingAddressTitle": "Shipping address",
       "note": "Note",
-      "notePlaceholder": "Additional info..."
+      "notePlaceholder": "Additional info...",
+      "hotelTitle": "Hotel delivery",
+      "hotelName": "Hotel name and address *",
+      "departureDate": "Departure date (check-out) *",
+      "hotelHint": "We will deliver your order to the hotel reception on {date}.",
+      "departureTooEarly": "We deliver on {date}, so your departure must be later. If you are leaving earlier, please choose shipping to your home address.",
+      "billingCountry": "Country *"
     },
     "countries": {
       "Albánie": "Albania",
@@ -339,6 +349,10 @@
         "ems": {
           "name": "EMS",
           "desc": "Express shipping, fastest international delivery, signature required on delivery"
+        },
+        "expres-hotel": {
+          "name": "Express to your hotel (Prague)",
+          "desc": "Personal delivery to your hotel in Prague on {date}. Orders placed on a working day by 2 pm are delivered the next working day, no weekend deliveries."
         },
         "karta": {
           "name": "Card payment online",
