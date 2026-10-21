@@ -2,32 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import LandingCta from '@/components/landing/LandingCta';
+import { LandingPriceFrom, LandingStampsTeaser } from '@/components/landing/LandingOffer';
 import { CONTENT, HTML_LANG, LANGS, LangCode } from './content';
-
-// Primární CTA - stejné třídy jako Button.tsx (variant="contained"), replikované
-// na <Link>, protože <button> uvnitř <a> je neplatné HTML a odkaz musí vést na
-// /vytvorit-arch (cesta je mimo next-intl [locale], next/link stačí přímo).
-function PrimaryCta({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  const [href, setHref] = useState('/vytvorit-arch');
-
-  useEffect(() => {
-    // Přenese ?code=... (slevový kód z QR na letáku, viz GIFT8) na checkout -
-    // CartContext ho tam po příchodu tiše ověří a rovnou aplikuje. window.location,
-    // ne useSearchParams, ať stránka zůstane staticky prerenderovaná.
-    const code = new URLSearchParams(window.location.search).get('code');
-    if (code) setHref(`/vytvorit-arch?code=${encodeURIComponent(code)}`);
-  }, []);
-
-  return (
-    <Link
-      href={href}
-      className={`inline-flex items-center justify-center font-medium tracking-[-0.02em] leading-[1.1] rounded-[12px] transition-all duration-300 hover:scale-[1.03] active:scale-95 text-[16px] md:text-[18px] p-[16px] bg-primary text-black hover:bg-primary-hover ${className}`}
-    >
-      {children}
-    </Link>
-  );
-}
 
 type Props = {
   lang: LangCode;
@@ -94,8 +72,9 @@ export default function LandingContent({ lang, onSelectLang }: Props) {
         <div className="flex flex-col md:order-1 order-2">
           <h1 className="style-h1 mb-4">{c.heroTitle}</h1>
           <p className="style-perex text-secondary/70 mb-8 max-w-[520px]">{c.heroSubtitle}</p>
+          <LandingPriceFrom text={c.offer} />
           <div>
-            <PrimaryCta>{c.heroCta}</PrimaryCta>
+            <LandingCta landing="prague-souvenir">{c.heroCta}</LandingCta>
             <p className="style-label text-black300 mt-3">{c.heroCtaNote}</p>
           </div>
         </div>
@@ -144,6 +123,9 @@ export default function LandingContent({ lang, onSelectLang }: Props) {
         </div>
       </section>
 
+      {/* ZNÁMKY - levnější alternativa k archu, odkaz do kategorie známek */}
+      <LandingStampsTeaser text={c.offer} />
+
       {/* DOPRAVA / ODBĚR - dvě rovnocenné karty, ne kroky (bez čísel) */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
@@ -166,7 +148,7 @@ export default function LandingContent({ lang, onSelectLang }: Props) {
         <div className="layout-container py-[56px] md:py-[80px] text-center flex flex-col items-center">
           <h2 className="style-h2 mb-4">{c.finalTitle}</h2>
           <p className="style-perex text-secondary/70 max-w-[480px] mx-auto mb-10">{c.finalSubtitle}</p>
-          <PrimaryCta>{c.finalCta}</PrimaryCta>
+          <LandingCta landing="prague-souvenir">{c.finalCta}</LandingCta>
         </div>
       </section>
 

@@ -13,9 +13,10 @@ import Stepper from '@/components/checkout/Stepper';
 import Footer from '@/components/Footer';
 import TrustBadges from '@/components/TrustBadges';
 import { TEMPLATES, Template } from '@/lib/editorConfig';
-import { getSalePrice } from '@/lib/pricing';
+import { getSalePrice, getEffectivePrice } from '@/lib/pricing';
 import { getOrderCurrency, getLocalizedPrice, getLocalizedEffectivePrice, formatPrice, Currency } from '@/lib/currency';
 import { getLocalizedProductField } from '@/lib/product-i18n';
+import { gtagSelectTemplate } from '@/lib/gtag';
 
 type TemplateInfo = {
   name: string;
@@ -143,6 +144,8 @@ export default function EditorPage() {
   const selectedTemplate = TEMPLATES.find((tpl) => tpl.id === selectedTemplateId);
 
   const handleSelectTemplate = (templateId: string) => {
+    const template = TEMPLATES.find((tpl) => tpl.id === templateId);
+    if (template) gtagSelectTemplate(templateId, nameOf(template, productInfo, locale));
     setSelectedTemplateId(templateId);
     setCurrentStep(prev => prev + 1);
   };
@@ -163,7 +166,9 @@ export default function EditorPage() {
           products (
             name,
             price,
+            sale_price,
             price_eur,
+            sale_price_eur,
             weight_grams
           )
         `)
@@ -174,9 +179,10 @@ export default function EditorPage() {
 
       if (data && data.products) {
         const stampProductInfo = Array.isArray(data.products) ? data.products[0] : data.products;
-        // Vlastní archy nemají koncept slevy (products.sale_price se tu odjakživa
-        // nenačítá) - jen zákaznická cena podle měny.
-        const localizedPrice = currency === 'CZK' ? stampProductInfo.price : stampProductInfo.price_eur;
+        // Stejná efektivní cena (vč. sale_price) jako v /api/create-order, jinak by košík
+        // ukazoval plnou cenu a zákazník by zaplatil zlevněnou.
+        const localized = getLocalizedPrice(stampProductInfo, currency);
+        const localizedPrice = localized ? getEffectivePrice(localized.price, localized.salePrice) : null;
 
         if (localizedPrice == null) {
           console.error('Chybí cena v měně', currency, 'pro produkt vlastního archu:', stampProductInfo.name);

@@ -78,3 +78,30 @@ export function gtagPurchase(
     ...(coupon ? { coupon } : {}),
   });
 }
+
+// Mikrokonverze pro trychtýř landing → editor → košík (docs/14-plan-marketing-2026-10.md,
+// bod 8). V GA4 označené jako klíčové události, do Google Ads importované jako
+// sekundární konverze - Ads se dál optimalizují jen na purchase.
+export function gtagLandingCtaClick(landing: string) {
+  gtagEvent('landing_cta_click', { landing });
+}
+
+export function gtagSelectTemplate(templateId: string, templateName: string) {
+  gtagEvent('select_template', { template_id: templateId, template_name: templateName });
+}
+
+export function gtagEditorPhotoUpload(templateId: string) {
+  gtagEvent('editor_photo_upload', { template_id: templateId });
+}
+
+export function gtagEditorComplete(templateId: string) {
+  gtagEvent('editor_complete', { template_id: templateId });
+}
+
+// Úvodní page_view odchází dřív, než návštěvník odklikne cookie lištu, tedy s
+// odepřeným souhlasem (gcs=G100) - GA4 ho do standardních reportů nezapočítá a
+// relace přijde o zdroj (gclid/utm z URL). Po prvním udělení analytického
+// souhlasu ho proto pošleme znovu.
+export function gtagResendPageview() {
+  gtagEvent('page_view', { page_location: window.location.href, page_title: document.title });
+}

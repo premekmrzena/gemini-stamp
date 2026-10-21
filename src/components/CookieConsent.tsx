@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { gtagConsentUpdate } from '@/lib/gtag';
+import { gtagConsentUpdate, gtagResendPageview } from '@/lib/gtag';
 
 const STORAGE_KEY = 'mcs_cookie_consent';
 
@@ -34,7 +34,8 @@ export default function CookieConsent() {
       gtagConsentUpdate(existing.analytics, existing.marketing);
       return;
     }
-    const timer = setTimeout(() => setVisible(true), 2000);
+    // Bez zpoždění - dokud lišta visí, GA4 hity nezapočítá (docs/14-plan-marketing-2026-10.md, bod 8).
+    const timer = setTimeout(() => setVisible(true), 0);
     return () => clearTimeout(timer);
   }, []);
 
@@ -43,6 +44,7 @@ export default function CookieConsent() {
   const apply = (consent: Consent) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(consent));
     gtagConsentUpdate(consent.analytics, consent.marketing);
+    if (consent.analytics) gtagResendPageview();
     setVisible(false);
   };
 

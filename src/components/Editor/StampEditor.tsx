@@ -7,6 +7,7 @@ import Button from '@/components/Button';
 import { TEMPLATES, Template, PhotoState, TextState, PRINT_INCLUDES_TEMPLATE_BACKGROUND, getPrintBackgroundImage } from '@/lib/editorConfig';
 import { generateCanvasDataUrl, uploadBase64ToBlob } from '@/lib/canvasUtils';
 import { supabase } from '@/lib/supabase';
+import { gtagEditorPhotoUpload, gtagEditorComplete } from '@/lib/gtag';
 import TextControls from './TextControls';
 import ColorPickerInput from './ColorPickerInput';
 import { editorFontClassNames } from './editorFonts';
@@ -168,6 +169,8 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !targetSlotIdRef.current) return;
+    // Mikrokonverze jen za první fotku v editoru, ne za každý slot.
+    if (Object.keys(photos).length === 0) gtagEditorPhotoUpload(activeTemplate.id);
     setPhotos((prev) => ({ ...prev, [targetSlotIdRef.current!]: { url: URL.createObjectURL(file), scale: 1, x: 0, y: 0 } }));
     e.target.value = '';
   };
@@ -263,6 +266,7 @@ export default function StampEditor({ onComplete, templateId, templateName }: St
         .select('id')
         .single();
       if (error) throw error;
+      gtagEditorComplete(activeTemplate.id);
       const addedToCart = await onComplete(data.id);
       if (addedToCart) setShowThankYou(true);
     } catch {

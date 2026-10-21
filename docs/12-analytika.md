@@ -24,6 +24,21 @@ Helpery: `gtagViewItem`, `gtagAddToCart`, `gtagBeginCheckout`, `gtagPurchase` v 
 
 **Ověřeno živě 2026-08-04** přes Playwright (headless Chromium, `site_access` cookie pro obejití pre-launch gate, patchnutý `window.gtag` pro zachycení všech volání) – celý flow produkt → košík → adresa → objednávka převodem (i se slevovým kódem u `begin_checkout`), všechny eventy odešly se správnými daty. **Pozor:** tenhle test reálně proběhl přes `/api/create-order` u platby převodem, což spustilo živé vytvoření zálohové faktury v iDokladu (`createProformaForOrder`) – 2 testovací objednávky (a s nimi 2 proforma faktury v iDokladu) vznikly při ověřování. Testovací řádky v `orders` byly smazané, **zálohové faktury v iDokladu ale ne** – je potřeba je tam dohledat a smazat/zneplatnit ručně (order ID `00de26bd-0591-4f05-b47c-58050a450a8e` a `f6a2e28a-9333-4cf4-93d9-b2af9a51a292`, e-mail `test.ga4@example.com`, 209 Kč).
 
+## Mikrokonverze (2026-10-21)
+
+Trychtýř landing → editor → košík (`docs/14-plan-marketing-2026-10.md`, bod 8). Helpery v `src/lib/gtag.ts`.
+
+| Event | Kde | Parametry |
+|---|---|---|
+| `landing_cta_click` | `src/components/landing/LandingCta.tsx`, klik na CTA na /prague-souvenir a /prague-gift | `landing` |
+| `select_template` | `vytvorit-arch/page.tsx`, `handleSelectTemplate` (ne při příchodu přes `?productId=`) | `template_id`, `template_name` |
+| `editor_photo_upload` | `StampEditor.tsx`, `handleImageUpload`, jen první fotka v editoru | `template_id` |
+| `editor_complete` | `StampEditor.tsx`, po uložení `custom_stamps`, před přidáním do košíku | `template_id` |
+
+**Ruční krok v GA4/Ads:** eventy označit v GA4 jako klíčové události a importovat do Google Ads jako *sekundární* konverze (Ads se dál optimalizují jen na `purchase`).
+
+**Cookie lišta:** zpoždění 2 s zrušeno (`CookieConsent.tsx`, `CampaignCookieConsent.tsx`). Po prvním udělení analytického souhlasu se navíc znovu pošle `page_view` (`gtagResendPageview`), protože úvodní page_view odešel ještě s odepřeným souhlasem a relace by přišla o zdroj (gclid/utm).
+
 ## Zapojené soubory
 | Soubor | Role |
 |---|---|
