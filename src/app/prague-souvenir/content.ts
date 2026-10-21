@@ -28,6 +28,8 @@ export function isLangCode(value: string): value is LangCode {
   return LANGS.some((l) => l.code === value);
 }
 
+import type { LandingOfferText } from '@/components/landing/LandingOffer';
+
 type Step = { title: string; text: string };
 
 export type Content = {
@@ -47,6 +49,8 @@ export type Content = {
   finalSubtitle: string;
   finalCta: string;
   footerText: string;
+  /** "Cena od" a upoutávka na známky (docs/14-plan-marketing-2026-10.md, body 3 a 5). */
+  offer: LandingOfferText;
 };
 
 // POZOR: JA/ZH-Hans/ZH-Hant/KO texty jsou strojový překlad (stejná situace jako EN
@@ -76,6 +80,15 @@ export const CONTENT: Record<LangCode, Content> = {
     finalSubtitle: 'It takes a few minutes to design, and it lasts a lot longer than the trip.',
     finalCta: 'Create Your Stamp Sheet',
     footerText: 'Shipped from Prague, Czech Republic.',
+    offer: {
+      priceFrom: 'From',
+      saleNote: '25% off everything until 30 November.',
+      stampsTitle: 'Or take home real Czech stamps.',
+      stampsText: 'Original postage stamps with Charles Bridge, Prague landmarks and Alphonse Mucha — a light, flat gift that fits in any suitcase.',
+      stampsCta: 'Browse stamps',
+      stampsPriceFrom: 'Stamps from',
+      stampsImageAlt: 'Charles Bridge – 650 years, a miniature sheet of Czech postage stamps',
+    },
   },
   ja: {
     heroTitle: '旅の記念に、世界にひとつだけの一枚を。',
@@ -99,6 +112,15 @@ export const CONTENT: Record<LangCode, Content> = {
     finalSubtitle: 'デザインは数分で完成。旅よりずっと長く残ります。',
     finalCta: '切手シートを作る',
     footerText: 'チェコ・プラハより発送。',
+    offer: {
+      priceFrom: '価格',
+      saleNote: '11月30日まで全商品25%オフ。',
+      stampsTitle: '本物のチェコ切手をお土産に。',
+      stampsText: 'カレル橋やプラハの名所、アルフォンス・ミュシャを描いたオリジナル切手。軽くて平らなので、スーツケースにも簡単に入ります。',
+      stampsCta: '切手を見る',
+      stampsPriceFrom: '切手',
+      stampsImageAlt: 'カレル橋650周年の小型シート(チェコ切手)',
+    },
   },
   'zh-Hans': {
     heroTitle: '把这趟旅行,变成世界上独一无二的纪念。',
@@ -121,6 +143,15 @@ export const CONTENT: Record<LangCode, Content> = {
     finalSubtitle: '设计只需几分钟,留存却比这趟旅行更久。',
     finalCta: '制作我的邮票纪念页',
     footerText: '从捷克布拉格发货。',
+    offer: {
+      priceFrom: '起价',
+      saleNote: '全场25%折扣，截至11月30日。',
+      stampsTitle: '或者带走真正的捷克邮票。',
+      stampsText: '印有查理大桥、布拉格名胜和慕夏作品的原版邮票——轻巧平整，放进任何行李箱都不占地方。',
+      stampsCta: '浏览邮票',
+      stampsPriceFrom: '邮票起价',
+      stampsImageAlt: '查理大桥650周年捷克邮票小全张',
+    },
   },
   'zh-Hant': {
     heroTitle: '把這趟旅行,變成世界上獨一無二的紀念。',
@@ -143,6 +174,15 @@ export const CONTENT: Record<LangCode, Content> = {
     finalSubtitle: '設計只需幾分鐘,留存卻比這趟旅行更久。',
     finalCta: '製作我的郵票紀念頁',
     footerText: '從捷克布拉格發貨。',
+    offer: {
+      priceFrom: '起價',
+      saleNote: '全館75折，至11月30日止。',
+      stampsTitle: '或者帶走真正的捷克郵票。',
+      stampsText: '印有查理大橋、布拉格名勝和慕夏作品的原版郵票——輕巧平整，放進任何行李箱都不佔空間。',
+      stampsCta: '瀏覽郵票',
+      stampsPriceFrom: '郵票起價',
+      stampsImageAlt: '查理大橋650週年捷克郵票小全張',
+    },
   },
   ko: {
     heroTitle: '여행을 세상에 하나뿐인 기념품으로.',
@@ -165,6 +205,15 @@ export const CONTENT: Record<LangCode, Content> = {
     finalSubtitle: '디자인은 몇 분이면 완성되고, 여행보다 훨씬 오래 남습니다.',
     finalCta: '우표 시트 만들기',
     footerText: '체코 프라하에서 발송됩니다.',
+    offer: {
+      priceFrom: '최저가',
+      saleNote: '11월 30일까지 전 상품 25% 할인.',
+      stampsTitle: '진짜 체코 우표를 가져가세요.',
+      stampsText: '카를교, 프라하 명소, 알폰스 무하가 담긴 오리지널 우표 — 가볍고 납작해서 어떤 여행 가방에도 쏙 들어갑니다.',
+      stampsCta: '우표 보기',
+      stampsPriceFrom: '우표 최저가',
+      stampsImageAlt: '카를교 650주년 체코 우표 소형 시트',
+    },
   },
 };
 

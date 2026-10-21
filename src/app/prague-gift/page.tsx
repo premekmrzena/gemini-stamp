@@ -1,5 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import LandingCta from '@/components/landing/LandingCta';
+import { LandingPriceFrom, LandingStampsTeaser } from '@/components/landing/LandingOffer';
+import { CONTENT } from '../prague-souvenir/content';
+
+// Texty ceny a upoutávky na známky sdílené s anglickou /prague-souvenir (stejná copy kvůli A/B).
+const offer = CONTENT.en.offer;
 
 // Kampaňová landing page pro západní turisty v ČR (2026-08-13, viz
 // project_prague_gift_landing) - sesterská stránka k /prague-souvenir (ta
@@ -9,17 +15,6 @@ import Link from 'next/link';
 // Copy je záměrně TOTOŽNÁ s anglickou variantou /prague-souvenir - jediná
 // proměnná v A/B srovnání má být zdroj provozu (kampaň/publikum), ne text.
 // Liší se jen hero/showcase obrázky (viz níže).
-
-function PrimaryCta({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <Link
-      href="/vytvorit-arch"
-      className={`inline-flex items-center justify-center font-medium tracking-[-0.02em] leading-[1.1] rounded-[12px] transition-all duration-300 hover:scale-[1.03] active:scale-95 text-[16px] md:text-[18px] p-[16px] bg-primary text-black hover:bg-primary-hover ${className}`}
-    >
-      {children}
-    </Link>
-  );
-}
 
 export default function PragueGiftPage() {
   return (
@@ -43,8 +38,9 @@ export default function PragueGiftPage() {
             Design your own sheet of postage stamps using your own travel photos — a personal, one-of-a-kind
             souvenir from the Czech Republic.
           </p>
+          <LandingPriceFrom text={offer} />
           <div>
-            <PrimaryCta>Create Your Stamp Sheet</PrimaryCta>
+            <LandingCta landing="prague-gift">Create Your Stamp Sheet</LandingCta>
           </div>
         </div>
         <div className="relative w-full aspect-[4/3] min-w-0 min-h-0 rounded-[4px] overflow-hidden md:order-2 order-1">
@@ -96,6 +92,9 @@ export default function PragueGiftPage() {
         </div>
       </section>
 
+      {/* ZNÁMKY - levnější alternativa k archu, odkaz do kategorie známek */}
+      <LandingStampsTeaser text={offer} />
+
       {/* DOPRAVA / ODBĚR */}
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
@@ -123,7 +122,7 @@ export default function PragueGiftPage() {
           <p className="style-perex text-secondary/70 max-w-[480px] mx-auto mb-10">
             It takes a few minutes to design, and it lasts a lot longer than the trip.
           </p>
-          <PrimaryCta>Create Your Stamp Sheet</PrimaryCta>
+          <LandingCta landing="prague-gift">Create Your Stamp Sheet</LandingCta>
         </div>
       </section>
 

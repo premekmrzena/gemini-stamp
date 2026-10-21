@@ -3,8 +3,9 @@
 // "Oslovení CK s asijskými turisty"). Natvrdo v souboru, ne přes next-intl -
 // stejný vzor jako prague-souvenir/content.ts (stránka žije mimo [locale]).
 //
-// POZOR: expres na hotel, pole hotel/datum odjezdu a kódy CK s automatickým
-// přiřazením objednávek zatím v e-shopu nejsou - doplní se s první ostrou zakázkou.
+// POZOR: kódy CK s automatickým přiřazením objednávek zatím v e-shopu nejsou - doplní se
+// s první ostrou zakázkou. Podmínky expresu na hotel musí sedět s checkoutem
+// (docs/14-plan-marketing-2026-10.md, bod 3): 150 Kč / 6 €, do 14:00, Po-Pá, jen Praha.
 
 export type PartnerLang = 'cs' | 'en';
 
@@ -136,7 +137,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       },
       {
         title: 'Arch dorazí na hotel',
-        text: 'Druhý den ho kurýr doručí na hotel v Praze. Kdo už odjíždí, dostane ho domů.',
+        text: 'Další pracovní den ho doručíme na hotel v Praze. Kdo už odjíždí, dostane ho domů.',
       },
     ],
 
@@ -145,11 +146,11 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     delivery: [
       {
         title: 'Expres na hotel v Praze',
-        text: 'Objednávka do 14:00 = doručení kurýrem na hotel další doručovací den. Vhodné pro skupiny, které v Praze spí aspoň 2 noci.',
+        text: 'Objednávka do 14:00 = doručení na hotel další pracovní den, za 150 Kč (6 €). Vhodné pro skupiny, které v Praze spí aspoň 2 noci.',
       },
       {
-        title: 'Doručujeme pondělí až sobota',
-        text: 'Objednávka ze čtvrtka po 14:00 dorazí v sobotu. Objednávky ze soboty po 14:00 a z neděle doručíme v pondělí.',
+        title: 'Doručujeme pondělí až pátek',
+        text: 'O víkendu nedoručujeme. Objednávky z pátku po 14:00, ze soboty a z neděle doručíme v pondělí.',
       },
       {
         title: 'Jen hotely v Praze',
@@ -270,7 +271,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       },
       {
         title: 'The sheet arrives at the hotel',
-        text: 'A courier delivers it to their Prague hotel the next day. Guests leaving earlier get it shipped home.',
+        text: 'We deliver it to their Prague hotel the next working day. Guests leaving earlier get it shipped home.',
       },
     ],
 
@@ -279,11 +280,11 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
     delivery: [
       {
         title: 'Express to Prague hotels',
-        text: 'Order by 2 pm = courier delivery to the hotel on the next delivery day. Best for groups staying at least 2 nights in Prague.',
+        text: 'Order by 2 pm = delivery to the hotel on the next working day, for €6. Best for groups staying at least 2 nights in Prague.',
       },
       {
-        title: 'We deliver Monday to Saturday',
-        text: 'Orders placed on Thursday after 2 pm arrive on Saturday. Orders placed on Saturday after 2 pm or on Sunday arrive on Monday.',
+        title: 'We deliver Monday to Friday',
+        text: 'No weekend deliveries. Orders placed on Friday after 2 pm, on Saturday or on Sunday arrive on Monday.',
       },
       {
         title: 'Prague hotels only',
