@@ -66,6 +66,27 @@
 - **Kreativa:** krátké video (Reels), jak někdo na mobilu nahraje fotky z Karlova mostu a pak drží hotový arch. Potřeba natočit hotové archy.
 - **Cílení:** lidé, kteří právě cestují v Praze. Druhá vlna: lidé, kteří se z Prahy nedávno vrátili domů (US, UK, DE). Test 150–250 Kč/den na 2 týdny.
 
+## Stav Search kampaní po úpravě (21. 10. 2026)
+
+**Diagnóza před úpravou:** kampaně se překrývaly („prague gift shop“, „unique gift from prague“ v obou), Souvenir s vyšším rozpočtem vyhrával aukce → Gift měl za měsíc 4 zobrazení. Souvenir brzdil strop CPC 8 Kč („Nastavení nabídky omezeno“). Texty reklam neuváděly cenu a popisovaly produkt nepřesně („custom postage stamp“).
+
+| | Search – Prague Souvenir | Search – Prague Gift |
+|---|---|---|
+| Rozpočet | 53 → **100 Kč/den** | 44 → **75 Kč/den** |
+| Strop CPC | 8 → **18 Kč** | 8 → **18 Kč** |
+| Lokality | Praha + Č. Krumlov, **přítomnost nebo zájem** | totéž |
+| Jazyky | EN + **JA, KO, ZH (zjedn. i trad.)** | EN |
+| Klíčová slova | +11 (souvenir/Mucha/stamps), „prague gift shop“ a „unique gift from prague“ pozastavena | +13 (gift ideas, gift delivery, personalized/custom postage stamps…) |
+| Vylučující | sdílený seznam „Negativa – razitka a nerelevantni“ (rubber, ink, self inking, stamp maker, notary, passport, tattoo, job(s), wholesale, free, diy) | totéž |
+| Reklama | 12 nadpisů + 4 popisy: 25 % off do 30. 11., od €42, hotel delivery, real Czech postage stamps; cesta /souvenir/25-off | totéž s „gift“; cesta /gift/25-off |
+
+**Vyhodnocení:** za 2–3 týdny (cca 10. 11.) – zobrazení, CTR, CPC, mikrokonverze z GA4, objednávky.
+
+### ⚠️ 1. 12. 2026 – konec slevy
+1. DB: `update products set sale_price = null, sale_price_eur = null;`
+2. Google Ads: v obou reklamách odstranit „25% Off Until 30 November“, „Creative Sheets From €42“ → „From €56“, popis s „25% off“ a cestu „25-off“.
+3. Landing pages a web se přepnou samy (ceny se čtou z DB).
+
 ## Pořadí realizace
 
 | Fáze | Body | Kdo | Stav |
@@ -73,7 +94,7 @@
 | 1 | sleva 25 % v DB (2) + mikrokonverze + cookie lišta (8) | Claude | ✅ sleva v DB 21. 10., kód v PR; zbývá označit klíčové události v GA4 a import do Ads |
 | 2 | landing pages: „cena od“ + upoutávka na aršík Karlův most (3, 5) | Claude | ✅ v PR (expres doplní fáze 3) |
 | 3 | expres doručení na hotel: checkout, info na webu, oprava /partners (3, 4) | Claude | ✅ v PR, před merge spustit SQL 030 |
-| 4 | Search kampaně: CPC, klíčová slova, texty s 25 % a hotel delivery, rozpočet (7) | Claude v Ads | po fázi 3 |
+| 4 | Search kampaně: CPC, klíčová slova, texty s 25 % a hotel delivery, rozpočet (7) | Claude v Ads | ✅ 21. 10. (viz níže) |
 | 5 | šablony s opravenou URL (1) | ty obrázky, Claude nasazení | čeká na obrázky |
 | 6 | Meta Pixel → účet → první FB/IG kampaň (9) | Claude pixel, ty účet a kreativu | poslední |
 
