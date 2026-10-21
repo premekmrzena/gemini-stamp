@@ -150,7 +150,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       },
       {
         title: 'Doručujeme pondělí až pátek',
-        text: 'O víkendu nedoručujeme. Objednávky z pátku po 14:00, ze soboty a z neděle doručíme v pondělí.',
+        text: 'O víkendu nedoručujeme ani nevyřizujeme. Objednávka z pátku do 14:00 dorazí v pondělí, z pátku po 14:00 a z víkendu v úterý.',
       },
       {
         title: 'Jen hotely v Praze',
@@ -284,7 +284,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       },
       {
         title: 'We deliver Monday to Friday',
-        text: 'No weekend deliveries. Orders placed on Friday after 2 pm, on Saturday or on Sunday arrive on Monday.',
+        text: 'No weekend deliveries or processing. Orders placed on Friday by 2 pm arrive on Monday; orders placed on Friday after 2 pm or at the weekend arrive on Tuesday.',
       },
       {
         title: 'Prague hotels only',

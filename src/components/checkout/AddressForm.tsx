@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { INTERNATIONAL_COUNTRIES, PHONE_DIAL_CODES, DIAL_CODE_BY_COUNTRY } from '@/lib/constants';
+import { getExpressDeliveryDate, isDepartureAfterDelivery, formatDeliveryDate } from '@/lib/expressDelivery';
 
 type FormData = Record<string, string>;
 
@@ -13,9 +14,20 @@ type Props = {
   onNoteChange: (note: string) => void;
   isMezinarodni: boolean;
   isPersonalPickup: boolean;
+  isExpressHotel: boolean;
+  hotelDelivery: HotelDelivery;
+  onHotelDeliveryChange: (next: HotelDelivery) => void;
   shippingIsDifferent: boolean;
   onShippingIsDifferentChange: (v: boolean) => void;
 };
+
+export type HotelDelivery = { hotel_name: string; departure_date: string };
+
+// Expres na hotel si objednávají hlavně hosté ze zahraničí - fakturační země je proto volitelná
+// (na rozdíl od tuzemské dopravy, kde je natvrdo Česká republika).
+const EXPRESS_BILLING_COUNTRIES = ['', 'Česká republika', ...INTERNATIONAL_COUNTRIES.filter(Boolean)];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const InputField = ({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
   <div className="w-full flex flex-col gap-2">
@@ -148,14 +160,28 @@ export default function AddressForm({
   onNoteChange,
   isMezinarodni,
   isPersonalPickup,
+  isExpressHotel,
+  hotelDelivery,
+  onHotelDeliveryChange,
   shippingIsDifferent,
   onShippingIsDifferentChange,
 }: Props) {
   const t = useTranslations('checkout.address');
   const tCountries = useTranslations('checkout.countries');
-  const countryLabels = Object.fromEntries(
-    INTERNATIONAL_COUNTRIES.filter(Boolean).filter((c) => c !== '---').map((c) => [c, tCountries.has(c) ? tCountries(c) : c])
-  );
+  const locale = useLocale();
+  const countryLabels: Record<string, string> = {
+    'Česká republika': t('czechRepublic'),
+    ...Object.fromEntries(
+      INTERNATIONAL_COUNTRIES.filter(Boolean).filter((c) => c !== '---').map((c) => [c, tCountries.has(c) ? tCountries(c) : c])
+    ),
+  };
+  // Zahraniční adresa (2. řádek, region, volba země) - mezinárodní doprava i expres na hotel.
+  const isForeignAddress = isMezinarodni || isExpressHotel;
+  const deliveryDate = getExpressDeliveryDate();
+  // Odjezd nejdřív den po doručení (viz isDepartureAfterDelivery) - min na date inputu
+  // zablokuje odeslání nativní validací, hláška níž vysvětlí proč.
+  const minDepartureDate = new Date(new Date(`${deliveryDate}T00:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10);
+  const departureTooEarly = !!hotelDelivery.departure_date && !isDepartureAfterDelivery(hotelDelivery.departure_date);
   // Lokálně řízeno (netřeba v rodičovském stavu) - jen skrývá/zobrazuje pole, která už formData
   // sleduje. Výchozí stav odvozen z předvyplněných dat, ne vždy false, kdyby se zákazník vrátil
   // krok zpátky poté, co firemní údaje vyplnil.
@@ -186,20 +212,31 @@ export default function AddressForm({
             name="billing_phone"
             value={formData.billing_phone}
             onChange={onChange}
-            defaultDial={isMezinarodni ? (DIAL_CODE_BY_COUNTRY[formData.billing_country] ?? '+420') : '+420'}
+            defaultDial={isForeignAddress ? (DIAL_CODE_BY_COUNTRY[formData.billing_country] ?? '+420') : '+420'}
             required
           />
           <InputField label={t('email')} name="billing_email" value={formData.billing_email} onChange={onChange} type="email" required />
           <InputField label={t('addressLine1')} name="billing_address_line1" value={formData.billing_address_line1} onChange={onChange} required />
-          {isMezinarodni && (
+          {isForeignAddress && (
             <InputField label={t('addressLine2')} name="billing_address_line2" value={formData.billing_address_line2} onChange={onChange} />
           )}
           <InputField label={t('city')} name="billing_city" value={formData.billing_city} onChange={onChange} required />
-          {isMezinarodni && (
+          {isForeignAddress && (
             <InputField label={t('region')} name="billing_region" value={formData.billing_region} onChange={onChange} />
           )}
           <InputField label={t('zip')} name="billing_zip" value={formData.billing_zip} onChange={onChange} required />
-          {isMezinarodni ? (
+          {isExpressHotel ? (
+            <SelectField
+              label={t('billingCountry')}
+              name="billing_country"
+              value={formData.billing_country}
+              onChange={onChange}
+              options={EXPRESS_BILLING_COUNTRIES}
+              optionLabels={countryLabels}
+              selectCountryLabel={t('selectCountry')}
+              required
+            />
+          ) : isMezinarodni ? (
             // Země už byla vybraná v kroku Doprava (podle ní se počítá cena) - tady jen
             // needitovatelně zobrazená, stejně jako u tuzemské varianty níže.
             <InputField label={t('countryPlain')} value={countryLabels[formData.billing_country] ?? formData.billing_country} disabled />
@@ -228,7 +265,33 @@ export default function AddressForm({
         </div>
       </div>
 
-      {!isPersonalPickup && (
+      {isExpressHotel && (
+        <div className="flex flex-col gap-4 border-t border-white/10 pt-6">
+          <h3 className="style-h3 text-secondary">{t('hotelTitle')}</h3>
+          <p className="style-body text-black200">{t('hotelHint', { date: formatDeliveryDate(deliveryDate, locale) })}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label={t('hotelName')}
+              value={hotelDelivery.hotel_name}
+              onChange={(e) => onHotelDeliveryChange({ ...hotelDelivery, hotel_name: e.target.value })}
+              required
+            />
+            <InputField
+              label={t('departureDate')}
+              type="date"
+              min={minDepartureDate}
+              value={hotelDelivery.departure_date}
+              onChange={(e) => onHotelDeliveryChange({ ...hotelDelivery, departure_date: e.target.value })}
+              required
+            />
+          </div>
+          {departureTooEarly && (
+            <p className="style-body text-red-500">{t('departureTooEarly', { date: formatDeliveryDate(deliveryDate, locale) })}</p>
+          )}
+        </div>
+      )}
+
+      {!isPersonalPickup && !isExpressHotel && (
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -240,7 +303,7 @@ export default function AddressForm({
         </label>
       )}
 
-      {!isPersonalPickup && shippingIsDifferent && (
+      {!isPersonalPickup && !isExpressHotel && shippingIsDifferent && (
         <div className="flex flex-col gap-4 border-t border-white/10 pt-6">
           <h3 className="style-h3 text-secondary">{t('shippingAddressTitle')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

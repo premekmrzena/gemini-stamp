@@ -33,7 +33,7 @@ export function getShippingOptionsInCurrency(
   const czkOptions = getShippingOptions(weightGrams, subtotalCzk, country);
   const options = czkOptions.map((option) => ({
     ...option,
-    price: convertToEur(option.price, rate) ?? option.price,
+    price: option.priceEur ?? convertToEur(option.price, rate) ?? option.price,
   }));
   return { ok: true, options };
 }

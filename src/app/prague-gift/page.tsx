@@ -99,7 +99,7 @@ export default function PragueGiftPage() {
       <section className="border-t border-white/5 bg-[#0B1120]">
         <div className="layout-container py-[48px] md:py-[64px] lg:py-[80px]">
           <h2 className="style-h2 text-center mb-12 md:mb-16">However you’re traveling</h2>
-          <div className="grid sm:grid-cols-2 gap-6 max-w-[760px] mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-[1100px] mx-auto">
             <div className="bg-black border border-white/5 rounded-[4px] p-6">
               <h3 className="style-h3 mb-2">We ship worldwide</h3>
               <p className="style-body text-secondary/60">Order now, and it will be waiting for you at home.</p>
@@ -110,6 +110,10 @@ export default function PragueGiftPage() {
                 Buy it in person at our partner shop In Arte Veritas, Malá Strana — a short walk from Charles
                 Bridge.
               </p>
+            </div>
+            <div className="bg-black border border-white/5 rounded-[4px] p-6">
+              <h3 className="style-h3 mb-2">{CONTENT.en.expressTitle}</h3>
+              <p className="style-body text-secondary/60">{CONTENT.en.expressText}</p>
             </div>
           </div>
         </div>
