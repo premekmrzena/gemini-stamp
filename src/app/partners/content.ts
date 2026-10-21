@@ -5,7 +5,8 @@
 //
 // POZOR: kódy CK s automatickým přiřazením objednávek zatím v e-shopu nejsou - doplní se
 // s první ostrou zakázkou. Podmínky expresu na hotel musí sedět s checkoutem
-// (docs/14-plan-marketing-2026-10.md, bod 3): 150 Kč / 6 €, do 14:00, Po-Pá, jen Praha.
+// (docs/14-plan-marketing-2026-10.md, bod 3, src/lib/expressDelivery.ts): 150 Kč / 6 €, do 14:00,
+// Po-Pá mimo svátky, pátek a víkend -> pondělí, jen Praha.
 
 export type PartnerLang = 'cs' | 'en';
 
@@ -150,7 +151,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       },
       {
         title: 'Doručujeme pondělí až pátek',
-        text: 'O víkendu nedoručujeme ani nevyřizujeme. Objednávka z pátku do 14:00 dorazí v pondělí, z pátku po 14:00 a z víkendu v úterý.',
+        text: 'O víkendu a ve státní svátky nedoručujeme. Objednávky z pátku a z víkendu doručíme v pondělí.',
       },
       {
         title: 'Jen hotely v Praze',
@@ -284,7 +285,7 @@ export const CONTENT: Record<PartnerLang, PartnerContent> = {
       },
       {
         title: 'We deliver Monday to Friday',
-        text: 'No weekend deliveries or processing. Orders placed on Friday by 2 pm arrive on Monday; orders placed on Friday after 2 pm or at the weekend arrive on Tuesday.',
+        text: 'No deliveries at weekends or on Czech public holidays. Orders placed on Friday or at the weekend arrive on Monday.',
       },
       {
         title: 'Prague hotels only',

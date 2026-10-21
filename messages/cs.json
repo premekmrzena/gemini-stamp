@@ -352,7 +352,7 @@
         },
         "expres-hotel": {
           "name": "Expres na hotel (Praha)",
-          "desc": "Osobní doručení na hotel v Praze: {date}. Objednávky v pracovní den do 14:00 doručujeme další pracovní den, o víkendu nedoručujeme."
+          "desc": "Osobní doručení na hotel v Praze: {date}. Objednávky v pracovní den do 14:00 doručujeme další pracovní den, z pátku a víkendu v pondělí. O víkendu a ve svátky nedoručujeme."
         },
         "karta": {
           "name": "Online platba kartou",

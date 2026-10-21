@@ -18,7 +18,7 @@ Interní stav `selectedShipping` má mezistav `'mezinarodni'` (rozcestník bez c
 
 Doprava `expres-hotel` (`src/lib/constants.ts`), doručuje majitel osobně, mimo Českou poštu.
 - **Cena:** 150 Kč / pevně 6 € (`ShippingOption.priceEur`, ne přepočet kurzem).
-- **Termín** (`src/lib/expressDelivery.ts`, pražský čas): objednávka v pracovní den do 14:00 = doručení další pracovní den, jinak o pracovní den později. Víkendy se nevyřizují ani nedoručují. Státní svátky zatím neřešeny.
+- **Termín** (`src/lib/expressDelivery.ts`, pražský čas): objednávka v pracovní den do 14:00 = doručení další pracovní den, po 14:00 o pracovní den později, ledaže následuje volno (pátek, den před svátkem) – pak první pracovní den. Objednávky z pátku a víkendu → pondělí. Víkendy a české státní svátky (vč. Velkého pátku a Velikonočního pondělí) se nedoručují.
 - **Checkout:** v kroku Adresa povinný hotel a datum odjezdu. Odjezd musí být až po dni doručení (kontrola na klientovi i v `create-order`). Fakturační země je volitelná (hosté ze zahraničí), „Doručit na jinou adresu“ se nenabízí.
 - **DB:** `orders.hotel_name`, `departure_date`, `express_delivery_date` (`docs/sql/030_orders_express_hotel_delivery.sql`). U ostatních doprav null.
 - **Admin:** v detailu objednávky blok „Expres na hotel“, tlačítko „Vytvořit zásilku“ se nezobrazuje.
